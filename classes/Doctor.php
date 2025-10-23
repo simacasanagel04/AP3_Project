@@ -191,13 +191,14 @@ class Doctor {
     public function create($doctor) {
         try {
             $sql = "INSERT INTO {$this->table_doctor}
-                    (doc_first_name, doc_middle_init, doc_last_name, doc_contact_num,
+                    (doc_id, doc_first_name, doc_middle_init, doc_last_name, doc_contact_num,
                     doc_email, spec_id, doc_created_at, doc_updated_at)
-                    VALUES (:doc_first_name, :doc_middle_init, :doc_last_name, :doc_contact_num,
+                    VALUES (:doc_id, :doc_first_name, :doc_middle_init, :doc_last_name, :doc_contact_num,
                     :doc_email, :spec_id, NOW(), NOW())";
 
             $stmt = $this->conn->prepare($sql);
             return $stmt->execute([
+                ':doc_id'           => trim($doctor['pat_id']),
                 ':doc_first_name'   => trim($doctor['doc_first_name']),
                 ':doc_middle_init'  => trim($doctor['doc_middle_init']),
                 ':doc_last_name'    => trim($doctor['doc_last_name']),

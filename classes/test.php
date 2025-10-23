@@ -16,10 +16,10 @@ $patient = new Patient($db);
 
 
 // Find Patient by ID
-$result = $patient->findById(100002);
-echo "Find Patient 100002: ";
-print_r($result);
-echo "<br>";
+// $result = $patient->findById(100002);
+// echo "Find Patient 100002: ";
+// print_r($result);
+// echo "<br>";
 
 // Get Patient Appointments
 // $appointments = $patient->getPatientAppointments(100002);
@@ -28,14 +28,14 @@ echo "<br>";
 // echo "<br>";
 
 // Get All Patients
-$patients = $patient->all();
-echo "All Patients Count: " . count($patients) . "<br>";
-print_r($patients);
-echo "<br>";
+// $patients = $patient->all();
+// echo "All Patients Count: " . count($patients) . "<br>";
+// print_r($patients);
+// echo "<br>";
 
 // Get Total Patient Count
-$totalPatients = $patient->count();
-echo "Total Patients Count: " . $totalPatients . "<br>";
+// $totalPatients = $patient->count();
+// echo "Total Patients Count: " . $totalPatients . "<br>";
 
 // Get Paginated Patients 
 // $paginatedPatients = $patient->allPaginated(5, 0);
@@ -189,5 +189,7 @@ $doctor = new Doctor($db);
 // echo "Find Deleted Doctor 1: ";
 // print_r($result);
 // echo "<br>";
+
+
 
 ?>
