@@ -1,6 +1,8 @@
 <?php
 include "../config/Database.php";
 include "Patient.php";
+include "Doctor.php";
+include "Payment.php";
 
 $db = (new Database())->connect();
 
@@ -105,7 +107,7 @@ $patient = new Patient($db);
 // ==========================================
 // FOR DOCTOR
 // ==========================================
-// echo "<h3>DOCTOR TEST</h3>";
+echo "<hr><h3>DOCTOR TEST</h3>";
 
 $doctor = new Doctor($db);
 
@@ -189,6 +191,116 @@ $doctor = new Doctor($db);
 // echo "Find Deleted Doctor 1: ";
 // print_r($result);
 // echo "<br>";
+
+
+
+// ==========================================
+// FOR PAYMENT
+// ==========================================
+echo "<hr><h2>PAYMENT TEST</h2>";
+
+$payment = new Payment($db);
+
+// TEST: RETRIEVAL METHODS
+
+// Test findById
+// echo "Test findById (Existing ID: 1): ";
+// $result = $payment->findById(1);
+// print_r($result);
+// echo "<br>";
+// if ($result === 0) echo "No payment found for ID 1.<br>";
+// echo "<br>";
+
+// // Test all
+// echo "Test all: ";
+// $allPayments = $payment->all();
+// echo "Total payments: " . count($allPayments) . "<br>";
+// print_r($allPayments);
+// echo "<br>";
+
+// // Test allPaginated
+// echo "Test allPaginated (Limit 5, Offset 0): ";
+// $paginatedPayments = $payment->allPaginated(5, 0);
+// echo "Paginated payments count: " . count($paginatedPayments) . "<br>";
+// print_r($paginatedPayments);
+// echo "<br>";
+
+// // Test getPaymentDetails
+// echo "Test getPaymentDetails (ID: 1): ";
+// $details = $payment->getPaymentDetails(1);
+// print_r($details);
+// echo "<br>";
+// if (empty($details)) echo "No details found for payment ID 1.<br>";
+// echo "<br>";
+
+// // Test count
+// echo "Test count: ";
+// $total = $payment->count();
+// echo "Total payments count: " . $total . "<br>";
+// echo "<br>";
+
+// // Test getAllForDropdown
+// echo "Test getAllForDropdown: ";
+// $dropdownOptions = $payment->getAllForDropdown();
+// echo "Dropdown options count: " . count($dropdownOptions) . "<br>";
+// print_r($dropdownOptions);
+// echo "<br>";
+
+// // Test searchWithDetails
+// echo "Test searchWithDetails (Search Term: 'Cash'): ";
+// $searchResults = $payment->searchWithDetails("Cash");
+// echo "Search results count: " . count($searchResults) . "<br>";
+// print_r($searchResults);
+// echo "<br>";
+
+// // TEST: CRUD 
+
+// // Test CREATE
+// echo "Test create: ";
+// $newPayment = [
+//     'paymt_amount_paid' => 150.50,
+//     'paymt_date'        => '2025-10-23 10:29:00',
+//     'pymt_meth_id'      => 1, 
+//     'pymt_stat_id'      => 1,
+//     'appt_id'           => 1
+// ];
+// $newPaymtId = $payment->create($newPayment);
+// echo "Create result: " . ($newPaymtId ? "SUCCESS, New PAYMT_ID: " . $newPaymtId : "FAILED") . "<br>";
+// echo "<br>";
+
+// // Test UPDATE
+// echo "Test update: ";
+// $updatePayment = [
+//     'paymt_id'          => $newPaymtId ?: 1, 
+//     'paymt_amount_paid' => 200.75,
+//     'paymt_date'        => '2025-10-23 11:00:00',
+//     'pymt_meth_id'      => 2, 
+//     'pymt_stat_id'      => 2, 
+//     'appt_id'           => 2 
+// ];
+// $result = $payment->update($updatePayment);
+// echo "Update result: " . ($result ? "SUCCESS" : "FAILED") . "<br>";
+// echo "<br>";
+
+// // Test findById after update
+// echo "Test findById after update (ID: " . ($newPaymtId ?: 1) . "): ";
+// $result = $payment->findById($newPaymtId ?: 1);
+// print_r($result);
+// echo "<br>";
+// echo "<br>";
+
+// // Test DELETE
+// echo "Test delete (ID: " . ($newPaymtId ?: 1) . "): ";
+// $result = $payment->delete($newPaymtId ?: 1);
+// echo "Delete result: " . ($result ? "SUCCESS" : "FAILED") . "<br>";
+// echo "<br>";
+
+// // Test findById after delete
+// echo "Test findById after delete (ID: " . ($newPaymtId ?: 1) . "): ";
+// $result = $payment->findById($newPaymtId ?: 1);
+// print_r($result);
+// echo "<br>";
+// if ($result === 0) echo "Payment ID " . ($newPaymtId ?: 1) . " successfully deleted.<br>";
 
 
 
