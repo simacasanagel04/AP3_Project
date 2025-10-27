@@ -1,168 +1,256 @@
 <?php
-    require_once '../config/Database.php';
-    require_once '../classes/Patient.php';
-    include '../includes/header.php';
+// patient_create.php
+// inside the folder public in AP3_PROJECT root
 
-    $db = (new Database())->connect();
-    $patient = new Patient($db);
+session_start();
 
-    $message = "";
-    $status = "";
+require_once '../config/Database.php';
+require_once '../classes/Patient.php';
+
+
+$db = (new Database())->connect();
+
+$patient = new Patient($db);
+
+$message = "";
+$status = "";
+$new_pat_id = null;
+
+$formData = [
+    'pat_first_name'  => '',
+    'pat_middle_init' => '',
+    'pat_last_name'   => '',
+    'pat_dob'         => '',
+    'pat_gender'      => '',
+    'pat_contact_num' => '',
+    'pat_email'       => '',
+    'pat_address'     => ''
+];
+
+if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $formData = [
-        'pat_id'          => '',
-        'pat_first_name'  => '',
-        'pat_middle_init' => '',
-        'pat_last_name'   => '',
-        'pat_dob'         => '',
-        'pat_gender'      => '',
-        'pat_contact_num' => '',
-        'pat_email'       => '',
-        'pat_address'     => ''
+        'pat_first_name'  => trim($_POST['pat_first_name']),
+        'pat_middle_init' => trim($_POST['pat_middle_init']),
+        'pat_last_name'   => trim($_POST['pat_last_name']),
+        'pat_dob'         => $_POST['pat_dob'],
+        'pat_gender'      => $_POST['pat_gender'],
+        'pat_contact_num' => trim($_POST['pat_contact_num']),
+        'pat_email'       => trim($_POST['pat_email']),
+        'pat_address'     => trim($_POST['pat_address'])
     ];
 
-    // Handle form submission
-    if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-        $formData = [
-            'pat_id'          => $_POST['pat_id'],
-            'pat_first_name'  => $_POST['pat_first_name'],
-            'pat_middle_init' => $_POST['pat_middle_init'],
-            'pat_last_name'   => $_POST['pat_last_name'],
-            'pat_dob'         => $_POST['pat_dob'],
-            'pat_gender'      => $_POST['pat_gender'],
-            'pat_contact_num' => $_POST['pat_contact_num'],
-            'pat_email'       => $_POST['pat_email'],
-            'pat_address'     => $_POST['pat_address']
-        ];
+    $errors = [];
+    
+    // Basic validation - just check if fields are filled
+    if (empty($formData['pat_first_name']))  $errors[] = "First Name is required.";
+    if (empty($formData['pat_last_name']))   $errors[] = "Last Name is required.";
+    if (empty($formData['pat_dob']))         $errors[] = "Date of Birth is required.";
+    if (empty($formData['pat_gender']))      $errors[] = "Gender is required.";
+    if (empty($formData['pat_contact_num'])) $errors[] = "Contact Number is required.";
+    if (empty($formData['pat_email']))       $errors[] = "Email is required.";
+    if (empty($formData['pat_address']))     $errors[] = "Address is required.";
 
-        if ($patient->create($formData)) {
+    if (empty($errors)) {
+        error_log("=== PATIENT CREATE DEBUG ===");
+        error_log("Form data: " . print_r($formData, true));
+        
+        $result = $patient->create($formData);
+
+        error_log("Create result: " . var_export($result, true));
+        error_log("Result type: " . gettype($result));
+
+        if ($result !== false && is_numeric($result) && $result > 0) {
+            $new_pat_id = $result;
             $status = "success";
-            $message = "Patient {$formData['pat_first_name']} {$formData['pat_last_name']} registered successfully!";
-            // Clear form after success
-            $formData = [
-                'pat_id'          => '',
-                'pat_first_name'  => '',
-                'pat_middle_init' => '',
-                'pat_last_name'   => '',
-                'pat_dob'         => '',
-                'pat_gender'      => '',
-                'pat_contact_num' => '',
-                'pat_email'       => '',
-                'pat_address'     => ''
-            ];
+            $message = "Patient <strong>{$formData['pat_first_name']} {$formData['pat_last_name']}</strong> registered successfully!";
+
+            $_SESSION['pending_pat_id'] = $new_pat_id;
+            $_SESSION['pending_email']  = $formData['pat_email'];
+
+            error_log("SUCCESS! Patient ID: $new_pat_id stored in session");
+
+            // Clear form
+            $formData = array_fill_keys(array_keys($formData), '');
+
+            // Redirect after 2 seconds
+            header("Refresh: 2; url=signup.php");
         } else {
             $status = "error";
-            $message = "Failed to register patient. Please check if Patient ID already exists.";
+            
+            // More detailed error message
+            if ($result === false) {
+                $message = "Database error occurred. Please try again or contact support.";
+                error_log("ERROR: create() returned FALSE");
+            } else {
+                $message = "Unexpected error (result: " . var_export($result, true) . "). Please try again.";
+                error_log("ERROR: Unexpected result value");
+            }
+            
+            error_log("Form data was: " . print_r($formData, true));
         }
+    } else {
+        $status = "error";
+        $message = implode("<br>", $errors);
     }
+}
 ?>
 
-<!-- Content -->
-<div class="public_background flex-grow-1 d-flex justify-content-center align-items-center position-relative p-4">
-    <div class="container mt-2">
-        <div class="row justify-content-center">
-            <div class="col-12 col-md-10 col-lg-8">
-                <div class="card shadow-sm border-0 rounded-2 p-4">
-                    <div class="card_header card-header text-white mb-4">
-                        <h2 class="mb-0">Patient Registration</h2>
-                    </div>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Patient Registration | AKSyon Medical Center</title>
 
-                    <!-- Display success/error message -->
+    <!-- Bootstrap 5 -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Bootstrap Icons -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css">
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet">
+    <!-- Custom CSS -->
+    <link rel="stylesheet" href="../public/css/style.css">
+</head>
+<body class="bg-light">
+
+<!-- HEADER WITH LOGO -->
+<div class="container">
+    <div class="text-center my-4">
+        <img src="../assets/logo/logo.png" alt="AKSyon Medical Center" height="50">
+        <h4 class="logo-font-aksyon text-primary d-inline-block ms-2">AKSyon</h4>
+        <p class="logo-font-medical text-muted d-inline-block">Medical Center</p>
+    </div>
+</div>
+
+<!-- MAIN CONTENT -->
+<div class="container mt-3">
+    <div class="row justify-content-center">
+        <div class="col-12 col-md-10 col-lg-8">
+            <div class="card shadow-sm border-0 rounded-2">
+                <div class="card-header text-white text-center" style="background-color: #336d96;">
+                    <h2 class="mb-0">Patient Registration</h2>
+                </div>
+                <div class="card-body p-4">
+
+                    <!-- ALERT -->
                     <?php if ($message): ?>
                         <div class="alert alert-<?= $status === 'success' ? 'success' : 'danger' ?> alert-dismissible fade show" role="alert">
-                            <?= htmlspecialchars($message) ?>
-                            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                            <?= $message ?>
+                            <?php if ($status === 'success'): ?>
+                                <br>
+                                <strong>Your Patient ID: <?= htmlspecialchars($new_pat_id) ?></strong>
+                                <br><small>Redirecting to account creation in 2 seconds...</small>
+                            <?php endif; ?>
+                            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
                         </div>
                     <?php endif; ?>
 
-                    <form method="post" action="">
-                        <div class="row">
-                            <div class="col-md-6 mb-3">
-                                <label for="pat_id" class="form-label">Patient ID <span class="text-danger">*</span></label>
-                                <input type="text" class="form-control" name="pat_id" id="pat_id"
-                                    value="<?= htmlspecialchars($formData['pat_id']) ?>" required>
+                    <!-- FORM -->
+                    <form method="post" action="" id="patientForm" novalidate>
+                        <div class="row g-3">
+                            <div class="col-md-4">
+                                <label class="form-label">First Name <span class="text-danger">*</span></label>
+                                <input type="text" class="form-control" name="pat_first_name" value="<?= htmlspecialchars($formData['pat_first_name']) ?>" required>
                             </div>
+                            <div class="col-md-2">
+                                <label class="form-label">M.I.</label>
+                                <input type="text" class="form-control" name="pat_middle_init" value="<?= htmlspecialchars($formData['pat_middle_init']) ?>" maxlength="5">
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">Last Name <span class="text-danger">*</span></label>
+                                <input type="text" class="form-control" name="pat_last_name" value="<?= htmlspecialchars($formData['pat_last_name']) ?>" required>
+                            </div>
+                        </div>
 
-                            <div class="col-md-6 mb-3">
-                                <label for="pat_gender" class="form-label">Gender <span class="text-danger">*</span></label>
-                                <select class="form-select" name="pat_gender" id="pat_gender" required>
-                                    <option value="">-- Select Gender --</option>
-                                    <option value="Male" <?= ($formData['pat_gender'] === 'Male') ? 'selected' : '' ?>>Male</option>
-                                    <option value="Female" <?= ($formData['pat_gender'] === 'Female') ? 'selected' : '' ?>>Female</option>
-                                    <option value="Other" <?= ($formData['pat_gender'] === 'Other') ? 'selected' : '' ?>>Other</option>
+                        <div class="row g-3 mt-2">
+                            <div class="col-md-6">
+                                <label class="form-label">Date of Birth <span class="text-danger">*</span></label>
+                                <input type="date" class="form-control" name="pat_dob" value="<?= htmlspecialchars($formData['pat_dob']) ?>" required>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">Gender <span class="text-danger">*</span></label>
+                                <select class="form-select" name="pat_gender" required>
+                                    <option value="">-- Select --</option>
+                                    <option value="Male"   <?= $formData['pat_gender'] === 'Male'   ? 'selected' : '' ?>>Male</option>
+                                    <option value="Female" <?= $formData['pat_gender'] === 'Female' ? 'selected' : '' ?>>Female</option>
+                                    <option value="Other"  <?= $formData['pat_gender'] === 'Other'  ? 'selected' : '' ?>>Other</option>
                                 </select>
                             </div>
                         </div>
 
-                        <div class="row">
-                            <div class="col-md-4 mb-3">
-                                <label for="pat_first_name" class="form-label">First Name <span class="text-danger">*</span></label>
-                                <input type="text" class="form-control" name="pat_first_name" id="pat_first_name"
-                                    value="<?= htmlspecialchars($formData['pat_first_name']) ?>" required>
+                        <div class="row g-3 mt-2">
+                            <div class="col-md-6">
+                                <label class="form-label">Email <span class="text-danger">*</span></label>
+                                <input type="text" class="form-control" name="pat_email" value="<?= htmlspecialchars($formData['pat_email']) ?>" placeholder="Any format for testing" required>
+                                <small class="text-muted">You can use any format for testing</small>
                             </div>
-
-                            <div class="col-md-2 mb-3">
-                                <label for="pat_middle_init" class="form-label">M.I.</label>
-                                <input type="text" class="form-control" name="pat_middle_init" id="pat_middle_init"
-                                    value="<?= htmlspecialchars($formData['pat_middle_init']) ?>" maxlength="5">
-                            </div>
-
-                            <div class="col-md-6 mb-3">
-                                <label for="pat_last_name" class="form-label">Last Name <span class="text-danger">*</span></label>
-                                <input type="text" class="form-control" name="pat_last_name" id="pat_last_name"
-                                    value="<?= htmlspecialchars($formData['pat_last_name']) ?>" required>
+                            <div class="col-md-6">
+                                <label class="form-label">Contact Number <span class="text-danger">*</span></label>
+                                <input type="text" class="form-control" name="pat_contact_num" value="<?= htmlspecialchars($formData['pat_contact_num']) ?>" placeholder="09XX-XXX-XXXX" required>
                             </div>
                         </div>
 
-                        <div class="row">
-                            <div class="col-md-6 mb-3">
-                                <label for="pat_dob" class="form-label">Date of Birth <span class="text-danger">*</span></label>
-                                <input type="date" class="form-control" name="pat_dob" id="pat_dob"
-                                    value="<?= htmlspecialchars($formData['pat_dob']) ?>" required>
-                            </div>
-
-                            <div class="col-md-6 mb-3">
-                                <label for="pat_contact_num" class="form-label">Contact Number <span class="text-danger">*</span></label>
-                                <input type="tel" class="form-control" name="pat_contact_num" id="pat_contact_num"
-                                    value="<?= htmlspecialchars($formData['pat_contact_num']) ?>" 
-                                    placeholder="09XX-XXX-XXXX" required>
-                            </div>
+                        <div class="mt-3">
+                            <label class="form-label">Address <span class="text-danger">*</span></label>
+                            <textarea class="form-control" name="pat_address" rows="3" required><?= htmlspecialchars($formData['pat_address']) ?></textarea>
                         </div>
 
-                        <div class="mb-3">
-                            <label for="pat_email" class="form-label">Email <span class="text-danger">*</span></label>
-                            <input type="email" class="form-control" name="pat_email" id="pat_email"
-                                value="<?= htmlspecialchars($formData['pat_email']) ?>" required>
-                        </div>
-
-                        <div class="mb-3">
-                            <label for="pat_address" class="form-label">Address <span class="text-danger">*</span></label>
-                            <textarea class="form-control" name="pat_address" id="pat_address" 
-                                rows="3" required><?= htmlspecialchars($formData['pat_address']) ?></textarea>
-                        </div>
-
-                        <div class="d-flex gap-2">
-                            <button type="submit" class="btn btn-primary">
-                                <i class="bi bi-save"></i> Register Patient
+                        <div class="mt-4 text-end">
+                            <button type="submit" class="btn btn-primary px-4" id="nextBtn">
+                                <i class="bi bi-arrow-right-circle"></i> Next: Create Account
                             </button>
-                            <a href="patient_list.php" class="btn btn-secondary">
-                                <i class="bi bi-list"></i> View All Patients
-                            </a>
                         </div>
                     </form>
                 </div>
             </div>
         </div>
-    </div>        
+    </div>
 </div>
 
+<!-- Bootstrap JS -->
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 
+<!-- FORM VALIDATION -->
 <script>
-    var status = "<?php echo $status; ?>";
-    var message = "<?php echo $message; ?>";
-</script>
-<script src="js/modal.js"></script>
+    document.addEventListener('DOMContentLoaded', function () {
+        const form = document.getElementById('patientForm');
+        const nextBtn = document.getElementById('nextBtn');
+        const required = form.querySelectorAll('[required]');
 
-<?php include '../includes/footer.php'; ?>
+        function validate() {
+            let valid = true;
+            required.forEach(field => {
+                const value = field.value.trim();
+                if (!value) {
+                    valid = false;
+                    field.classList.add('is-invalid');
+                } else {
+                    field.classList.remove('is-invalid');
+                }
+            });
+            
+            // Enable button if all required fields are filled
+            nextBtn.disabled = !valid;
+            
+            // Change button appearance based on validity
+            if (valid) {
+                nextBtn.classList.remove('btn-secondary');
+                nextBtn.classList.add('btn-primary');
+            } else {
+                nextBtn.classList.remove('btn-primary');
+                nextBtn.classList.add('btn-secondary');
+            }
+        }
+
+        required.forEach(field => {
+            field.addEventListener('input', validate);
+            field.addEventListener('change', validate);
+        });
+
+        // Run validation on page load
+        validate();
+    });
+</script>
+
 </body>
 </html>
