@@ -73,7 +73,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $formData = array_fill_keys(array_keys($formData), '');
 
             // Redirect after 2 seconds
-            header("Refresh: 2; url=signup.php");
+            header("Refresh: 5; url=signup.php");
         } else {
             $status = "error";
             
@@ -139,7 +139,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                             <?php if ($status === 'success'): ?>
                                 <br>
                                 <strong>Your Patient ID: <?= htmlspecialchars($new_pat_id) ?></strong>
-                                <br><small>Redirecting to account creation in 2 seconds...</small>
+                                <br><small>Redirecting to account creation in 5 seconds...</small>
                             <?php endif; ?>
                             <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
                         </div>
