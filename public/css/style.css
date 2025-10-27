@@ -1,0 +1,43 @@
+:root{
+    --blue:#336d96;
+    --teal:#183358;
+    --light-blue:#b4cad9;
+    --light-gray:#e5e2e2;
+    --pastel-green:#c1dbc5;
+}
+.bg-teal{background:var(--teal);}
+.text-teal{color:var(--teal);}
+
+/* Heartbeat line */
+.heartbeat-line{
+    width:150px;height:3px;
+    background:url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 150 3"><path d="M0,1.5 L40,1.5 L45,0 L50,3 L55,1.5 L150,1.5"stroke="%23267476"stroke-width="2"fill="none"/></svg>') center/contain no-repeat;
+    margin:0 auto 1rem;
+}
+
+/* Circular numbers */
+.procedure-number{
+    width:60px;height:60px;border-radius:50%;
+    display:flex;align-items:center;justify-content:center;
+    font-size:1.8rem;font-weight:bold;color:#fff;
+    margin:0 auto 1rem;
+}
+
+/* Hover lift */
+.action-card,.procedure-card,.specialist-card,.service-card{
+    transition:transform .3s ease,box-shadow .3s ease;
+}
+.action-card:hover,.procedure-card:hover,
+.specialist-card:hover,.service-card:hover{
+    transform:translateY(-5px);
+    box-shadow:0 10px 25px rgba(0,0,0,.15)!important;
+}
+
+/* Hero gradient */
+.hero-section{background:linear-gradient(135deg,var(--light-blue),var(--light-gray));}
+
+/* Responsive tweaks */
+@media(max-width:768px){
+    .hero-section .display-4{font-size:2rem;}
+    .procedure-number{width:50px;height:50px;font-size:1.5rem;}
+}
