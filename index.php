@@ -32,7 +32,7 @@ include 'includes/header.php';
     <div class="container">
         <div class="row align-items-center">
             <div class="col-lg-6 mb-4 mb-lg-0">
-                <h1 class="display-4 fw-bold text-primary mb-4">
+                <h1 class="text-dark-blue display-4 fw-bold mb-4">
                     Because Health Needs More Than Words,<br>
                     <span class="text-dark">It Needs Action</span>
                 </h1>
@@ -40,7 +40,7 @@ include 'includes/header.php';
                     AKSyon Medical Center is committed to providing quality healthcare through timely action and compassionate service. We believe your health deserves proactive care, centered on diagnosis, treatment, and recovery.
                 </p>
                 <div class="d-flex flex-wrap gap-3">
-                    <a href="public/patient_book_appt.php" class="btn btn-primary btn-lg px-4">MAKE APPOINTMENT</a>
+                    <!-- <a href="public/patient_book_appt.php" class="btn btn-primary btn-lg px-4">MAKE APPOINTMENT</a> -->
                     <a href="#" class="btn btn-outline-primary btn-lg px-4">HOW IT WORKS</a>
                 </div>
             </div>
@@ -63,10 +63,10 @@ include 'includes/header.php';
                 <div class="action-card text-white p-4 rounded-5 shadow h-100 text-center" style="background-color: #267476;">
                     <h4 class="fw-bold bi bi-clock fs-2 mb-4"> Opening Hours</h4>
                     <p class="small mb-1">
-                        <strong style="margin-right: 20px;">Monday - Friday</strong>08:00 AM- 05:00 PM
+                        <strong style="margin-right: 20px;">Monday - Friday</strong>08:00 AM- 06:00 PM
                     </p>
                     <p class="small mb-0">
-                        <strong style="margin-right: 60px;">Saturday</strong>09:00 AM- 01:00 PM
+                        <strong style="margin-right: 60px;">Saturday</strong>09:00 AM- 05:00 PM
                     </p>
                     <p class="small">
                         <strong style="margin-right: 140px;">Sunday</strong>Closed</p>
@@ -169,11 +169,11 @@ include 'includes/header.php';
 </section>
 
 <!-- MEET OUR SPECIALISTS -->
-<section class="specialists" style="padding-top: 6rem; padding-bottom: 6rem;">
+<section id="doctors" class="specialists" style="padding-top: 6rem; padding-bottom: 6rem;">
     <div class="container">
         <div class="text-center mb-5">
             <div class="heartbeat-line mx-auto"></div>
-            <h2 class="fw-bold">MEET SOME OF OUR SPECIALISTS ACROSS MEDICAL DEPARTMENTS</h2>
+            <h2 class="fw-bold" style="font-family: 'Times New Roman';">MEET SOME OF OUR SPECIALISTS ACROSS MEDICAL DEPARTMENTS</h2>
         </div>
 
         <div class="row g-3 g-md-4">
@@ -181,7 +181,7 @@ include 'includes/header.php';
             <!-- Pediatrics 1 -->
             <div class="col-6 col-md-4 col-lg-3">
                 <div class="specialist-card rounded-3 overflow-hidden shadow-sm h-100">
-                    <img src="assets/images/3.png" alt="Dr. Angela Dela Cruz" class="w-100" style="height: 300px; object-fit: cover;">
+                    <img src="assets/images/3.png" alt="Dr. Angela Dela Cruz" class="w-100" style="height: 250px; object-fit: cover;">
                     <div class="p-2 bg-primary text-white text-center">
                         <h6 class="mb-1 small">Dr. Angela Dela Cruz</h6>
                         <p class="x-small mb-0">MD, FPCPS<br>Pediatrics</p>
@@ -192,9 +192,9 @@ include 'includes/header.php';
             <!-- Pediatrics 2 -->
             <div class="col-6 col-md-4 col-lg-3">
                 <div class="specialist-card rounded-3 overflow-hidden shadow-sm h-100">
-                    <img src="assets/images/3.png" alt="Dr. Angela Dela Cruz" class="w-100" style="height: 300px; object-fit: cover;">
+                    <img src="assets/images/8.png" alt="Dr. Angela Dela Cruz" class="w-100" style="height: 250px; object-fit: cover;">
                     <div class="p-2 bg-primary text-white text-center">
-                        <h6 class="mb-1 small">Dr. Angela Dela Cruz</h6>
+                        <h6 class="mb-1 small">Dr. Flordeliza Booc</h6>
                         <p class="x-small mb-0">MD, FPCPS<br>Pediatrics</p>
                     </div>
                 </div>
@@ -203,7 +203,7 @@ include 'includes/header.php';
             <!-- Cardiology 1 -->
             <div class="col-6 col-md-4 col-lg-3">
                 <div class="specialist-card rounded-3 overflow-hidden shadow-sm h-100">
-                    <img src="assets/images/4.png" alt="Dr. Rafael Santos" class="w-100" style="height: 300px; object-fit: cover;">
+                    <img src="assets/images/4.png" alt="Dr. Rafael Santos" class="w-100" style="height: 250px; object-fit: cover;">
                     <div class="p-2 bg-primary text-white text-center">
                         <h6 class="mb-1 small">Dr. Rafael Santos</h6>
                         <p class="x-small mb-0">MD, FPCC<br>Cardiology</p>
@@ -214,9 +214,9 @@ include 'includes/header.php';
             <!-- Cardiology 2 -->
             <div class="col-6 col-md-4 col-lg-3">
                 <div class="specialist-card rounded-3 overflow-hidden shadow-sm h-100">
-                    <img src="assets/images/4.png" alt="Dr. Rafael Santos" class="w-100" style="height: 300px; object-fit: cover;">
+                    <img src="assets/images/9.png" alt="Dr. Rafael Santos" class="w-100" style="height: 250px; object-fit: cover;">
                     <div class="p-2 bg-primary text-white text-center">
-                        <h6 class="mb-1 small">Dr. Rafael Santos</h6>
+                        <h6 class="mb-1 small">Dr. Joy Manawari</h6>
                         <p class="x-small mb-0">MD, FPCC<br>Cardiology</p>
                     </div>
                 </div>
@@ -225,7 +225,7 @@ include 'includes/header.php';
             <!-- Neurology 1 -->
             <div class="col-6 col-md-4 col-lg-3">
                 <div class="specialist-card rounded-3 overflow-hidden shadow-sm h-100">
-                    <img src="assets/images/5.png" alt="Dr. Miguel Ramirez" class="w-100" style="height: 300px; object-fit: cover;">
+                    <img src="assets/images/5.png" alt="Dr. Miguel Ramirez" class="w-100" style="height: 250px; object-fit: cover;">
                     <div class="p-2 bg-primary text-white text-center">
                         <h6 class="mb-1 small">Dr. Miguel Ramirez</h6>
                         <p class="x-small mb-0">MD, FPNA<br>Neurology</p>
@@ -236,9 +236,9 @@ include 'includes/header.php';
             <!-- Neurology 2 -->
             <div class="col-6 col-md-4 col-lg-3">
                 <div class="specialist-card rounded-3 overflow-hidden shadow-sm h-100">
-                    <img src="assets/images/5.png" alt="Dr. Miguel Ramirez" class="w-100" style="height: 300px; object-fit: cover;">
+                    <img src="assets/images/10.png" alt="Dr. Miguel Ramirez" class="w-100" style="height: 250px; object-fit: cover;">
                     <div class="p-2 bg-primary text-white text-center">
-                        <h6 class="mb-1 small">Dr. Miguel Ramirez</h6>
+                        <h6 class="mb-1 small">Dr. Kendric Rodriguez</h6>
                         <p class="x-small mb-0">MD, FPNA<br>Neurology</p>
                     </div>
                 </div>
@@ -247,7 +247,7 @@ include 'includes/header.php';
             <!-- Ophthalmology 1 -->
             <div class="col-6 col-md-4 col-lg-3">
                 <div class="specialist-card rounded-3 overflow-hidden shadow-sm h-100">
-                    <img src="assets/images/6.png" alt="Dr. Kristine Bautista" class="w-100" style="height: 300px; object-fit: cover;">
+                    <img src="assets/images/6.png" alt="Dr. Kristine Bautista" class="w-100" style="height: 250px; object-fit: cover;">
                     <div class="p-2 bg-primary text-white text-center">
                         <h6 class="mb-1 small">Dr. Kristine Bautista</h6>
                         <p class="x-small mb-0">MD, FPAO<br>Ophthalmology</p>
@@ -258,9 +258,9 @@ include 'includes/header.php';
             <!-- Ophthalmology 2 -->
             <div class="col-6 col-md-4 col-lg-3">
                 <div class="specialist-card rounded-3 overflow-hidden shadow-sm h-100">
-                    <img src="assets/images/6.png" alt="Dr. Kristine Bautista" class="w-100" style="height: 300px; object-fit: cover;">
+                    <img src="assets/images/11.png" alt="Dr. Kristine Bautista" class="w-100" style="height: 250px; object-fit: cover;">
                     <div class="p-2 bg-primary text-white text-center">
-                        <h6 class="mb-1 small">Dr. Kristine Bautista</h6>
+                        <h6 class="mb-1 small">Dr. Antonio Aquilino</h6>
                         <p class="x-small mb-0">MD, FPAO<br>Ophthalmology</p>
                     </div>
                 </div>
@@ -269,7 +269,7 @@ include 'includes/header.php';
             <!-- Dental Care 1 -->
             <div class="col-6 col-md-4 col-lg-3">
                 <div class="specialist-card rounded-3 overflow-hidden shadow-sm h-100">
-                    <img src="assets/images/7.png" alt="Dr. Carlo Reyes" class="w-100" style="height: 300px; object-fit: cover;">
+                    <img src="assets/images/7.png" alt="Dr. Carlo Reyes" class="w-100" style="height: 250px; object-fit: cover;">
                     <div class="p-2 bg-primary text-white text-center">
                         <h6 class="mb-1 small">Dr. Carlo Reyes</h6>
                         <p class="x-small mb-0">DMD<br>Dental Care</p>
@@ -280,9 +280,9 @@ include 'includes/header.php';
             <!-- Dental Care 2 -->
             <div class="col-6 col-md-4 col-lg-3">
                 <div class="specialist-card rounded-3 overflow-hidden shadow-sm h-100">
-                    <img src="assets/images/7.png" alt="Dr. Carlo Reyes" class="w-100" style="height: 300px; object-fit: cover;">
+                    <img src="assets/images/12.png" alt="Dr. Carlo Reyes" class="w-100" style="height: 250px; object-fit: cover;">
                     <div class="p-2 bg-primary text-white text-center">
-                        <h6 class="mb-1 small">Dr. Carlo Reyes</h6>
+                        <h6 class="mb-1 small">Dr. Luna Consuelo</h6>
                         <p class="x-small mb-0">DMD<br>Dental Care</p>
                     </div>
                 </div>
@@ -302,13 +302,13 @@ include 'includes/header.php';
         </div>
 
         <!-- =================================== PEDIATRIC SERVICES =================================== -->
-        <div class="service-category mb-5">
+        <div class="service-category mb-5" id="pediatrics">
             <h3 class="service-category-title">PEDIATRIC SERVICES</h3>
             <div class="service-row-wrapper">
                 <div class="service-row d-flex gap-3 flex-nowrap">
 
                     <!-- Pediatric service 1 -->
-                    <div class="service-card flex-shrink-0">
+                    <div  class="service-card flex-shrink-0">
                         <img src="assets/images/pedia_ser1.jpg" alt="Well Baby Clinic" class="w-100">
                         <div class="service-content">
                             <h5>GENERAL CHECK-UP FOR CHILDREN</h5>
@@ -357,7 +357,7 @@ include 'includes/header.php';
         </div>
 
         <!-- =================================== CARDIOLOGY SERVICES =================================== -->
-        <div class="service-category mb-5">
+        <div class="service-category mb-5" id="cardiology">
             <h3 class="service-category-title">CARDIOLOGY SERVICES</h3>
             <div class="service-row-wrapper">
                 <div class="service-row d-flex gap-3 flex-nowrap">
@@ -412,7 +412,7 @@ include 'includes/header.php';
         </div>
 
         <!-- =================================== NEUROLOGY SERVICES =================================== -->
-        <div class="service-category mb-5">
+        <div class="service-category mb-5" id="neurology">
             <h3 class="service-category-title">NEUROLOGY SERVICES</h3>
             <div class="service-row-wrapper">
                 <div class="service-row d-flex gap-3 flex-nowrap">
@@ -467,7 +467,7 @@ include 'includes/header.php';
         </div>
 
         <!-- =================================== OPHTHALMOLOGY SERVICES =================================== -->
-        <div class="service-category mb-5">
+        <div class="service-category mb-5" id="ophthalmology">
             <h3 class="service-category-title">OPHTHALMOLOGY SERVICES</h3>
             <div class="service-row-wrapper">
                 <div class="service-row d-flex gap-3 flex-nowrap">
@@ -522,7 +522,7 @@ include 'includes/header.php';
         </div>
 
         <!-- =================================== DENTAL CARE SERVICES =================================== -->
-        <div class="service-category mb-5">
+        <div class="service-category mb-5" id="dental">
             <h3 class="service-category-title">DENTAL CARE SERVICES</h3>
             <div class="service-row-wrapper">
                 <div class="service-row d-flex gap-3 flex-nowrap">

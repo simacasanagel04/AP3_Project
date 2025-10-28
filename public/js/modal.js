@@ -1,5 +1,13 @@
 document.addEventListener('DOMContentLoaded', function () {
 
+    /* ----- STICKY HEADER ON SCROLL ----- */
+    const header = document.querySelector('.main-header');
+    if (header) {
+        window.addEventListener('scroll', () => {
+            header.classList.toggle('shadow-sm', window.scrollY > 10);
+        });
+    }
+
     /* ----- SMOOTH SCROLL ----- */
     document.querySelectorAll('a[href^="#"]').forEach(link => {
         link.addEventListener('click', e => {
@@ -35,7 +43,7 @@ document.addEventListener('DOMContentLoaded', function () {
         observer.observe(el);
     });
 
-    /* ----- SCROLL-BASED CARD MOVEMENT (Parallax Effect) ----- */
+    /* ----- SCROLL-BASED CARD MOVEMENT ----- */
     let ticking = false;
     
     function updateCardPositions() {
@@ -91,7 +99,7 @@ document.addEventListener('DOMContentLoaded', function () {
     if (loginBtn)  loginBtn.onclick  = () => alert('Login functionality will be implemented');
     if (regBtn)    regBtn.onclick    = () => alert('Registration functionality will be implemented');
 
-    /* ----- TOAST UTILITY (optional) ----- */
+    /* ----- TOAST ----- */
     window.showToast = (msg, type = 'info') => {
         const container = document.querySelector('.toast-container') || (() => {
             const c = document.createElement('div');

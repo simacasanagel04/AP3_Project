@@ -1,7 +1,3 @@
-/* ========================================
-   AKSYON MEDICAL CENTER - GLOBAL STYLES
-   ======================================== */
-
 :root {
     --blue: #336d96;
     --teal: #183358;
@@ -28,6 +24,107 @@
 }
 
 /* ========================================
+HEADER */
+
+.main-header {z-index: 1050; transition: all 0.3s ease;}
+
+/* MAKE HEADER STICKY */
+.main-header {
+    position: sticky;
+    top: 0;
+    z-index: 1050;
+}
+
+.main-header.scrolled {
+    background-color: rgba(229, 226, 226, 0.95) !important;
+    backdrop-filter: blur(10px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.navbar {
+    padding-top: 0 !important;
+    padding-bottom: 0 !important;
+    min-height: 80px;
+}
+
+/* NAV LINKS */
+.navbar-nav .nav-link {
+    color: #183358 !important;
+    font-weight: 500;
+    position: relative;
+    padding: 0.5rem 1rem !important;
+}
+
+.navbar-nav .nav-link:hover,
+.navbar-nav .nav-link.active {
+    color: #0b2e75 !important;
+}
+
+.navbar-nav .nav-link::after {
+    content: '';
+    position: absolute;
+    width: 0;
+    height: 2px;
+    bottom: 0;
+    left: 50%;
+    background-color: #0b2e75;
+    transition: width 0.3s ease, left 0.3s ease;
+}
+
+.navbar-nav .nav-link:hover::after,
+.navbar-nav .nav-link.active::after {
+    width: 100%;
+    left: 0;
+}
+
+/* PRIMARY BUTTONS */
+.btn-primary,
+.bg-primary {
+    background-color: #0b2e75 !important;
+    border-color: #0b2e75 !important;
+    transition: all 0.3s ease;
+}
+
+.btn-primary:hover {
+    background-color: #09255f !important;
+    border-color: #09255f !important;
+    transform: translateY(-1px);
+}
+
+.btn-outline-primary {
+    color: #0b2e75 !important;
+    border-color: #0b2e75 !important;
+}
+
+.btn-outline-primary:hover {
+    background-color: #0b2e75 !important;
+    color: white !important;
+    transform: translateY(-1px);
+}
+
+/* DROPDOWN */
+.dropdown-menu {
+    border: none;
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15);
+    border-radius: 0.5rem;
+}
+
+.dropdown-item:hover {
+    background-color: #f8f9fa;
+    color: #0b2e75 !important;
+}
+
+/* Mobile */
+@media (max-width: 992px) {
+    .navbar-nav .nav-link::after {
+        display: none;
+    }
+    .navbar-nav {
+        text-align: center;
+    }
+}
+
+/* ========================================
    HEARTBEAT LINE
    ======================================== */
 .heartbeat-line {
@@ -38,7 +135,7 @@
 }
 
 /* ========================================
-   CIRCULAR NUMBERS (PROCEDURE)
+   CIRCULAR NUMBERS 
    ======================================== */
 .procedure-number {
     width: 60px;
@@ -72,7 +169,7 @@
 }
 
 /* ========================================
-   ACTION CARD (QUICK ACTIONS)
+   ACTION CARD 
    ======================================== */
 .action-card {
     background-color: var(--teal-action) !important;
@@ -142,9 +239,34 @@
     }
 }
 
+.text-dark-blue {
+    color: #183358;
+    font-family: 'Times New Roman';
+}
+
+.btn-primary, .bg-primary {
+  background-color: #0b2e75 !important;
+  border-color: #0b2e75 !important;
+}
+
+.btn-primary:hover {
+  background-color: #09255f !important;
+  border-color: #09255f !important;
+}
+
+.btn-outline-primary {
+  color: #0b2e75 !important;
+  border-color: #0b2e75 !important;
+}
+
+.btn-outline-primary:hover {
+  background-color: #0b2e75 !important;
+  color: white !important;
+}
+
 
 /* ========================================
-   SERVICES SECTION - MAIN TITLE
+   SERVICES SECTION 
    ======================================== */
 .services-main-title {
     font-family: 'Times New Roman', Times, serif;
@@ -155,7 +277,7 @@
 }
 
 /* ========================================
-   SERVICE CATEGORY TITLE
+   SERVICE CATEGORY 
    ======================================== */
 .service-category-title {
     font-family: 'Roboto', sans-serif;
@@ -263,6 +385,77 @@
     color: #555;
     line-height: 1.5;
     margin: 0;
+}
+
+/* ========================================
+   FOOTER 
+   ======================================== */
+.main-footer {
+    background-color: #183358 !important;
+    color: #b4cad9;
+    font-family: 'Roboto', sans-serif;
+    font-size: 0.875rem;
+}
+
+.main-footer h5,
+.main-footer h6 {
+    color: #ffffff;
+    font-weight: 600;
+}
+
+.main-footer a.text-white {
+    position: relative;
+    transition: color 0.3s ease;
+}
+
+.main-footer a.hover-underline::after {
+    content: '';
+    position: absolute;
+    width: 0;
+    height: 1px;
+    bottom: -2px;
+    left: 0;
+    background-color: #ffffff;
+    transition: width 0.3s ease;
+}
+
+.main-footer a.hover-underline:hover::after {
+    width: 100%;
+}
+
+.main-footer a:hover {
+    color: #ffffff !important;
+}
+
+.main-footer .contact-info i {
+    color: #b4cad9;
+    font-size: 0.9rem;
+}
+
+.main-footer .text-warning {
+    color: #ffd700 !important;
+}
+
+.main-footer .social-links a {
+    color: #b4cad9;
+    transition: all 0.3s ease;
+    font-size: 1.25rem;
+}
+
+.main-footer .social-links a:hover {
+    color: #3111a1 !important;
+    transform: translateY(-2px);
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    .main-footer .text-lg-start,
+    .main-footer .text-lg-end {
+        text-align: center !important;
+    }
+    .main-footer .list-unstyled {
+        display: inline-block;
+    }
 }
 
 /* ========================================
