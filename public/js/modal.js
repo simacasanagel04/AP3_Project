@@ -35,6 +35,37 @@ document.addEventListener('DOMContentLoaded', function () {
         observer.observe(el);
     });
 
+    /* ----- SCROLL-BASED CARD MOVEMENT (Parallax Effect) ----- */
+    let ticking = false;
+    
+    function updateCardPositions() {
+        const serviceCards = document.querySelectorAll('.service-card');
+        const scrollPosition = window.pageYOffset;
+        
+        serviceCards.forEach((card, index) => {
+            const cardTop = card.getBoundingClientRect().top + scrollPosition;
+            const cardVisible = card.getBoundingClientRect().top < window.innerHeight && 
+                               card.getBoundingClientRect().bottom > 0;
+            
+            if (cardVisible && !card.matches(':hover')) {
+                const movement = (scrollPosition - cardTop + window.innerHeight) * 0.01;
+                const direction = index % 2 === 0 ? 1 : -1;
+                card.style.transform = `translateY(${movement * direction}px)`;
+            }
+        });
+        
+        ticking = false;
+    }
+
+    window.addEventListener('scroll', () => {
+        if (!ticking) {
+            window.requestAnimationFrame(() => {
+                updateCardPositions();
+            });
+            ticking = true;
+        }
+    });
+
     /* ----- ACTIVE NAV LINK ON SCROLL ----- */
     window.addEventListener('scroll', () => {
         let current = '';
@@ -48,16 +79,11 @@ document.addEventListener('DOMContentLoaded', function () {
 
     /* ----- NAVBAR BG ON SCROLL ----- */
     const navbar = document.querySelector('.navbar');
-    window.addEventListener('scroll', () => {
-        navbar.classList.toggle('scrolled', window.scrollY > 50);
-    });
-
-    /* ----- BOOK BUTTON ALERT (placeholder) ----- */
-    document.querySelectorAll('button').forEach(btn => {
-        if (/BOOK/i.test(btn.textContent)) {
-            btn.addEventListener('click', () => alert('Appointment booking system will be available soon!'));
-        }
-    });
+    if (navbar) {
+        window.addEventListener('scroll', () => {
+            navbar.classList.toggle('scrolled', window.scrollY > 50);
+        });
+    }
 
     /* ----- LOGIN / REGISTER ALERT (placeholder) ----- */
     const loginBtn  = document.querySelector('button:contains("LOG IN")');
@@ -80,11 +106,15 @@ document.addEventListener('DOMContentLoaded', function () {
         container.insertAdjacentHTML('beforeend', html);
         const toast = new bootstrap.Toast(container.lastElementChild);
         toast.show();
-        container.lastElementChild.addEventListener('hidden.bs.toast', () => it.remove());
+        container.lastElementChild.addEventListener('hidden.bs.toast', () => {
+            container.lastElementChild.remove();
+        });
     };
 
     console.log('AKSyon Medical Center – All JS features loaded');
 });
 
 /* Helper for :contains selector (used above) */
-HTMLElement.prototype.contains = function (text) { return this.textContent.includes(text); };
+HTMLElement.prototype.contains = function (text) { 
+    return this.textContent.includes(text); 
+};
