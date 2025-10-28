@@ -115,10 +115,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
 <!-- HEADER WITH LOGO -->
 <div class="container">
-    <div class="text-center my-4">
-        <img src="../assets/logo/logo.png" alt="AKSyon Medical Center" height="50">
-        <h4 class="logo-font-aksyon text-primary d-inline-block ms-2">AKSyon</h4>
-        <p class="logo-font-medical text-muted d-inline-block">Medical Center</p>
+    <div class="text-center my-2">
+        <a href="../index.php"><img src="../assets/logo/logo_white_bg.png" alt="AKSyon Medical Center" height="80" class="mb-3"></a>
     </div>
 </div>
 
@@ -128,7 +126,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         <div class="col-12 col-md-10 col-lg-8">
             <div class="card shadow-sm border-0 rounded-2">
                 <div class="card-header text-white text-center" style="background-color: #336d96;">
-                    <h2 class="mb-0">Patient Registration</h2>
+                    <h3 class="mb-0">Patient Registration</h3>
                 </div>
                 <div class="card-body p-4">
 

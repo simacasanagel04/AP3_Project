@@ -92,9 +92,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 <div class="card-body p-5 text-center">
 
                     <div class="mb-4">
-                        <img src="../assets/logo/logo.png" alt="AKSyon Medical Center" height="50" class="mb-3">
-                        <h4 class="logo-font-aksyon text-primary">AKSyon</h4>
-                        <p class="logo-font-medical text-muted">Medical Center</p>
+                        <a href="../index.php"><img src="../assets/logo/logo_white_bg.png" alt="AKSyon Medical Center" height="80"></a>
                         <h5 class="mt-3" style="font-family: 'Times New Roman', serif;">Create Account</h5>
                         <p class="text-muted small">Complete your registration.</p>
                     </div>
