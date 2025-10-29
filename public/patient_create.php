@@ -28,6 +28,7 @@ $formData = [
 ];
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    // validation
     $formData = [
         'pat_first_name'  => trim($_POST['pat_first_name']),
         'pat_middle_init' => trim($_POST['pat_middle_init']),
@@ -113,23 +114,24 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 </head>
 <body class="bg-light">
 
-<!-- HEADER WITH LOGO -->
-<div class="container">
-    <div class="text-center my-2">
-        <a href="../index.php"><img src="../assets/logo/logo_white_bg.png" alt="AKSyon Medical Center" height="80" class="mb-3"></a>
-    </div>
-</div>
 
 <!-- MAIN CONTENT -->
 <div class="container mt-3">
     <div class="row justify-content-center">
         <div class="col-12 col-md-10 col-lg-8">
-            <div class="card shadow-sm border-0 rounded-2">
+
+            <div class="card shadow-sm rounded-2 my-5">
+
+            <!-- HEADER WITH LOGO -->
+                <div class="text-center my-2">
+                    <a href="../index.php"><img src="../assets/logo/logo_white_bg.png" alt="AKSyon Medical Center" height="100" class="mb-3"></a>
+                </div>
+
                 <div class="card-header text-white text-center" style="background-color: #336d96;">
                     <h3 class="mb-0">Patient Registration</h3>
                 </div>
-                <div class="card-body p-4">
 
+                <div class="card-body p-3">
                     <!-- ALERT -->
                     <?php if ($message): ?>
                         <div class="alert alert-<?= $status === 'success' ? 'success' : 'danger' ?> alert-dismissible fade show" role="alert">
@@ -198,6 +200,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                                 <i class="bi bi-arrow-right-circle"></i> Next: Create Account
                             </button>
                         </div>
+
+                         <div class="mt-4 text-center">
+                            <small class="text-muted">
+                                Already have an account? <a href="login.php" class="text-primary text-decoration-none">LOGIN</a>
+                            </small>
+                         </div>                         
                     </form>
                 </div>
             </div>
