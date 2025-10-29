@@ -14,7 +14,7 @@ $pat_id = $_SESSION['pat_id'] ?? null;
 if ($pat_id) {
     $patientData = $patient->findById($pat_id);
     if ($patientData) {
-        $userName = trim($patientData['pat_first_name'] . ' ' . $patientData['pat_last_name']);
+        $userName = trim($patientData['PAT_FIRST_NAME'] . ' ' . $patientData['PAT_LAST_NAME']);
     }
 }
 ?>
@@ -34,10 +34,10 @@ if ($pat_id) {
 
 <body>
     <header class="main-header">
-        <nav class="navbar navbar-expand-lg shadow-sm " style="background-color: #e5e2e2;">
-            <div class="container ">
+        <nav class="navbar navbar-expand-lg shadow-sm" style="background-color: #e5e2e2;">
+            <div class="container">
 
-                <a class="navbar-brand " href="../index.php">
+                <a class="navbar-brand" href="../index.php">
                     <img src="assets/logo/logo-no-margn.png" alt="AKSyon Medical Center Logo" height="60">
                 </a>
 
@@ -63,7 +63,7 @@ if ($pat_id) {
                             <a class="nav-link" href="#contact">CONTACT</a>
                         </li>
 
-                        <li class="nav-item ms-lg-3">
+                        <li class="nav-item ms-lg-3" id="authSection">
                             <?php if ($userName): ?>
                                 <!-- Logged In: Show Name + Dropdown -->
                                 <div class="dropdown">
@@ -71,15 +71,17 @@ if ($pat_id) {
                                         <?= htmlspecialchars($userName) ?>
                                     </a>
                                     <ul class="dropdown-menu dropdown-menu-end">
-                                        <li><a class="dropdown-item" href="patient_dashb.php">
-                                            <i class="bi bi-speedometer2 me-2"></i>View Dashboard
-                                        </a></li>
-
+                                        <li>
+                                            <a class="dropdown-item" href="patient_dashb.php">
+                                                <i class="bi bi-speedometer2 me-2"></i>View Dashboard
+                                            </a>
+                                        </li>
                                         <li><hr class="dropdown-divider"></li>
-
-                                        <li><a class="dropdown-item text-danger" href="logout.php">
-                                            <i class="bi bi-box-arrow-right me-2"></i>Log Out
-                                        </a></li>
+                                        <li>
+                                            <a class="dropdown-item text-danger" href="logout.php">
+                                                <i class="bi bi-box-arrow-right me-2"></i>Log Out
+                                            </a>
+                                        </li>
                                     </ul>
                                 </div>
                             <?php else: ?>

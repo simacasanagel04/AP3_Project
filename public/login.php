@@ -2,6 +2,7 @@
 session_start();
 require_once '../config/Database.php';
 require_once '../classes/User.php';
+require_once '../classes/Patient.php';
 
 $db = (new Database())->connect();
 $user = new User($db);
@@ -23,7 +24,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $_SESSION['pat_id']    = $userData['PAT_ID'];
             $_SESSION['user_type'] = 'patient';
 
-            header("Location: ../index.php");
+            header("Location: patient_dashb.php");
             exit();
         } else {
             $errors[] = "Invalid email or password.";
