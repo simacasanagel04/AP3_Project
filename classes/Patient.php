@@ -54,10 +54,10 @@ class Patient {
                 return $patient;
             }
 
-            return 0; // Not found
+            return false; // Not found
         } catch (PDOException $e) {
             error_log("Error in findById(): " . $e->getMessage());
-            return 0;
+            return false;
         }
     }
 
