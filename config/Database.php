@@ -1,4 +1,5 @@
 <?php
+// config/Database.php
      class Database { 
           private $host = "localhost";
           private $dbname = "medical_booking";
