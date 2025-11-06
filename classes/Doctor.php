@@ -1,11 +1,11 @@
 <?php
+// classes/Doctor.php
 class Doctor {
     private $conn;
     private $table_doctor = "doctor";
     private $table_patient = "patient";
     private $table_appointment = "appointment";
     private $table_specialization = "specialization";
-
 
     public function __construct($db) {
         $this->conn = $db;
@@ -14,13 +14,11 @@ class Doctor {
     // Search by ID - Returns doctor data with row number and appointments
     public function findById($doc_id) {
         try {
-            // Get row number
             $sqlRowNum = "SELECT COUNT(*) as row_num FROM {$this->table_doctor} WHERE doc_id <= :doc_id ORDER BY doc_id";
             $stmtRowNum = $this->conn->prepare($sqlRowNum);
             $stmtRowNum->execute([':doc_id' => trim($doc_id)]);
             $rowData = $stmtRowNum->fetch(PDO::FETCH_ASSOC);
 
-            // Get doctor data
             $sql = "SELECT d.doc_id, d.doc_first_name, d.doc_middle_init, d.doc_last_name,
                     d.doc_contact_num, d.doc_email,
                     d.doc_created_at, d.doc_updated_at,
@@ -43,7 +41,6 @@ class Doctor {
                 return $doctor;
             }
 
-            // Return 0 if doctor does not exist
             return 0;
         } catch (PDOException $e) {
             error_log("Error finding doctor: " . $e->getMessage());
@@ -188,17 +185,19 @@ class Doctor {
     }
 
     // CREATE
+// In classes/Doctor.php - Replace the create method with this:
+
     public function create($doctor) {
         try {
-            $sql = "INSERT INTO {$this->table_doctor}
-                    (doc_id, doc_first_name, doc_middle_init, doc_last_name, doc_contact_num,
-                    doc_email, spec_id, doc_created_at, doc_updated_at)
-                    VALUES (:doc_id, :doc_first_name, :doc_middle_init, :doc_last_name, :doc_contact_num,
+            // Don't include doc_id - let database auto-increment
+            $sql = "INSERT INTO doctor
+                    (DOC_FIRST_NAME, DOC_MIDDLE_INIT, DOC_LAST_NAME, DOC_CONTACT_NUM,
+                    DOC_EMAIL, SPEC_ID, DOC_CREATED_AT, DOC_UPDATED_AT)
+                    VALUES (:doc_first_name, :doc_middle_init, :doc_last_name, :doc_contact_num,
                     :doc_email, :spec_id, NOW(), NOW())";
 
             $stmt = $this->conn->prepare($sql);
             return $stmt->execute([
-                ':doc_id'           => trim($doctor['pat_id']),
                 ':doc_first_name'   => trim($doctor['doc_first_name']),
                 ':doc_middle_init'  => trim($doctor['doc_middle_init']),
                 ':doc_last_name'    => trim($doctor['doc_last_name']),
@@ -245,13 +244,84 @@ class Doctor {
     public function delete($doc_id) {
         try {
             $sql = "DELETE FROM {$this->table_doctor} WHERE doc_id = :doc_id";
-
             $stmt = $this->conn->prepare($sql);
             return $stmt->execute([':doc_id' => trim($doc_id)]);
         } catch (PDOException $e) {
             error_log("Error deleting doctor: " . $e->getMessage());
             return false;
         }
+    }
+
+    // UPDATE PROFILE (Doctor + User Table)
+    public function updateProfile($doc_id, $first, $middle, $last, $contact, $email, $new_password = '') {
+        try {
+            $this->conn->beginTransaction();
+
+            // Update DOCTOR table
+            $sqlDoc = "UPDATE {$this->table_doctor} 
+                       SET doc_first_name = ?, doc_middle_init = ?, doc_last_name = ?, 
+                           doc_contact_num = ?, doc_email = ?, doc_updated_at = NOW() 
+                       WHERE doc_id = ?";
+            $stmtDoc = $this->conn->prepare($sqlDoc);
+            $stmtDoc->execute([$first, $middle, $last, $contact, $email, $doc_id]);
+
+            // Update USERS table (email + password)
+            $sqlUser = "UPDATE USERS SET USER_NAME = ?, USER_UPDATED_AT = NOW()";
+            $params = [$email];
+
+            if (!empty($new_password)) {
+                $sqlUser .= ", PASSWORD = ?";
+                $params[] = password_hash($new_password, PASSWORD_DEFAULT);
+            }
+
+            $sqlUser .= " WHERE USER_NAME = (SELECT doc_email FROM {$this->table_doctor} WHERE doc_id = ?) OR PAT_ID = ?";
+            $params[] = $doc_id;
+            $params[] = $doc_id;
+
+            $stmtUser = $this->conn->prepare($sqlUser);
+            $stmtUser->execute($params);
+
+            $this->conn->commit();
+            return true;
+        } catch (Exception $e) {
+            $this->conn->rollBack();
+            error_log("Profile update failed: " . $e->getMessage());
+            return false;
+        }
+    }
+
+    // DELETE ACCOUNT (Doctor + User Table)
+    public function deleteAccount($doc_id) {
+        try {
+            $this->conn->beginTransaction();
+
+            // Get email for user deletion
+            $stmt = $this->conn->prepare("SELECT doc_email FROM {$this->table_doctor} WHERE doc_id = ?");
+            $stmt->execute([$doc_id]);
+            $email = $stmt->fetchColumn();
+
+            // Delete from USERS
+            $stmtUser = $this->conn->prepare("DELETE FROM USERS WHERE USER_NAME = ? OR PAT_ID = ?");
+            $stmtUser->execute([$email, $doc_id]);
+
+            // Delete from DOCTORS
+            $stmtDoc = $this->conn->prepare("DELETE FROM {$this->table_doctor} WHERE doc_id = ?");
+            $stmtDoc->execute([$doc_id]);
+
+            $this->conn->commit();
+            return true;
+        } catch (Exception $e) {
+            $this->conn->rollBack();
+            error_log("Account deletion failed: " . $e->getMessage());
+            return false;
+        }
+    }
+
+    // LEGACY METHOD (kept for compatibility)
+    public function updateProfileLegacy($doc_id, $first, $middle, $last, $contact) {
+        $sql = "UPDATE DOCTORS SET doc_first_name = ?, doc_middle_init = ?, doc_last_name = ?, doc_contact_num = ?, doc_updated_at = NOW() WHERE doc_id = ?";
+        $stmt = $this->conn->prepare($sql);
+        return $stmt->execute([$first, $middle, $last, $contact, $doc_id]);
     }
 }
 ?>

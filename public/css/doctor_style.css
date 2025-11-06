@@ -1,0 +1,494 @@
+/* public/css/doctor_style.css */
+
+/* ===== VARIABLES ===== */
+:root {
+  --main-blue: #336d96;
+  --sidebar-gray: #e5e2e2;
+  --dashboard-blue: #546674;
+  --sidebar-width: 260px;
+}
+
+/* ===== BASE ===== */
+body {
+  font-family: 'Roboto', sans-serif;
+  background-color: var(--dashboard-blue);
+  min-height: 100vh;
+  margin: 0;
+}
+
+/* ===== SIDEBAR ===== */
+.sidebar {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: var(--sidebar-width);
+  height: 100vh;
+  background-color: var(--sidebar-gray);
+  overflow-y: auto;
+  transition: 0.3s;
+  box-shadow: 2px 0 10px rgba(0,0,0,0.05);
+  z-index: 1050;
+}
+
+.sidebar.hidden {
+  transform: translateX(-100%);
+}
+
+.logo-area {
+  padding: 1.5rem 1rem;
+  text-align: center;
+  border-bottom: 1px solid #ccc;
+}
+
+.logo-img {
+  max-height: 50px;
+}
+
+.user-info {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  background: rgba(255,255,255,0.5);
+  border-radius: 12px;
+  margin: 1rem;
+  padding: 1rem;
+}
+
+.user-avatar {
+  width: 45px;
+  height: 45px;
+  border-radius: 50%;
+  background-color: var(--main-blue);
+  color: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.5rem;
+  flex-shrink: 0;
+}
+
+/* ===== CLOCK CARD ===== */
+.clock-card {
+  background: #fff;
+  padding: 1rem;
+  margin: 1rem;
+  border-radius: 12px;
+  text-align: center;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+}
+
+.clock-card strong {
+  color: var(--main-blue);
+  display: block;
+  font-size: 1.1rem;
+}
+
+/* ===== NAV LINKS ===== */
+.sidebar .nav-link {
+  color: #333;
+  padding: 12px 20px;
+  border-radius: 8px;
+  margin: 5px 10px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  transition: 0.2s;
+}
+
+.sidebar .nav-link:hover {
+  background-color: rgba(51,109,150,0.1);
+  color: var(--main-blue);
+}
+
+.sidebar .nav-link.active {
+  background-color: var(--main-blue);
+  color: #fff;
+  font-weight: 600;
+}
+
+/* ===== SIDEBAR TOGGLE ===== */
+.sidebar-toggle {
+  position: fixed;
+  top: 1rem;
+  left: 1rem;
+  z-index: 1100;
+  background: #fff;
+  border: 2px solid var(--main-blue);
+  border-radius: 50%;
+  color: var(--main-blue);
+  width: 45px;
+  height: 45px;
+  display: none;
+  justify-content: center;
+  align-items: center;
+  font-size: 1.4rem;
+  box-shadow: 0 4px 10px rgba(0,0,0,0.2);
+  cursor: pointer;
+  transition: 0.3s;
+}
+
+.sidebar-toggle:hover {
+  background-color: var(--main-blue);
+  color: #fff;
+}
+
+/* ===== MAIN CONTENT ===== */
+.main-content {
+  margin-left: var(--sidebar-width);
+  padding: 1.5rem;
+  transition: 0.3s;
+  min-height: 100vh;
+}
+
+.sidebar.hidden ~ .main-content {
+  margin-left: 0;
+}
+
+/* ===== INFO CARDS ===== */
+.info-card {
+  background: rgba(255,255,255,0.95);
+  border-radius: 12px;
+  padding: 1.5rem;
+  box-shadow: 0 4px 10px rgba(0,0,0,0.08);
+  margin-bottom: 1rem;
+}
+
+.profile-card {
+  background: linear-gradient(135deg, var(--main-blue), #4a80a8);
+  color: #fff;
+}
+
+.info-card h4 {
+  color: var(--main-blue);
+  font-weight: 600;
+  border-bottom: 2px solid #eee;
+  padding-bottom: 0.5rem;
+  margin-bottom: 1rem;
+}
+
+.info-card h2 {
+  color: var(--main-blue);
+}
+
+/* ===== TABLE ===== */
+.table-responsive {
+  overflow-x: auto;
+}
+
+.info-card .table {
+  background: #fff;
+  margin: 0;
+}
+
+.info-card thead {
+  background: var(--main-blue);
+  color: #fff;
+}
+
+.info-card td, 
+.info-card th {
+  padding: 12px;
+  vertical-align: middle;
+}
+
+/* ===== ACTION BUTTONS ===== */
+.action-btn {
+  font-size: 0.8rem;
+  padding: 0.3rem 0.6rem;
+  margin: 0.1rem;
+  color: var(--main-blue);
+  border: 1px solid var(--main-blue);
+  transition: 0.2s;
+  background: #fff;
+}
+
+.action-btn:hover {
+  background: var(--main-blue);
+  color: #fff;
+  border-color: var(--main-blue);
+}
+
+.btn-delete {
+  color: #dc3545;
+  border-color: #dc3545;
+}
+
+.btn-delete:hover {
+  background: #dc3545;
+  color: #fff;
+}
+
+/* ===== TAB BUTTONS ===== */
+.tab-btn {
+  transition: all 0.3s ease;
+}
+
+.tab-btn.active {
+  font-weight: 600;
+}
+
+/* ===== TABLE SECTIONS ===== */
+.table-section {
+  display: none;
+  animation: fadeIn 0.3s ease;
+}
+
+.table-section.active {
+  display: block;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* ===== TOTAL CARD ===== */
+.total-card {
+  background: linear-gradient(135deg, #ffffff, #f8f9fa);
+  border: 2px solid var(--main-blue);
+  border-radius: 12px;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+  padding: 1.5rem;
+  text-align: center;
+  max-width: 320px;
+  margin: 0 auto;
+}
+
+.total-card h5 {
+  font-weight: 600;
+  margin-bottom: 0.5rem;
+}
+
+.total-card h2 {
+  font-size: 2.5rem;
+  font-weight: 700;
+  color: var(--main-blue);
+  margin: 0;
+}
+
+/* ===== RESPONSIVE ===== */
+@media (max-width: 991.98px) {
+  .sidebar {
+    transform: translateX(-100%);
+  }
+  .sidebar.active {
+    transform: translateX(0);
+  }
+  .sidebar-toggle {
+    display: flex;
+  }
+  .main-content {
+    margin-left: 0;
+    padding: 1rem;
+  }
+}
+
+@media (max-width: 576px) {
+  .action-btn {
+    font-size: 0.7rem;
+    padding: 0.2rem 0.4rem;
+  }
+  
+  .total-card {
+    max-width: 100%;
+  }
+  
+  .info-card {
+    padding: 1rem;
+  }
+}
+
+
+
+/* Add to public/css/doctor_style.css */
+
+/* ===== NAV LINK UNDERLINE EFFECT ===== */
+.sidebar .nav-link.active span {
+  text-decoration: underline;
+  text-underline-offset: 4px;
+  text-decoration-thickness: 2px;
+}
+
+/* ===== FILTERED CARD STYLING ===== */
+.filtered-card {
+  border: 2px solid #198754;
+  background: linear-gradient(135deg, #ffffff, #d1e7dd);
+}
+
+.filtered-card h5 {
+  color: #198754;
+}
+
+.filtered-card h2 {
+  color: #198754;
+}
+
+/* ===== MODAL ENHANCEMENTS ===== */
+.modal-body .form-control-plaintext {
+  padding: 0.5rem 0;
+  font-size: 1rem;
+  color: #333;
+}
+
+.modal-body .border-bottom {
+  border-bottom: 1px solid #dee2e6 !important;
+}
+
+/* ===== TABLE IMPROVEMENTS ===== */
+.table tbody tr {
+  transition: all 0.2s ease;
+}
+
+.table tbody tr:hover {
+  background-color: rgba(51, 109, 150, 0.05);
+  transform: translateX(2px);
+}
+
+/* ===== BUTTON ICONS ===== */
+.btn i {
+  margin-right: 3px;
+}
+
+/* ===== RESPONSIVE ADJUSTMENTS FOR MED REC ===== */
+@media (max-width: 768px) {
+  #totalCardsRow .col-md-6 {
+    margin-bottom: 1rem;
+  }
+  
+  .info-card .row.g-3 > div {
+    margin-bottom: 0.5rem;
+  }
+}
+
+/* ===== STATUS BADGES ===== */
+.badge {
+  padding: 0.4em 0.8em;
+  font-size: 0.85rem;
+}
+
+/* Add at the end of public/css/doctor_style.css */
+
+/* ===== MEDICAL RECORDS PAGE SPECIFIC ===== */
+.info-card h2 i {
+  margin-right: 10px;
+}
+
+.form-control:focus,
+.form-control:active {
+  border-color: var(--main-blue);
+  box-shadow: 0 0 0 0.2rem rgba(51, 109, 150, 0.25);
+}
+
+/* ===== MODAL IMPROVEMENTS ===== */
+.modal-header.bg-primary {
+  background-color: var(--main-blue) !important;
+}
+
+.modal-header.bg-warning {
+  background-color: #ffc107 !important;
+}
+
+.modal-content {
+  border-radius: 12px;
+  overflow: hidden;
+}
+
+.modal-body textarea.form-control {
+  resize: vertical;
+  min-height: 80px;
+}
+
+/* ===== ACTION BUTTONS IN TABLES ===== */
+.btn-view {
+  background-color: #fff;
+  color: #0d6efd;
+  border-color: #0d6efd;
+}
+
+.btn-view:hover {
+  background-color: #0d6efd;
+  color: #fff;
+}
+
+.btn-edit {
+  background-color: #fff;
+  color: #ffc107;
+  border-color: #ffc107;
+}
+
+.btn-edit:hover {
+  background-color: #ffc107;
+  color: #000;
+}
+
+/* ===== FILTER SECTION STYLING ===== */
+.info-card label i {
+  margin-right: 5px;
+}
+
+/* ===== EMPTY STATE ===== */
+.table tbody tr td[colspan] {
+  padding: 3rem 1rem;
+  font-size: 1.1rem;
+  color: #6c757d;
+}
+
+/* ===== SMOOTH TRANSITIONS ===== */
+.total-card,
+.info-card {
+  transition: all 0.3s ease;
+}
+
+.total-card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.15);
+}
+
+/* ===== RESPONSIVE ADJUSTMENTS ===== */
+@media (max-width: 576px) {
+  .modal-dialog {
+    margin: 0.5rem;
+  }
+  
+  .btn-sm {
+    font-size: 0.75rem;
+    padding: 0.25rem 0.5rem;
+  }
+  
+  .action-btn i {
+    display: none;
+  }
+
+  /* PROFILE CARDS – CLICKABLE */
+.cursor-pointer {
+    cursor: pointer;
+    transition: all 0.3s ease;
+    border: 2px solid transparent;
+}
+
+.cursor-pointer:hover {
+    border-color: var(--main-blue);
+    transform: translateY(-5px);
+    box-shadow: 0 8px 20px rgba(0,0,0,0.15);
+}
+
+.cursor-pointer i {
+    transition: transform 0.3s ease;
+}
+
+.cursor-pointer:hover i {
+    transform: scale(1.2);
+}
+
+/* MODAL HEADER COLORS */
+.modal-header.bg-primary { background-color: var(--main-blue) !important; }
+.modal-header.bg-warning { background-color: #ffc107 !important; color: #000; }
+.modal-header.bg-danger { background-color: #dc3545 !important; }
+
+}
