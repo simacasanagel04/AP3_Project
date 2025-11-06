@@ -1,0 +1,540 @@
+:root {
+    --blue: #336d96;
+    --teal: #183358;
+    --light-blue: #b4cad9;
+    --light-gray: #e5e2e2;
+    --pastel-green: #c1dbc5;
+    --teal-action: #267476;
+}
+
+.bg-teal { background-color: var(--teal); }
+.text-teal { color: var(--teal); }
+
+.first-section {
+    background: linear-gradient(135deg, #b4cad9, #e5e2e2);
+    padding: 5rem 0;
+}
+
+.working-procedure{
+    background: #aeaeae;
+}
+
+.specialists {
+    background: #c1dbc5;
+}
+
+/* ========================================
+HEADER */
+
+.main-header {z-index: 1050; transition: all 0.3s ease;}
+
+/* MAKE HEADER STICKY */
+.main-header {
+    position: sticky;
+    top: 0;
+    z-index: 1050;
+}
+
+.main-header.scrolled {
+    background-color: rgba(229, 226, 226, 0.95) !important;
+    backdrop-filter: blur(10px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.navbar {
+    padding-top: 0 !important;
+    padding-bottom: 0 !important;
+    min-height: 80px;
+}
+
+/* NAV LINKS */
+.navbar-nav .nav-link {
+    color: #183358 !important;
+    font-weight: 500;
+    position: relative;
+    padding: 0.5rem 1rem !important;
+}
+
+.navbar-nav .nav-link:hover,
+.navbar-nav .nav-link.active {
+    color: #0b2e75 !important;
+}
+
+.navbar-nav .nav-link::after {
+    content: '';
+    position: absolute;
+    width: 0;
+    height: 2px;
+    bottom: 0;
+    left: 50%;
+    background-color: #0b2e75;
+    transition: width 0.3s ease, left 0.3s ease;
+}
+
+.navbar-nav .nav-link:hover::after,
+.navbar-nav .nav-link.active::after {
+    width: 100%;
+    left: 0;
+}
+
+/* PRIMARY BUTTONS */
+.btn-primary,
+.bg-primary {
+    background-color: #0b2e75 !important;
+    border-color: #0b2e75 !important;
+    transition: all 0.3s ease;
+}
+
+.btn-primary:hover {
+    background-color: #09255f !important;
+    border-color: #09255f !important;
+    transform: translateY(-1px);
+}
+
+.btn-outline-primary {
+    color: #0b2e75 !important;
+    border-color: #0b2e75 !important;
+}
+
+.btn-outline-primary:hover {
+    background-color: #0b2e75 !important;
+    color: white !important;
+    transform: translateY(-1px);
+}
+
+/* DROPDOWN */
+.dropdown-menu {
+    border: none;
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15);
+    border-radius: 0.5rem;
+}
+
+.dropdown-item:hover {
+    background-color: #f8f9fa;
+    color: #0b2e75 !important;
+}
+
+/* Mobile */
+@media (max-width: 992px) {
+    .navbar-nav .nav-link::after {
+        display: none;
+    }
+    .navbar-nav {
+        text-align: center;
+    }
+}
+
+/* ========================================
+   HEARTBEAT LINE
+   ======================================== */
+.heartbeat-line {
+    width: 150px;
+    height: 3px;
+    background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 150 3"><path d="M0,1.5 L40,1.5 L45,0 L50,3 L55,1.5 L150,1.5" stroke="%23267476" stroke-width="2" fill="none"/></svg>') center/contain no-repeat;
+    margin: 0 auto 1rem;
+}
+
+/* ========================================
+   CIRCULAR NUMBERS 
+   ======================================== */
+.procedure-number {
+    width: 60px;
+    height: 60px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.8rem;
+    font-weight: bold;
+    color: #fff;
+    margin: 0 auto 1rem;
+}
+
+/* ========================================
+   HOVER LIFT EFFECT
+   ======================================== */
+.action-card,
+.procedure-card,
+.specialist-card,
+.service-card {
+    transition: transform .3s ease, box-shadow .3s ease;
+}
+
+.action-card:hover,
+.procedure-card:hover,
+.specialist-card:hover,
+.service-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 10px 25px rgba(0, 0, 0, .15) !important;
+}
+
+/* ========================================
+   ACTION CARD 
+   ======================================== */
+.action-card {
+    background-color: var(--teal-action) !important;
+    color: white;
+    border-radius: 1.25rem !important;
+}
+
+/* ========================================
+   SOFT EDGE IMAGE
+   ======================================== */
+.soft-edge {
+    -webkit-mask-image: radial-gradient(circle, black 80%, transparent 100%);
+    mask-image: radial-gradient(circle, black 80%, transparent 100%);
+    filter: drop-shadow(0 0 15px rgba(0, 0, 0, 0.3));
+    background: transparent !important;
+}
+
+/* ========================================
+   SPECIALIST CARD - SMALL & RESPONSIVE
+   ======================================== */
+.specialist-card {
+    transition: transform .3s ease, box-shadow .3s ease;
+    border: 1px solid #dee2e6;
+}
+
+.specialist-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.12) !important;
+}
+
+.specialist-card img {
+    transition: transform .4s ease;
+}
+
+.specialist-card:hover img {
+    transform: scale(1.05);
+}
+
+/* Smaller text */
+.specialist-card h6.small {
+    font-size: 0.85rem;
+    line-height: 1.2;
+}
+
+.specialist-card p.x-small {
+    font-size: 0.7rem;
+    line-height: 1.2;
+}
+
+/* Mobile: 2 per row */
+@media (max-width: 576px) {
+    .specialist-card img {
+        height: 230px !important;
+    }
+    .specialist-card .p-2 {
+        padding: 0.5rem !important;
+    }
+    .specialist-card h6.small {
+        font-size: 0.8rem;
+    }
+    .specialist-card p.x-small {
+        font-size: 0.65rem;
+    }
+    .pic_2 img{
+        height: 350px;
+        width: 250px !important;
+    }
+}
+
+.text-dark-blue {
+    color: #183358;
+    font-family: 'Times New Roman';
+}
+
+.btn-primary, .bg-primary {
+  background-color: #0b2e75 !important;
+  border-color: #0b2e75 !important;
+}
+
+.btn-primary:hover {
+  background-color: #09255f !important;
+  border-color: #09255f !important;
+}
+
+.btn-outline-primary {
+  color: #0b2e75 !important;
+  border-color: #0b2e75 !important;
+}
+
+.btn-outline-primary:hover {
+  background-color: #0b2e75 !important;
+  color: white !important;
+}
+
+
+/* ========================================
+   SERVICES SECTION 
+   ======================================== */
+.services-main-title {
+    font-family: 'Times New Roman', Times, serif;
+    font-size: 2.5rem;
+    color: #333;
+    letter-spacing: 1px;
+    font-weight: 700;
+}
+
+/* ========================================
+   SERVICE CATEGORY 
+   ======================================== */
+.service-category-title {
+    font-family: 'Roboto', sans-serif;
+    font-size: 1.4rem;
+    font-weight: 700;
+    color: var(--blue);
+    border-left: 5px solid var(--blue);
+    padding-left: 15px;
+    margin-bottom: 2rem;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+/* ========================================
+   SERVICE ROW - HORIZONTAL SCROLL
+   ======================================== */
+.service-row-wrapper {
+    overflow-x: auto;
+    overflow-y: hidden;
+    padding: 0 1rem;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: thin;
+    scrollbar-color: var(--blue) #f0f0f0;
+}
+
+.service-row-wrapper::-webkit-scrollbar {
+    height: 8px;
+}
+
+.service-row-wrapper::-webkit-scrollbar-track {
+    background: #f0f0f0;
+    border-radius: 10px;
+}
+
+.service-row-wrapper::-webkit-scrollbar-thumb {
+    background: var(--blue);
+    border-radius: 10px;
+}
+
+.service-row-wrapper::-webkit-scrollbar-thumb:hover {
+    background: #2a5a7a;
+}
+
+/* ========================================
+   SERVICE CARD
+   ======================================== */
+.service-card {
+    background: #ffffff;
+    border: 2px solid #e0e0e0;
+    border-radius: 12px;
+    overflow: hidden;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+    transition: all 0.3s ease;
+    cursor: pointer;
+    width: 280px;
+    min-width: 280px;
+    flex-shrink: 0;
+}
+
+.service-card:hover {
+    transform: translateY(-8px) scale(1.03);
+    box-shadow: 0 12px 30px rgba(0, 0, 0, 0.18);
+    border-color: var(--blue);
+    z-index: 10;
+}
+
+.service-card img {
+    width: 100%;
+    height: 180px;
+    object-fit: cover;
+    transition: transform 0.4s ease;
+}
+
+.service-card:hover img {
+    transform: scale(1.08);
+}
+
+.service-content {
+    padding: 1.25rem;
+    flex-grow: 1;
+    display: flex;
+    flex-direction: column;
+    background: #fff;
+}
+
+/* Service Title */
+.service-card h5 {
+    font-family: 'Roboto', sans-serif;
+    font-size: 0.95rem;
+    font-weight: 600;
+    color: #333;
+    margin-bottom: 0.75rem;
+    min-height: 50px;
+    display: flex;
+    align-items: center;
+    text-transform: uppercase;
+    letter-spacing: 0.3px;
+    line-height: 1.3;
+}
+
+/* Service Description */
+.service-card p {
+    font-family: 'Courier New', Courier, monospace;
+    font-size: 0.8rem;
+    color: #555;
+    line-height: 1.5;
+    margin: 0;
+}
+
+/* ========================================
+   FOOTER 
+   ======================================== */
+.main-footer {
+    background-color: #183358 !important;
+    color: #b4cad9;
+    font-family: 'Roboto', sans-serif;
+    font-size: 0.875rem;
+}
+
+.main-footer h5,
+.main-footer h6 {
+    color: #ffffff;
+    font-weight: 600;
+}
+
+.main-footer a.text-white {
+    position: relative;
+    transition: color 0.3s ease;
+}
+
+.main-footer a.hover-underline::after {
+    content: '';
+    position: absolute;
+    width: 0;
+    height: 1px;
+    bottom: -2px;
+    left: 0;
+    background-color: #ffffff;
+    transition: width 0.3s ease;
+}
+
+.main-footer a.hover-underline:hover::after {
+    width: 100%;
+}
+
+.main-footer a:hover {
+    color: #ffffff !important;
+}
+
+.main-footer .contact-info i {
+    color: #b4cad9;
+    font-size: 0.9rem;
+}
+
+.main-footer .text-warning {
+    color: #ffd700 !important;
+}
+
+.main-footer .social-links a {
+    color: #b4cad9;
+    transition: all 0.3s ease;
+    font-size: 1.25rem;
+}
+
+.main-footer .social-links a:hover {
+    color: #3111a1 !important;
+    transform: translateY(-2px);
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    .main-footer .text-lg-start,
+    .main-footer .text-lg-end {
+        text-align: center !important;
+    }
+    .main-footer .list-unstyled {
+        display: inline-block;
+    }
+}
+
+/* ========================================
+   RESPONSIVE ADJUSTMENTS
+   ======================================== */
+@media (max-width: 576px) {
+    .services-main-title {
+        font-size: 1.8rem;
+    }
+    .service-category-title {
+        font-size: 1.1rem;
+    }
+    .service-card {
+        width: 240px;
+        min-width: 240px;
+    }
+    .service-card img {
+        height: 150px;
+    }
+    .service-card h5 {
+        font-size: 0.85rem;
+        min-height: 48px;
+    }
+    .service-card p {
+        font-size: 0.75rem;
+    }
+    .service-content {
+        padding: 1rem;
+    }
+    .first-section .display-4 {
+        font-size: 2rem;
+    }
+    .procedure-number {
+        width: 50px;
+        height: 50px;
+        font-size: 1.5rem;
+    }
+}
+
+@media (min-width: 577px) and (max-width: 768px) {
+    .services-main-title {
+        font-size: 2rem;
+    }
+    .service-category-title {
+        font-size: 1.25rem;
+    }
+    .service-card {
+        width: 260px;
+        min-width: 260px;
+    }
+    .service-card img {
+        height: 160px;
+    }
+    .service-card h5 {
+        font-size: 0.9rem;
+    }
+}
+
+/* Large screens - keep 5 cards */
+@media (min-width: 992px) {
+    .service-card {
+        width: calc(20% - 16px);
+        min-width: 220px;
+    }
+}
+
+@media (min-width: 1200px) {
+    .service-card {
+        width: calc(20% - 16px);
+        min-width: 250px;
+    }
+    .service-card img {
+        height: 190px;
+    }
+}
+
+@media (min-width: 1400px) {
+    .service-card {
+        width: calc(20% - 16px);
+        min-width: 280px;
+    }
+}
