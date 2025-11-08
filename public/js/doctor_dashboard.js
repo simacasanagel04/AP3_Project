@@ -62,7 +62,7 @@ document.addEventListener('DOMContentLoaded', function () {
     updateClock();
 
     // ===============================
-    // TAB SWITCHING (FOR SCHEDULE PAGE)
+    // FOR SCHEDULE PAGE - TAB SWITCHING
     // ===============================
     const tabButtons = document.querySelectorAll('.tab-btn');
     const tableSections = document.querySelectorAll('.table-section');
@@ -101,7 +101,7 @@ document.addEventListener('DOMContentLoaded', function () {
     }
 
     // ===============================
-    // DATE VALIDATION (No Sundays, Time Restrictions) - FOR SCHEDULE PAGE
+    // FOR SCHEDULE PAGE - DATE VALIDATION (No Sundays, Time Restrictions)
     // ===============================
     const newDate = document.getElementById('newDate');
     const newStartTime = document.getElementById('newStartTime');
@@ -137,7 +137,7 @@ document.addEventListener('DOMContentLoaded', function () {
     }
 
     // ===============================
-    // ADD SCHEDULE FUNCTIONALITY - FOR SCHEDULE PAGE
+    // FOR SCHEDULE PAGE - ADD SCHEDULE FUNCTIONALITY - 
     // ===============================
     const addForm = document.getElementById('addForm');
     if (addForm) {
@@ -188,7 +188,7 @@ document.addEventListener('DOMContentLoaded', function () {
     }
 
     // ===============================
-    // FILTER BY DATE (View All Schedule) - FOR SCHEDULE PAGE
+    // FOR SCHEDULE PAGE - FILTER BY DATE (View All Schedule)
     // ===============================
     const filterDate = document.getElementById('filterDate');
     const searchBtn = document.getElementById('searchBtn');
@@ -228,7 +228,7 @@ document.addEventListener('DOMContentLoaded', function () {
     }
 
     // ===============================
-    // DELETE SCHEDULE - FOR SCHEDULE PAGE
+    // FOR SCHEDULE PAGE - DELETE SCHEDULE
     // ===============================
     document.addEventListener('click', function (e) {
         if (e.target.classList.contains('btn-delete')) {
@@ -242,7 +242,7 @@ document.addEventListener('DOMContentLoaded', function () {
     });
 
     // ===============================
-    // UPDATE COUNTS - FOR SCHEDULE PAGE
+    // FOR SCHEDULE PAGE - UPDATE COUNTS
     // ===============================
     function updateTodayCount() {
         const el = document.getElementById('todayScheduleCount');
@@ -468,8 +468,330 @@ document.addEventListener('DOMContentLoaded', function () {
     }
 
     // ===============================
-    // Date Time
+    // FORM VALIDATION FOR ../doctor_create.php
     // ===============================
+    const form = document.getElementById('doctorForm');
+    const nextBtn = document.getElementById('nextBtn');
+    if (form && nextBtn) {
+        const required = form.querySelectorAll('[required]');
+
+        function validate() {
+            let valid = true;
+            required.forEach(field => {
+                const value = field.value.trim();
+                if (!value) {
+                    valid = false;
+                    field.classList.add('is-invalid');
+                } else {
+                    field.classList.remove('is-invalid');
+                }
+            });
+
+            nextBtn.disabled = !valid;
+            if (valid) {
+                nextBtn.classList.remove('btn-secondary');
+                nextBtn.classList.add('btn-primary');
+            } else {
+                nextBtn.classList.remove('btn-primary');
+                nextBtn.classList.add('btn-secondary');
+            }
+        }
+
+        required.forEach(field => {
+            field.addEventListener('input', validate);
+            field.addEventListener('change', validate);
+        });
+
+        validate();
+    }
+
+    // ========================================================================
+    // DOCTOR DASHBOARD - APPOINTMENT MANAGEMENT (AJAX)
+    // This section handles all AJAX operations for the doctor dashboard
+    // including: View, Edit, Delete appointments and Status updates
+    // ========================================================================
+
+    // DASHBOARD - WORKING HOURS VALIDATION FOR EDIT MODAL
+    // Purpose: Validates that appointments can only be scheduled during working hours
+    // Working Hours:
+    // - Monday to Friday: 8:00 AM - 6:00 PM
+    // - Saturday: 9:00 AM - 5:00 PM
+    // - Sunday: CLOSED
+    // ===============================
+
+    const editApptDate = document.getElementById('edit_appt_date');
+    const editApptTime = document.getElementById('edit_appt_time');
+    const timeRestrictionMsg = document.getElementById('time_restriction_msg');
+
+    if (editApptDate && editApptTime) {
+        // Listen for date changes to validate and set time restrictions
+        editApptDate.addEventListener('change', function() {
+            const selectedDate = new Date(this.value + 'T00:00:00');
+            const day = selectedDate.getDay(); // 0=Sunday, 1=Monday, ..., 6=Saturday
+
+            // Block Sunday appointments (day === 0)
+            if (day === 0) {
+                alert('Sunday is closed. Please select another day.');
+                this.value = '';
+                editApptTime.value = '';
+                editApptTime.disabled = true;
+                timeRestrictionMsg.textContent = 'Sunday is closed';
+                return;
+            }
+
+            // Enable time input when valid day is selected
+            editApptTime.disabled = false;
+
+            // Set time restrictions based on selected day
+            if (day === 6) { 
+                // Saturday hours: 9:00 AM - 5:00 PM
+                editApptTime.min = '09:00';
+                editApptTime.max = '17:00';
+                timeRestrictionMsg.textContent = 'Saturday: 9:00 AM - 5:00 PM';
+            } else { 
+                // Monday-Friday hours: 8:00 AM - 6:00 PM
+                editApptTime.min = '08:00';
+                editApptTime.max = '18:00';
+                timeRestrictionMsg.textContent = 'Monday-Friday: 8:00 AM - 6:00 PM';
+            }
+        });
+
+        // Validate time input when changed
+        editApptTime.addEventListener('change', function() {
+            // Ensure date is selected first
+            if (!editApptDate.value) {
+                alert('Please select a date first');
+                this.value = '';
+                return;
+            }
+
+            const selectedDate = new Date(editApptDate.value + 'T00:00:00');
+            const day = selectedDate.getDay();
+            const time = this.value;
+
+            // Validate time is within working hours for Saturday
+            if (day === 6) { 
+                if (time < '09:00' || time > '17:00') {
+                    alert('Saturday working hours: 9:00 AM - 5:00 PM');
+                    this.value = '';
+                }
+            } else { 
+                // Validate time is within working hours for Monday-Friday
+                if (time < '08:00' || time > '18:00') {
+                    alert('Monday-Friday working hours: 8:00 AM - 6:00 PM');
+                    this.value = '';
+                }
+            }
+        });
+    }
+
+    // ===============================
+    // DASHBOARD - STATUS DROPDOWN CHANGE (INLINE UPDATE)
+    // Purpose: Allows quick status updates directly from the table without opening a modal
+    // Status Options: Scheduled, Completed, Cancelled
+    // ===============================
+
+    document.querySelectorAll('.status-select').forEach(select => {
+        // Store original value to revert if update fails
+        select.dataset.original = select.value;
+
+        select.addEventListener('change', function() {
+            const apptId = this.dataset.apptId;
+            const statusId = this.value;
+            const option = this.options[this.selectedIndex];
+            const color = option.dataset.color; // For badge color update
+
+            // Confirm status change with user
+            if (confirm('Change status to ' + option.text + '?')) {
+                const formData = new FormData();
+                formData.append('appt_id', apptId);
+                formData.append('status_id', statusId);
+
+                // Send AJAX request to update status
+                fetch('ajax/update_status.php', {
+                    method: 'POST',
+                    body: formData,
+                    headers: { 'X-Requested-With': 'XMLHttpRequest' }
+                })
+                .then(r => r.json())
+                .then(data => {
+                    if (data.success) {
+                        alert('Status updated!');
+                        // Update badge color if exists (for history view)
+                        const badge = select.closest('td').querySelector('.badge');
+                        if (badge) {
+                            badge.className = `badge bg-${color}`;
+                            badge.textContent = option.text;
+                        }
+                        // Update stored original value
+                        select.dataset.original = statusId;
+                    } else {
+                        alert('Error: ' + data.message);
+                        // Revert to original value on error
+                        select.value = select.dataset.original;
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    alert('An error occurred while updating status');
+                    // Revert to original value on error
+                    select.value = select.dataset.original;
+                });
+            } else {
+                // User cancelled - revert to original value
+                select.value = select.dataset.original;
+            }
+        });
+    });
+
+    // ===============================
+    // DASHBOARD - VIEW PATIENT DETAILS BUTTON
+    // Purpose: Opens modal showing complete patient information; Fetches data from server via AJAX
+    // ===============================
+    document.querySelectorAll('.btn-view').forEach(btn => {
+        btn.addEventListener('click', function() {
+            const patId = this.dataset.patId;
+            const apptId = this.dataset.apptId;
+            const modal = new bootstrap.Modal(document.getElementById('viewPatientModal'));
+            const content = document.getElementById('patientDetailsContent');
+
+            // Show loading spinner while fetching data
+            content.innerHTML = '<div class="text-center"><div class="spinner-border text-primary"></div></div>';
+            modal.show();
+
+            // Fetch patient details from server
+            fetch(`ajax/get_patient_details.php?pat_id=${patId}&appt_id=${apptId}`)
+                .then(r => r.json())
+                .then(data => {
+                    if (data.success) {
+                        const p = data.patient;
+                        // Calculate age from date of birth
+                        const age = new Date().getFullYear() - new Date(p.PAT_DOB).getFullYear();
+                        
+                        // Display patient information in modal
+                        content.innerHTML = `
+                            <p><strong>Appointment ID:</strong> ${apptId}</p>
+                            <p><strong>Name:</strong> ${p.PAT_FIRST_NAME} ${p.PAT_MIDDLE_INIT}. ${p.PAT_LAST_NAME}</p>
+                            <p><strong>DOB:</strong> ${p.PAT_DOB} (Age: ${age})</p>
+                            <p><strong>Gender:</strong> ${p.PAT_GENDER}</p>
+                            <p><strong>Contact:</strong> ${p.PAT_CONTACT_NUM}</p>
+                            <p><strong>Email:</strong> ${p.PAT_EMAIL}</p>
+                            <p><strong>Address:</strong> ${p.PAT_ADDRESS}</p>
+                        `;
+                    } else {
+                        content.innerHTML = '<p class="text-danger">Failed to load patient details.</p>';
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    content.innerHTML = '<p class="text-danger">An error occurred while loading patient details.</p>';
+                });
+        });
+    });
+
+    // ===============================
+    // DASHBOARD - EDIT APPOINTMENT BUTTON
+    // Purpose: Opens modal with appointment details for editing; Pre-fills form with current appointment data
+    // ===============================
+    document.querySelectorAll('.btn-edit').forEach(btn => {
+        btn.addEventListener('click', function() {
+            // Get appointment data from button's data attributes
+            document.getElementById('edit_appt_id').value = this.dataset.apptId;
+            document.getElementById('edit_appt_id_display').value = this.dataset.apptId;
+            document.getElementById('edit_appt_date').value = this.dataset.apptDate;
+            document.getElementById('edit_appt_time').value = this.dataset.apptTime;
+            document.getElementById('edit_service').value = this.dataset.serviceId;
+            document.getElementById('edit_status').value = this.dataset.status;
+
+            // Trigger date change event to set proper time restrictions
+            // This ensures the time picker shows correct min/max values
+            editApptDate.dispatchEvent(new Event('change'));
+
+            // Show the edit modal
+            new bootstrap.Modal(document.getElementById('editApptModal')).show();
+        });
+    });
+
+    // ===============================
+    // DASHBOARD - EDIT APPOINTMENT FORM SUBMISSION
+    // Purpose: Submits updated appointment data to server via AJAX; Validates working hours and updates appointment details
+    // ===============================
+    const editApptForm = document.getElementById('editApptForm');
+    if (editApptForm) {
+        editApptForm.addEventListener('submit', function(e) {
+            e.preventDefault(); // Prevent default form submission
+            
+            const formData = new FormData(this);
+
+            // Send AJAX request to update appointment
+            fetch('ajax/update_appointment.php', {
+                method: 'POST',
+                body: formData,
+                headers: { 'X-Requested-With': 'XMLHttpRequest' }
+            })
+            .then(r => r.json())
+            .then(data => {
+                if (data.success) {
+                    alert('UPDATED SUCCESSFULLY');
+                    // Reload page to show updated data in tables
+                    location.reload();
+                } else {
+                    alert('Error: ' + data.message);
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('An error occurred while updating the appointment');
+            });
+        });
+    }
+
+    // ===============================
+    // DASHBOARD - DELETE APPOINTMENT BUTTON
+    // Purpose: Removes appointment from database; Requires confirmation before deletion
+    // ===============================
+    document.querySelectorAll('.btn-delete').forEach(btn => {
+        btn.addEventListener('click', function() {
+            const apptId = this.dataset.apptId;
+            const row = this.closest('tr'); // Get table row for removal
+
+            // Confirm deletion with user
+            if (confirm('Delete appointment ' + apptId + '?')) {
+                const formData = new FormData();
+                formData.append('appt_id', apptId);
+
+                // Send AJAX request to delete appointment
+                fetch('ajax/delete_appointment.php', {
+                    method: 'POST',
+                    body: formData,
+                    headers: { 'X-Requested-With': 'XMLHttpRequest' }
+                })
+                .then(r => r.json())
+                .then(data => {
+                    if (data.success) {
+                        // Remove row from table immediately for better UX
+                        row.remove();
+                        alert('Appointment deleted.');
+                        // Reload to update counts and ensure data consistency
+                        location.reload();
+                    } else {
+                        alert('Error: ' + data.message);
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    alert('An error occurred while deleting the appointment');
+                });
+            }
+        });
+    });
+
+    // ===============================
+    // UTILITY FUNCTIONS - Date & Time Formatting
+    // These functions are used across multiple pages
+    // Format 24-hour time to 12-hour format with AM/PM
+    // ===============================
+
     function formatTime(timeStr) {
         if (!timeStr) return '';
         const [h, m] = timeStr.split(':');
