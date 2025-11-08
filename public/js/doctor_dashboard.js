@@ -280,18 +280,18 @@ document.addEventListener('DOMContentLoaded', function () {
     // ===============================
     const medRecFilterBtn = document.getElementById('filterBtn');
     const medRecClearFilterBtn = document.getElementById('clearFilterBtn');
-    const filterByDate = document.getElementById('filterByDate');
-    const searchPatientName = document.getElementById('searchPatientName');
-    const searchApptId = document.getElementById('searchApptId');
+    const medRecFilterByDate = document.getElementById('filterByDate');
+    const medRecSearchPatientName = document.getElementById('searchPatientName');
+    const medRecSearchApptId = document.getElementById('searchApptId');
     const medRecTableRows = document.querySelectorAll('#medRecTable tbody tr');
     const filteredCardWrapper = document.getElementById('filteredCardWrapper');
     const filteredRecordsCount = document.getElementById('filteredRecordsCount');
 
     if (medRecFilterBtn) {
         medRecFilterBtn.addEventListener('click', function () {
-            const dateValue = filterByDate.value;
-            const nameValue = searchPatientName.value.toLowerCase().trim();
-            const apptIdValue = searchApptId.value.trim();
+            const dateValue = medRecFilterByDate.value;
+            const nameValue = medRecSearchPatientName.value.toLowerCase().trim();
+            const apptIdValue = medRecSearchApptId.value.trim();
 
             let visibleCount = 0;
 
@@ -351,9 +351,9 @@ document.addEventListener('DOMContentLoaded', function () {
     // ===============================
     if (medRecClearFilterBtn) {
         medRecClearFilterBtn.addEventListener('click', function () {
-            if (filterByDate) filterByDate.value = '';
-            if (searchPatientName) searchPatientName.value = '';
-            if (searchApptId) searchApptId.value = '';
+            if (medRecFilterByDate) medRecFilterByDate.value = '';
+            if (medRecSearchPatientName) medRecSearchPatientName.value = '';
+            if (medRecSearchApptId) medRecSearchApptId.value = '';
             
             medRecTableRows.forEach(row => {
                 row.style.display = '';
@@ -378,16 +378,16 @@ document.addEventListener('DOMContentLoaded', function () {
 
             // Populate view modal
             document.getElementById('view_appt_id').textContent = data.APPT_ID || '-';
-            document.getElementById('view_patient_name').textContent = `${data.PAT_FNAME} ${data.PAT_LNAME}`;
+            document.getElementById('view_patient_name').textContent = `${data.PAT_FIRST_NAME} ${data.PAT_LAST_NAME}`;
             document.getElementById('view_age').textContent = data.PAT_AGE || '-';
             document.getElementById('view_gender').textContent = data.PAT_GENDER || '-';
             document.getElementById('view_contact').textContent = data.PAT_CONTACT_NUM || '-';
             document.getElementById('view_email').textContent = data.PAT_EMAIL || '-';
             document.getElementById('view_service').textContent = data.SERVICE_NAME || '-';
             document.getElementById('view_status').textContent = data.APPT_STATUS || '-';
-            document.getElementById('view_diagnosis').textContent = data.DIAGNOSIS || '-';
-            document.getElementById('view_prescription').textContent = data.PRESCRIPTION || '-';
-            document.getElementById('view_visit_date').textContent = formatDisplayDate(data.MED_REC_DATE);
+            document.getElementById('view_diagnosis').textContent = data.MED_REC_DIAGNOSIS || '-';
+            document.getElementById('view_prescription').textContent = data.MED_REC_PRESCRIPTION || '-';
+            document.getElementById('view_visit_date').textContent = formatDisplayDate(data.MED_REC_VISIT_DATE);
 
             // Show modal
             const viewModal = new bootstrap.Modal(document.getElementById('viewModal'));
@@ -409,19 +409,19 @@ document.addEventListener('DOMContentLoaded', function () {
             const data = JSON.parse(dataAttr);
 
             // Populate edit modal
-            document.getElementById('edit_medrec_id').value = data.MEDREC_ID;
+            document.getElementById('edit_med_rec_id').value = data.MED_REC_ID;
             document.getElementById('edit_appt_id').value = data.APPT_ID;
             document.getElementById('edit_appt_id_hidden').value = data.APPT_ID;
-            document.getElementById('edit_patient_name').value = `${data.PAT_FNAME} ${data.PAT_LNAME}`;
+            document.getElementById('edit_patient_name').value = `${data.PAT_FIRST_NAME} ${data.PAT_LAST_NAME}`;
             document.getElementById('edit_age').value = data.PAT_AGE || '-';
             document.getElementById('edit_gender').value = data.PAT_GENDER || '-';
             document.getElementById('edit_contact').value = data.PAT_CONTACT_NUM || '-';
             document.getElementById('edit_email').value = data.PAT_EMAIL || '-';
             document.getElementById('edit_service').value = data.SERVICE_NAME || '-';
             document.getElementById('edit_status').value = data.APPT_STATUS || '-';
-            document.getElementById('edit_diagnosis').value = data.DIAGNOSIS || '';
-            document.getElementById('edit_prescription').value = data.PRESCRIPTION || '';
-            document.getElementById('edit_visit_date').value = data.MED_REC_DATE || '';
+            document.getElementById('edit_diagnosis').value = data.MED_REC_DIAGNOSIS || '';
+            document.getElementById('edit_prescription').value = data.MED_REC_PRESCRIPTION || '';
+            document.getElementById('edit_visit_date').value = data.MED_REC_VISIT_DATE || '';
 
             // Show modal
             const editModal = new bootstrap.Modal(document.getElementById('editModal'));
@@ -652,6 +652,10 @@ document.addEventListener('DOMContentLoaded', function () {
         btn.addEventListener('click', function() {
             const patId = this.dataset.patId;
             const apptId = this.dataset.apptId;
+            
+            // Skip if this is a medical records view button (different handling)
+            if (!patId) return;
+            
             const modal = new bootstrap.Modal(document.getElementById('viewPatientModal'));
             const content = document.getElementById('patientDetailsContent');
 
@@ -695,6 +699,9 @@ document.addEventListener('DOMContentLoaded', function () {
     // ===============================
     document.querySelectorAll('.btn-edit').forEach(btn => {
         btn.addEventListener('click', function() {
+            // Skip if this doesn't have appointment data (medical records edit button)
+            if (!this.dataset.apptDate) return;
+            
             // Get appointment data from button's data attributes
             document.getElementById('edit_appt_id').value = this.dataset.apptId;
             document.getElementById('edit_appt_id_display').value = this.dataset.apptId;
@@ -752,6 +759,9 @@ document.addEventListener('DOMContentLoaded', function () {
     // ===============================
     document.querySelectorAll('.btn-delete').forEach(btn => {
         btn.addEventListener('click', function() {
+            // Skip if this doesn't have appointment data
+            if (!this.dataset.apptId) return;
+            
             const apptId = this.dataset.apptId;
             const row = this.closest('tr'); // Get table row for removal
 
@@ -820,4 +830,135 @@ document.addEventListener('DOMContentLoaded', function () {
             year: 'numeric'
         });
     }
+
+    // ========================================================================
+    // DASHBOARD - CARD UPDATE & FILTER FUNCTIONALITY
+    // ========================================================================
+
+    document.querySelectorAll('.tab-btn').forEach(btn => {
+        btn.addEventListener('click', function() {
+            const count = this.dataset.count;
+            const label = this.dataset.label;
+            
+            document.getElementById('appointmentCount').textContent = count;
+            document.getElementById('appointmentLabel').textContent = label;
+        });
+    });
+
+    // ===============================
+    // DASHBOARD FILTER FUNCTIONALITY
+    // ===============================
+    
+    const dashFilterByDate = document.getElementById('filterByDate');
+    const dashSearchPatientName = document.getElementById('searchPatientName');
+    const dashSearchApptId = document.getElementById('searchApptId');
+    const applyFilterBtn = document.getElementById('applyFilterBtn');
+    const dashClearFilterBtn = document.getElementById('clearFilterBtn');
+    const filteredResultsWrapper = document.getElementById('filteredResultsWrapper');
+    const filteredCount = document.getElementById('filteredCount');
+
+    // Apply Filter Button
+    if (applyFilterBtn) {
+        applyFilterBtn.addEventListener('click', function() {
+            const dateValue = dashFilterByDate.value;
+            const nameValue = dashSearchPatientName.value.toLowerCase().trim();
+            const apptIdValue = dashSearchApptId.value.trim();
+
+            // Get current active table
+            const activeSection = document.querySelector('.table-section:not([style*="display: none"])');
+            if (!activeSection) return;
+
+            const tableBody = activeSection.querySelector('tbody');
+            if (!tableBody) return;
+
+            const rows = tableBody.querySelectorAll('tr');
+            let visibleCount = 0;
+
+            rows.forEach(row => {
+                // Skip empty state rows
+                if (row.cells.length < 6) {
+                    row.style.display = 'none';
+                    return;
+                }
+
+                const rowDate = row.dataset.date;
+                const rowPatient = row.dataset.patientName || '';
+                const rowApptId = row.dataset.apptId || '';
+
+                let matchDate = true;
+                let matchName = true;
+                let matchApptId = true;
+
+                // Check date filter
+                if (dateValue && rowDate !== dateValue) {
+                    matchDate = false;
+                }
+
+                // Check name filter
+                if (nameValue && !rowPatient.includes(nameValue)) {
+                    matchName = false;
+                }
+
+                // Check appointment ID filter
+                if (apptIdValue && !rowApptId.includes(apptIdValue)) {
+                    matchApptId = false;
+                }
+
+                // Show/hide row based on all filters
+                if (matchDate && matchName && matchApptId) {
+                    row.style.display = '';
+                    visibleCount++;
+                } else {
+                    row.style.display = 'none';
+                }
+            });
+
+            // Show filtered results if any filter is applied
+            if (dateValue || nameValue || apptIdValue) {
+                filteredResultsWrapper.style.display = 'block';
+                filteredCount.textContent = visibleCount;
+
+                if (visibleCount === 0) {
+                    alert('No appointments match your filter criteria');
+                }
+            } else {
+                alert('Please enter at least one filter criteria');
+            }
+        });
+    }
+
+    // Clear Filter Button
+    if (dashClearFilterBtn) {
+        dashClearFilterBtn.addEventListener('click', function() {
+            // Clear all input fields
+            if (dashFilterByDate) dashFilterByDate.value = '';
+            if (dashSearchPatientName) dashSearchPatientName.value = '';
+            if (dashSearchApptId) dashSearchApptId.value = '';
+
+            // Show all rows in all tables
+            document.querySelectorAll('.table-section tbody tr').forEach(row => {
+                row.style.display = '';
+            });
+
+            // Hide filtered results card
+            if (filteredResultsWrapper) {
+                filteredResultsWrapper.style.display = 'none';
+            }
+        });
+    }
+
+    // ===============================
+    // REAL-TIME SEARCH (Optional - triggers filter on Enter key)
+    // ===============================
+    [dashSearchPatientName, dashSearchApptId].forEach(input => {
+        if (input) {
+            input.addEventListener('keypress', function(e) {
+                if (e.key === 'Enter') {
+                    e.preventDefault();
+                    applyFilterBtn.click();
+                }
+            });
+        }
+    });
+
 });
