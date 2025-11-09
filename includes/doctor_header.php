@@ -6,15 +6,51 @@ if (session_status() == PHP_SESSION_NONE) {
 }
 
 // Check for authentication and user type
-// if (!isset($_SESSION['user_id']) || $_SESSION['user_type'] !== 'doctor') {
-//     // If not logged in as a doctor, redirect to login
-//     header('Location: login.php');
-//     exit;
-// }
+if (!isset($_SESSION['doc_id']) || $_SESSION['user_type'] !== 'doctor') {
+    // If not logged in as a doctor, redirect to login
+    header('Location: login.php');
+    exit;
+}
 
-// Assuming you have a function or class to get doctor details (e.g., name)
-// This is a placeholder for dynamic data fetching
-$doctorName = "Dr. [Doctor Name]"; // Replace with actual logic to fetch the doctor's name
+// Fetch doctor details from database
+require_once dirname(__DIR__) . '/config/Database.php';
+require_once dirname(__DIR__) . '/classes/Doctor.php';
+
+$database = new Database();
+$db = $database->connect();
+$doctorObj = new Doctor($db);
+
+$doc_id = $_SESSION['doc_id'];
+
+// Fetch doctor data with specialization
+try {
+    $sql = "SELECT d.DOC_ID, d.DOC_FIRST_NAME, d.DOC_MIDDLE_INIT, d.DOC_LAST_NAME, 
+                   d.DOC_EMAIL, d.DOC_CONTACT_NUM, s.SPEC_NAME
+            FROM doctor d
+            LEFT JOIN specialization s ON d.SPEC_ID = s.SPEC_ID
+            WHERE d.DOC_ID = :doc_id";
+    $stmt = $db->prepare($sql);
+    $stmt->execute([':doc_id' => $doc_id]);
+    $doctorData = $stmt->fetch(PDO::FETCH_ASSOC);
+    
+    if (!$doctorData) {
+        // Doctor not found, destroy session and redirect
+        session_destroy();
+        header('Location: login.php');
+        exit;
+    }
+    
+    // Build doctor name with title
+    $doctorName = "Dr. " . trim($doctorData['DOC_FIRST_NAME'] . ' ' . $doctorData['DOC_MIDDLE_INIT'] . '. ' . $doctorData['DOC_LAST_NAME']);
+    $doctorEmail = $doctorData['DOC_EMAIL'];
+    $doctorSpecialization = $doctorData['SPEC_NAME'] ?? 'General';
+    
+} catch (PDOException $e) {
+    error_log("Error fetching doctor data: " . $e->getMessage());
+    session_destroy();
+    header('Location: login.php');
+    exit;
+}
 
 // Determine current page for active nav link
 $currentPage = basename($_SERVER['PHP_SELF']);
@@ -41,7 +77,7 @@ $currentPage = basename($_SERVER['PHP_SELF']);
 <!-- SIDEBAR -->
 <div class="sidebar">
     <div class="logo-area">
-        <img src="../assets/logo/logo.png" alt="Logo" class="logo-img">
+        <a href="../index.php"><img src="../assets/logo/logo.png" alt="Logo" class="logo-img"></a>
     </div>
 
     <div class="user-info">
@@ -50,7 +86,7 @@ $currentPage = basename($_SERVER['PHP_SELF']);
         </div>
         <div class="flex-grow-1">
             <strong class="d-block text-truncate"><?= htmlspecialchars($doctorName) ?></strong>
-            <small class="text-muted">doctor.test@gmail.com</small>
+            <small class="text-muted"><?= htmlspecialchars($doctorEmail) ?></small>
         </div>
     </div>
 
@@ -78,12 +114,12 @@ $currentPage = basename($_SERVER['PHP_SELF']);
             </a>
         </li>
         <li>
-            <a href="doctor_profile.php" class="nav-link <?= $currentPage == 'doctor_settings.php' ? 'active' : '' ?>">
+            <a href="doctor_profile.php" class="nav-link <?= $currentPage == 'doctor_profile.php' ? 'active' : '' ?>">
                 <i class="bi bi-person"></i> <span>Profile</span>
             </a>
         </li>
         <li class="mt-4">
-            <a href="../logout.php" class="nav-link text-danger">
+            <a href="logout.php" class="nav-link text-danger" id="doctorLogoutLink">
                 <i class="bi bi-box-arrow-right"></i> <span>Log Out</span>
             </a>
         </li>

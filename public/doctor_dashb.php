@@ -112,18 +112,61 @@ require_once '../includes/doctor_header.php';
         </div>
     </div>
     <div class="col-md-8">
-        <div class="info-card p-4 text-center">
-            <h3 class="mb-0"><?= count($todayAppts) ?></h3>
-            <p class="mb-0 text-muted">Today's Appointments</p>
+        <div class="info-card p-4 text-center" id="dynamicCountCard">
+            <h3 class="mb-0" id="appointmentCount"><?= count($todayAppts) ?></h3>
+            <p class="mb-0 text-muted" id="appointmentLabel">Today's Appointments</p>
         </div>
     </div>
 </div>
 
 <!-- TABS -->
-<div class="d-flex gap-2 mb-4 flex-wrap">
-    <button class="tab-btn active" data-target="today">View Today's Appointment</button>
-    <button class="tab-btn" data-target="upcoming">View Upcoming Appointment</button>
-    <button class="tab-btn" data-target="history">View Appointment History</button>
+<div class="d-flex gap-2 mb-3 flex-wrap">
+    <button class="tab-btn btn btn-outline-light active" data-target="today" data-count="<?= count($todayAppts) ?>" data-label="Today's Appointments">
+        View Today's Appointment
+    </button>
+    <button class="tab-btn btn btn-outline-light" data-target="upcoming" data-count="<?= count($upcomingAppts) ?>" data-label="Upcoming Appointments">
+        View Upcoming Appointment
+    </button>
+    <button class="tab-btn btn btn-outline-light" data-target="history" data-count="<?= count($historyAppts) ?>" data-label="Past Appointments">
+        View Appointment History
+    </button>
+</div>
+
+<!-- FILTER SECTION -->
+<div class="info-card mb-4" id="filterSection">
+    <div class="row g-3 align-items-end">
+        <div class="col-md-3">
+            <label for="filterByDate" class="form-label"><i class="bi bi-calendar-date"></i> Filter by Date</label>
+            <input type="date" class="form-control" id="filterByDate">
+        </div>
+        <div class="col-md-3">
+            <label for="searchPatientName" class="form-label"><i class="bi bi-person-search"></i> Search Patient Name</label>
+            <input type="text" class="form-control" id="searchPatientName" placeholder="Enter patient name">
+        </div>
+        <div class="col-md-3">
+            <label for="searchApptId" class="form-label"><i class="bi bi-search"></i> Search Appointment ID</label>
+            <input type="text" class="form-control" id="searchApptId" placeholder="Enter appointment ID">
+        </div>
+        <div class="col-md-3">
+            <button type="button" class="btn btn-primary w-100" id="applyFilterBtn">
+                <i class="bi bi-funnel"></i> Apply Filter
+            </button>
+            <button type="button" class="btn btn-secondary w-100 mt-2" id="clearFilterBtn">
+                <i class="bi bi-x-circle"></i> Clear Filter
+            </button>
+        </div>
+    </div>
+    <!-- Filtered Results Card (Hidden by default) -->
+    <div class="row mt-3" id="filteredResultsWrapper" style="display: none;">
+        <div class="col-md-12">
+            <div class="alert alert-success d-flex align-items-center" role="alert">
+                <i class="bi bi-check-circle-fill me-2"></i>
+                <div>
+                    <strong>Filtered Results:</strong> <span id="filteredCount">0</span> appointment(s) found
+                </div>
+            </div>
+        </div>
+    </div>
 </div>
 
 <!-- TODAY'S APPOINTMENTS -->
@@ -143,9 +186,11 @@ require_once '../includes/doctor_header.php';
                             <th>Actions</th>
                         </tr>
                     </thead>
-                    <tbody>
+                    <tbody id="todayTableBody">
                         <?php foreach ($todayAppts as $a): ?>
-                            <tr data-appt-id="<?= $a['APPT_ID'] ?>">
+                            <tr data-appt-id="<?= $a['APPT_ID'] ?>" 
+                                data-date="<?= $a['APPT_DATE'] ?>"
+                                data-patient-name="<?= strtolower($a['patient_name']) ?>">
                                 <td><?= htmlspecialchars($a['APPT_ID']) ?></td>
                                 <td><?= htmlspecialchars($a['patient_name']) ?></td>
                                 <td><?= htmlspecialchars($a['service_name']) ?></td>
@@ -210,9 +255,11 @@ require_once '../includes/doctor_header.php';
                             <th>Actions</th>
                         </tr>
                     </thead>
-                    <tbody>
+                    <tbody id="upcomingTableBody">
                         <?php foreach ($upcomingAppts as $a): ?>
-                            <tr data-appt-id="<?= $a['APPT_ID'] ?>">
+                            <tr data-appt-id="<?= $a['APPT_ID'] ?>"
+                                data-date="<?= $a['APPT_DATE'] ?>"
+                                data-patient-name="<?= strtolower($a['patient_name']) ?>">
                                 <td><?= htmlspecialchars($a['APPT_ID']) ?></td>
                                 <td><?= htmlspecialchars($a['patient_name']) ?></td>
                                 <td><?= htmlspecialchars($a['service_name']) ?></td>
@@ -278,9 +325,11 @@ require_once '../includes/doctor_header.php';
                             <th>Actions</th>
                         </tr>
                     </thead>
-                    <tbody>
+                    <tbody id="historyTableBody">
                         <?php foreach ($historyAppts as $a): ?>
-                            <tr data-appt-id="<?= $a['APPT_ID'] ?>">
+                            <tr data-appt-id="<?= $a['APPT_ID'] ?>"
+                                data-date="<?= $a['APPT_DATE'] ?>"
+                                data-patient-name="<?= strtolower($a['patient_name']) ?>">
                                 <td><?= htmlspecialchars($a['APPT_ID']) ?></td>
                                 <td><?= htmlspecialchars($a['patient_name']) ?></td>
                                 <td><?= htmlspecialchars($a['service_name']) ?></td>

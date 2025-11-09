@@ -22,11 +22,14 @@ $query = "SELECT
     p.PAT_EMAIL,
     a.APPT_ID,
     s.SERV_ID,
+    s.SERV_NAME,
+    st.STATUS_NAME,
     a.STAT_ID
 FROM MEDICAL_RECORD mr
 INNER JOIN APPOINTMENT a ON mr.APPT_ID = a.APPT_ID
 INNER JOIN PATIENT p ON a.PAT_ID = p.PAT_ID
 INNER JOIN SERVICE s ON a.SERV_ID = s.SERV_ID
+INNER JOIN STATUS st ON a.STAT_ID = st.STAT_ID
 WHERE a.DOC_ID = :doc_id
 ORDER BY mr.MED_REC_VISIT_DATE DESC, mr.MED_REC_ID DESC";
 
@@ -34,6 +37,13 @@ $stmt = $db->prepare($query);
 $stmt->bindParam(':doc_id', $doc_id);
 $stmt->execute();
 $medicalRecords = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+// Calculate patient age
+foreach ($medicalRecords as &$record) {
+    $dob = new DateTime($record['PAT_DOB']);
+    $now = new DateTime();
+    $record['PAT_AGE'] = $now->diff($dob)->y;
+}
 ?>
 
 <div class="container-fluid">
@@ -60,6 +70,66 @@ $medicalRecords = $stmt->fetchAll(PDO::FETCH_ASSOC);
                 <h2 class="mb-0" id="filteredRecordsCount">0</h2>
             </div>
         </div>
+        <div class="col-md-6 col-lg-4 mb-3">
+            <div class="total-card add-new-card cursor-pointer" id="addNewRecordBtn">
+                <h5 class="text-success mb-2"><i class="bi bi-plus-circle"></i> Add New Record</h5>
+                <h2 class="mb-0"><i class="bi bi-file-earmark-plus"></i></h2>
+            </div>
+        </div>
+    </div>
+
+    <!-- Add New Medical Record Form (Hidden by default) -->
+    <div class="row mb-4" id="addRecordFormWrapper" style="display: none;">
+        <div class="col-12">
+            <div class="info-card">
+                <h4><i class="bi bi-plus-square"></i> Create New Medical Record</h4>
+                <form id="addMedicalRecordForm">
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <label class="form-label"><strong>Appointment ID <span class="text-danger">*</span></strong></label>
+                            <input type="text" class="form-control" id="new_appt_id" name="appt_id" placeholder="Enter Appointment ID" required>
+                            <small class="text-muted">Press Enter or Tab to fetch patient details</small>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label"><strong>Patient Name</strong></label>
+                            <input type="text" class="form-control" id="new_patient_name" readonly placeholder="Auto-filled">
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label"><strong>Age</strong></label>
+                            <input type="text" class="form-control" id="new_patient_age" readonly placeholder="Auto-filled">
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label"><strong>Gender</strong></label>
+                            <input type="text" class="form-control" id="new_patient_gender" readonly placeholder="Auto-filled">
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label"><strong>Service</strong></label>
+                            <input type="text" class="form-control" id="new_service_name" readonly placeholder="Auto-filled">
+                        </div>
+                        <div class="col-12">
+                            <label class="form-label"><strong>Diagnosis <span class="text-danger">*</span></strong></label>
+                            <textarea class="form-control" id="new_diagnosis" name="diagnosis" rows="3" required placeholder="Enter diagnosis details"></textarea>
+                        </div>
+                        <div class="col-12">
+                            <label class="form-label"><strong>Prescription <span class="text-danger">*</span></strong></label>
+                            <textarea class="form-control" id="new_prescription" name="prescription" rows="3" required placeholder="Enter prescription details"></textarea>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label"><strong>Visit Date <span class="text-danger">*</span></strong></label>
+                            <input type="date" class="form-control" id="new_visit_date" name="visit_date" required>
+                        </div>
+                        <div class="col-12">
+                            <button type="submit" class="btn btn-primary me-2">
+                                <i class="bi bi-check-circle"></i> Create Medical Record
+                            </button>
+                            <button type="button" class="btn btn-secondary" id="cancelAddRecordBtn">
+                                <i class="bi bi-x-circle"></i> Cancel
+                            </button>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
     </div>
 
     <!-- Filter Section -->
@@ -75,11 +145,15 @@ $medicalRecords = $stmt->fetchAll(PDO::FETCH_ASSOC);
                         <label class="form-label"><strong><i class="bi bi-person-search"></i> Search Patient Name</strong></label>
                         <input type="text" class="form-control" id="searchPatientName" placeholder="Enter patient name">
                     </div>
-                    <div class="col-md-3 col-sm-6">
-                        <label class="form-label"><strong><i class="bi bi-hash"></i> Search Appointment ID</strong></label>
-                        <input type="text" class="form-control" id="searchApptId" placeholder="Enter appointment ID">
+                    <div class="col-md-2 col-sm-6">
+                        <label class="form-label"><strong><i class="bi bi-hash"></i> Appointment ID</strong></label>
+                        <input type="text" class="form-control" id="searchApptId" placeholder="Appt ID">
                     </div>
-                    <div class="col-md-3 col-sm-6">
+                    <div class="col-md-2 col-sm-6">
+                        <label class="form-label"><strong><i class="bi bi-file-medical"></i> Medical Record ID</strong></label>
+                        <input type="text" class="form-control" id="searchMedRecId" placeholder="Med Rec ID">
+                    </div>
+                    <div class="col-md-2 col-sm-12">
                         <button class="btn btn-primary me-2" id="filterBtn">
                             <i class="bi bi-search"></i> Filter
                         </button>
@@ -101,7 +175,8 @@ $medicalRecords = $stmt->fetchAll(PDO::FETCH_ASSOC);
                     <table class="table table-hover" id="medRecTable">
                         <thead>
                             <tr>
-                                <th>MedRec ID</th>
+                                <th>Med Rec ID</th>
+                                <th>Appt ID</th>
                                 <th>Patient Name</th>
                                 <th>Diagnosis</th>
                                 <th>Prescription</th>
@@ -115,25 +190,24 @@ $medicalRecords = $stmt->fetchAll(PDO::FETCH_ASSOC);
                                     <tr data-date="<?= htmlspecialchars($record['MED_REC_VISIT_DATE']) ?>" 
                                         data-patient="<?= htmlspecialchars(strtolower($record['PAT_FIRST_NAME'] . ' ' . $record['PAT_LAST_NAME'])) ?>"
                                         data-apptid="<?= htmlspecialchars($record['APPT_ID']) ?>"
+                                        data-medrecid="<?= htmlspecialchars($record['MED_REC_ID']) ?>"
                                         data-medrec='<?= htmlspecialchars(json_encode($record), ENT_QUOTES, 'UTF-8') ?>'>
                                         <td><?= htmlspecialchars($record['MED_REC_ID']) ?></td>
+                                        <td><?= htmlspecialchars($record['APPT_ID']) ?></td>
                                         <td><?= htmlspecialchars($record['PAT_FIRST_NAME'] . ' ' . $record['PAT_LAST_NAME']) ?></td>
                                         <td><?= htmlspecialchars($record['MED_REC_DIAGNOSIS']) ?></td>
                                         <td><?= htmlspecialchars($record['MED_REC_PRESCRIPTION']) ?></td>
                                         <td><?= date('M d, Y', strtotime($record['MED_REC_VISIT_DATE'])) ?></td>
                                         <td>
-                                            <button class="btn btn-sm action-btn btn-view" data-medrec-id="<?= $record['MED_REC_ID'] ?>">
-                                                <i class="bi bi-eye"></i> View
-                                            </button>
-                                            <button class="btn btn-sm action-btn btn-edit" data-medrec-id="<?= $record['MED_REC_ID'] ?>">
-                                                <i class="bi bi-pencil"></i> Edit
+                                            <button class="btn btn-sm action-btn btn-update-medrec" data-medrec-id="<?= $record['MED_REC_ID'] ?>">
+                                                <i class="bi bi-pencil-square"></i> UPDATE
                                             </button>
                                         </td>
                                     </tr>
                                 <?php endforeach; ?>
                             <?php else: ?>
                                 <tr>
-                                    <td colspan="6" class="text-center text-muted">No medical records found</td>
+                                    <td colspan="7" class="text-center text-muted">No medical records found</td>
                                 </tr>
                             <?php endif; ?>
                         </tbody>
@@ -144,126 +218,47 @@ $medicalRecords = $stmt->fetchAll(PDO::FETCH_ASSOC);
     </div>
 </div>
 
-<!-- View Modal -->
-<div class="modal fade" id="viewModal" tabindex="-1">
-    <div class="modal-dialog modal-lg">
-        <div class="modal-content">
-            <div class="modal-header bg-primary text-white">
-                <h5 class="modal-title"><i class="bi bi-eye"></i> Medical Record Details</h5>
-                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
-            </div>
-            <div class="modal-body">
-                <div class="row g-3">
-                    <div class="col-md-6">
-                        <label class="form-label text-muted"><strong>Appointment ID</strong></label>
-                        <p class="form-control-plaintext border-bottom" id="view_appt_id">-</p>
-                    </div>
-                    <div class="col-md-6">
-                        <label class="form-label text-muted"><strong>Patient Name</strong></label>
-                        <p class="form-control-plaintext border-bottom" id="view_patient_name">-</p>
-                    </div>
-                    <div class="col-md-4">
-                        <label class="form-label text-muted"><strong>Age</strong></label>
-                        <p class="form-control-plaintext border-bottom" id="view_age">-</p>
-                    </div>
-                    <div class="col-md-4">
-                        <label class="form-label text-muted"><strong>Gender</strong></label>
-                        <p class="form-control-plaintext border-bottom" id="view_gender">-</p>
-                    </div>
-                    <div class="col-md-4">
-                        <label class="form-label text-muted"><strong>Status</strong></label>
-                        <p class="form-control-plaintext border-bottom" id="view_status">-</p>
-                    </div>
-                    <div class="col-md-6">
-                        <label class="form-label text-muted"><strong>Contact Number</strong></label>
-                        <p class="form-control-plaintext border-bottom" id="view_contact">-</p>
-                    </div>
-                    <div class="col-md-6">
-                        <label class="form-label text-muted"><strong>Email</strong></label>
-                        <p class="form-control-plaintext border-bottom" id="view_email">-</p>
-                    </div>
-                    <div class="col-12">
-                        <label class="form-label text-muted"><strong>Service</strong></label>
-                        <p class="form-control-plaintext border-bottom" id="view_service">-</p>
-                    </div>
-                    <div class="col-12">
-                        <label class="form-label text-muted"><strong>Diagnosis</strong></label>
-                        <p class="form-control-plaintext border-bottom" id="view_diagnosis">-</p>
-                    </div>
-                    <div class="col-12">
-                        <label class="form-label text-muted"><strong>Prescription</strong></label>
-                        <p class="form-control-plaintext border-bottom" id="view_prescription">-</p>
-                    </div>
-                    <div class="col-12">
-                        <label class="form-label text-muted"><strong>Visit Date</strong></label>
-                        <p class="form-control-plaintext border-bottom" id="view_visit_date">-</p>
-                    </div>
-                </div>
-            </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
-            </div>
-        </div>
-    </div>
-</div>
-
-<!-- Edit Modal -->
-<div class="modal fade" id="editModal" tabindex="-1">
+<!-- Update Medical Record Modal -->
+<div class="modal fade" id="updateModal" tabindex="-1">
     <div class="modal-dialog modal-lg">
         <div class="modal-content">
             <div class="modal-header bg-warning">
-                <h5 class="modal-title"><i class="bi bi-pencil-square"></i> Edit Medical Record</h5>
+                <h5 class="modal-title"><i class="bi bi-pencil-square"></i> Update Medical Record</h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
             </div>
-            <form id="editForm">
+            <form id="updateForm">
                 <div class="modal-body">
-                    <input type="hidden" id="edit_med_rec_id" name="med_rec_id">
-                    <input type="hidden" id="edit_appt_id_hidden" name="appt_id">
+                    <input type="hidden" id="update_med_rec_id" name="med_rec_id">
+                    <input type="hidden" id="update_appt_id_hidden" name="appt_id">
                     
                     <div class="row g-3">
                         <div class="col-md-6">
+                            <label class="form-label"><strong>Medical Record ID</strong></label>
+                            <input type="text" class="form-control" id="update_med_rec_id_display" readonly>
+                        </div>
+                        <div class="col-md-6">
                             <label class="form-label"><strong>Appointment ID</strong></label>
-                            <input type="text" class="form-control" id="edit_appt_id" readonly>
+                            <input type="text" class="form-control" id="update_appt_id" readonly>
                         </div>
                         <div class="col-md-6">
                             <label class="form-label"><strong>Patient Name</strong></label>
-                            <input type="text" class="form-control" id="edit_patient_name" readonly>
-                        </div>
-                        <div class="col-md-4">
-                            <label class="form-label"><strong>Age</strong></label>
-                            <input type="text" class="form-control" id="edit_age" readonly>
-                        </div>
-                        <div class="col-md-4">
-                            <label class="form-label"><strong>Gender</strong></label>
-                            <input type="text" class="form-control" id="edit_gender" readonly>
-                        </div>
-                        <div class="col-md-4">
-                            <label class="form-label"><strong>Status</strong></label>
-                            <input type="text" class="form-control" id="edit_status" readonly>
-                        </div>
-                        <div class="col-md-6">
-                            <label class="form-label"><strong>Contact Number</strong></label>
-                            <input type="text" class="form-control" id="edit_contact" readonly>
-                        </div>
-                        <div class="col-md-6">
-                            <label class="form-label"><strong>Email</strong></label>
-                            <input type="text" class="form-control" id="edit_email" readonly>
+                            <input type="text" class="form-control" id="update_patient_name" readonly>
                         </div>
                         <div class="col-12">
                             <label class="form-label"><strong>Service</strong></label>
-                            <input type="text" class="form-control" id="edit_service" readonly>
+                            <input type="text" class="form-control" id="update_service" readonly>
                         </div>
                         <div class="col-12">
                             <label class="form-label"><strong>Diagnosis <span class="text-danger">*</span></strong></label>
-                            <textarea class="form-control" id="edit_diagnosis" name="MED_REC_DIAGNOSIS" rows="3" required></textarea>
+                            <textarea class="form-control" id="update_diagnosis" name="MED_REC_DIAGNOSIS" rows="3" required></textarea>
                         </div>
                         <div class="col-12">
                             <label class="form-label"><strong>Prescription <span class="text-danger">*</span></strong></label>
-                            <textarea class="form-control" id="edit_prescription" name="MED_REC_PRESCRIPTION" rows="3" required></textarea>
+                            <textarea class="form-control" id="update_prescription" name="MED_REC_PRESCRIPTION" rows="3" required></textarea>
                         </div>
                         <div class="col-12">
                             <label class="form-label"><strong>Visit Date <span class="text-danger">*</span></strong></label>
-                            <input type="date" class="form-control" id="edit_visit_date" name="visit_date" required>
+                            <input type="date" class="form-control" id="update_visit_date" name="visit_date" required>
                         </div>
                     </div>
                 </div>
@@ -281,7 +276,7 @@ $medicalRecords = $stmt->fetchAll(PDO::FETCH_ASSOC);
 <!-- Bootstrap JS -->
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 <!-- Custom JS -->
-<script src="../public/js/doctor_dashboard.js"></script>
+<script src="js/doctor_dashboard.js"></script>
 
 </body>
 </html>

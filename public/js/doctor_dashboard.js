@@ -1,8 +1,15 @@
 // public/js/doctor_dashboard.js
+// ========================================================================
+// Used for all doctor pages: dashboard, schedule, medical records, etc.
+// ========================================================================
 
 document.addEventListener('DOMContentLoaded', function () {
     const sidebar = document.querySelector('.sidebar');
     const toggleBtn = document.querySelector('.sidebar-toggle');
+
+    // ========================================================================
+    // SECTION 1: GENERAL NAVIGATION & UI
+    // ========================================================================
 
     // ===============================
     // NAVIGATION - Set active nav link based on current page
@@ -61,237 +68,534 @@ document.addEventListener('DOMContentLoaded', function () {
     setInterval(updateClock, 1000);
     updateClock();
 
+    // ========================================================================
+    // SECTION 2: SCHEDULE PAGE - TAB SWITCHING & MANAGEMENT
+    // ========================================================================
+
     // ===============================
-    // FOR SCHEDULE PAGE - TAB SWITCHING
+    // TAB SWITCHING FOR SCHEDULE PAGE
     // ===============================
     const tabButtons = document.querySelectorAll('.tab-btn');
     const tableSections = document.querySelectorAll('.table-section');
+    const addScheduleForm = document.getElementById('addScheduleForm');
+    const addNewScheduleBtn = document.getElementById('addNewScheduleBtn');
+    const scheduleCountCard = document.getElementById('scheduleCountCard');
+    const scheduleCount = document.getElementById('scheduleCount');
+    const scheduleCountLabel = document.getElementById('scheduleCountLabel');
 
-    if (tabButtons.length > 0) {
-        tabButtons.forEach(btn => {
-            btn.addEventListener('click', () => {
-                // Hide all sections
-                tableSections.forEach(section => {
-                    section.style.display = 'none';
-                });
-
-                // Remove active from all buttons
-                tabButtons.forEach(b => b.classList.remove('active'));
-
-                // Activate clicked button
-                btn.classList.add('active');
-
-                // Show target section
-                const targetId = btn.getAttribute('data-target');
-                const target = document.getElementById(targetId);
-                if (target) {
-                    target.style.display = 'block';
-                    setTimeout(() => {
-                        target.scrollIntoView({ behavior: 'smooth', block: 'start' });
-                    }, 100);
-                }
-            });
+    // Handle "Add New Schedule" button click
+    if (addNewScheduleBtn) {
+        addNewScheduleBtn.addEventListener('click', function() {
+            // Hide all table sections
+            tableSections.forEach(section => section.style.display = 'none');
+            
+            // Remove active from all tab buttons
+            tabButtons.forEach(btn => btn.classList.remove('active'));
+            
+            // Show "All Schedules" section
+            const allSection = document.getElementById('allSection');
+            if (allSection) allSection.style.display = 'block';
+            
+            // Show add schedule form
+            if (addScheduleForm) {
+                addScheduleForm.style.display = 'block';
+                // Scroll to form
+                addScheduleForm.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            }
         });
-
-        // Show default section (Today's Schedule)
-        const defaultSection = document.getElementById('todaySection');
-        if (defaultSection) {
-            defaultSection.style.display = 'block';
-        }
     }
 
-    // ===============================
-    // FOR SCHEDULE PAGE - DATE VALIDATION (No Sundays, Time Restrictions)
-    // ===============================
-    const newDate = document.getElementById('newDate');
-    const newStartTime = document.getElementById('newStartTime');
-    const newEndTime = document.getElementById('newEndTime');
+    // Handle tab button clicks for schedule page
+    tabButtons.forEach(btn => {
+        btn.addEventListener('click', function() {
+            if (this.id === 'addNewScheduleBtn') return; // Skip for add button
+            
+            // Hide add schedule form when switching tabs
+            if (addScheduleForm) addScheduleForm.style.display = 'none';
+            
+            // Hide all sections
+            tableSections.forEach(section => section.style.display = 'none');
+            
+            // Remove active from all buttons
+            tabButtons.forEach(b => b.classList.remove('active'));
+            
+            // Activate clicked button
+            this.classList.add('active');
+            
+            // Show target section
+            const targetId = this.getAttribute('data-target');
+            const target = document.getElementById(targetId);
+            if (target) {
+                target.style.display = 'block';
+                
+                // Update count card
+                const count = this.getAttribute('data-count');
+                const label = this.getAttribute('data-label');
+                if (scheduleCount && scheduleCountLabel) {
+                    scheduleCount.textContent = count;
+                    scheduleCountLabel.innerHTML = '<i class="bi bi-calendar-day"></i> ' + label;
+                }
+                
+                setTimeout(() => {
+                    target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                }, 100);
+            }
+        });
+    });
 
-    if (newDate) {
-        newDate.addEventListener('change', function () {
-            const selectedDate = new Date(this.value);
-            const day = selectedDate.getUTCDay();
+    // ========================================================================
+    // SECTION 3: SCHEDULE PAGE - WORKING HOURS VALIDATION
+    // ========================================================================
 
-            // Disable Sundays
-            if (day === 0) {
+    // ===============================
+    // WORKING HOURS VALIDATION FOR NEW SCHEDULE
+    // ===============================
+    const newScheduleDate = document.getElementById('newScheduleDate');
+    const newScheduleStartTime = document.getElementById('newScheduleStartTime');
+    const newScheduleEndTime = document.getElementById('newScheduleEndTime');
+    const scheduleTimeRestriction = document.getElementById('scheduleTimeRestriction');
+
+    if (newScheduleDate) {
+        newScheduleDate.addEventListener('change', function() {
+            const selectedDate = new Date(this.value + 'T00:00:00');
+            const day = selectedDate.getDay();
+
+            if (day === 0) { // Sunday
                 alert('Sunday is closed. Please select another day.');
                 this.value = '';
+                if (newScheduleStartTime) newScheduleStartTime.disabled = true;
+                if (newScheduleEndTime) newScheduleEndTime.disabled = true;
+                if (scheduleTimeRestriction) scheduleTimeRestriction.textContent = 'Sunday is closed';
                 return;
             }
 
-            // Set time restrictions based on day
-            if (newStartTime && newEndTime) {
-                if (day === 6) { // Saturday
-                    newStartTime.min = '09:30';
-                    newStartTime.max = '17:00';
-                    newEndTime.min = '09:30';
-                    newEndTime.max = '17:00';
-                } else { // Monday-Friday
-                    newStartTime.min = '08:00';
-                    newStartTime.max = '19:00';
-                    newEndTime.min = '08:00';
-                    newEndTime.max = '19:00';
+            if (newScheduleStartTime) newScheduleStartTime.disabled = false;
+            if (newScheduleEndTime) newScheduleEndTime.disabled = false;
+
+            if (day === 6) { // Saturday
+                if (newScheduleStartTime) {
+                    newScheduleStartTime.min = '09:00';
+                    newScheduleStartTime.max = '17:00';
                 }
+                if (newScheduleEndTime) {
+                    newScheduleEndTime.min = '09:00';
+                    newScheduleEndTime.max = '17:00';
+                }
+                if (scheduleTimeRestriction) scheduleTimeRestriction.textContent = 'Saturday: 9:00 AM - 5:00 PM';
+            } else { // Monday-Friday
+                if (newScheduleStartTime) {
+                    newScheduleStartTime.min = '08:00';
+                    newScheduleStartTime.max = '18:00';
+                }
+                if (newScheduleEndTime) {
+                    newScheduleEndTime.min = '08:00';
+                    newScheduleEndTime.max = '18:00';
+                }
+                if (scheduleTimeRestriction) scheduleTimeRestriction.textContent = 'Monday-Friday: 8:00 AM - 6:00 PM';
             }
         });
     }
 
     // ===============================
-    // FOR SCHEDULE PAGE - ADD SCHEDULE FUNCTIONALITY - 
+    // WORKING HOURS VALIDATION FOR EDIT SCHEDULE
     // ===============================
-    const addForm = document.getElementById('addForm');
-    if (addForm) {
-        addForm.addEventListener('submit', function (e) {
-            e.preventDefault();
-            
-            const date = newDate.value;
-            const start = newStartTime.value;
-            const end = newEndTime.value;
+    const editSchedDate = document.getElementById('edit_sched_date');
+    const editSchedStartTime = document.getElementById('edit_sched_start_time');
+    const editSchedEndTime = document.getElementById('edit_sched_end_time');
+    const editScheduleTimeRestriction = document.getElementById('editScheduleTimeRestriction');
 
-            if (!date || !start || !end) {
+    if (editSchedDate) {
+        editSchedDate.addEventListener('change', function() {
+            const selectedDate = new Date(this.value + 'T00:00:00');
+            const day = selectedDate.getDay();
+
+            if (day === 0) {
+                alert('Sunday is closed. Please select another day.');
+                this.value = '';
+                if (editSchedStartTime) editSchedStartTime.disabled = true;
+                if (editSchedEndTime) editSchedEndTime.disabled = true;
+                if (editScheduleTimeRestriction) editScheduleTimeRestriction.textContent = 'Sunday is closed';
+                return;
+            }
+
+            if (editSchedStartTime) editSchedStartTime.disabled = false;
+            if (editSchedEndTime) editSchedEndTime.disabled = false;
+
+            if (day === 6) {
+                if (editSchedStartTime) {
+                    editSchedStartTime.min = '09:00';
+                    editSchedStartTime.max = '17:00';
+                }
+                if (editSchedEndTime) {
+                    editSchedEndTime.min = '09:00';
+                    editSchedEndTime.max = '17:00';
+                }
+                if (editScheduleTimeRestriction) editScheduleTimeRestriction.textContent = 'Saturday: 9:00 AM - 5:00 PM';
+            } else {
+                if (editSchedStartTime) {
+                    editSchedStartTime.min = '08:00';
+                    editSchedStartTime.max = '18:00';
+                }
+                if (editSchedEndTime) {
+                    editSchedEndTime.min = '08:00';
+                    editSchedEndTime.max = '18:00';
+                }
+                if (editScheduleTimeRestriction) editScheduleTimeRestriction.textContent = 'Monday-Friday: 8:00 AM - 6:00 PM';
+            }
+        });
+    }
+
+    // ========================================================================
+    // SECTION 4: SCHEDULE PAGE - ADD NEW SCHEDULE
+    // ========================================================================
+
+    // ===============================
+    // ADD NEW SCHEDULE FORM SUBMISSION
+    // ===============================
+    const scheduleForm = document.getElementById('scheduleForm');
+    if (scheduleForm) {
+        scheduleForm.addEventListener('submit', function(e) {
+            e.preventDefault();
+
+            const date = newScheduleDate ? newScheduleDate.value : '';
+            const startTime = newScheduleStartTime ? newScheduleStartTime.value : '';
+            const endTime = newScheduleEndTime ? newScheduleEndTime.value : '';
+
+            if (!date || !startTime || !endTime) {
                 alert('Please fill in all fields');
                 return;
             }
 
-            // Validate end time is after start time
-            if (start >= end) {
+            if (startTime >= endTime) {
                 alert('End time must be after start time');
                 return;
             }
 
-            // Generate new ID
-            const existingIds = Array.from(document.querySelectorAll('#newTable tbody tr'))
-                .map(tr => parseInt(tr.cells[0].textContent))
-                .filter(id => !isNaN(id));
-            const newId = existingIds.length > 0 ? Math.max(...existingIds) + 1 : 1;
+            const formData = new FormData();
+            formData.append('date', date);
+            formData.append('start_time', startTime);
+            formData.append('end_time', endTime);
 
-            const row = document.createElement('tr');
-            row.setAttribute('data-date', date);
-            row.innerHTML = `
-                <td>${newId}</td>
-                <td>${formatDate(date)}</td>
-                <td>${formatTime(start)}</td>
-                <td>${formatTime(end)}</td>
-                <td>0</td>
-                <td>
-                    <button class="btn btn-sm action-btn" data-bs-toggle="modal" data-bs-target="#viewModal${newId}">View</button>
-                    <button class="btn btn-sm action-btn">Edit</button>
-                    <button class="btn btn-sm action-btn btn-delete">Delete</button>
-                </td>
-            `;
-            
-            document.querySelector('#newTable tbody').prepend(row);
-            addForm.reset();
-            updateNewCount();
-            alert('Schedule added successfully!');
-        });
-    }
-
-    // ===============================
-    // FOR SCHEDULE PAGE - FILTER BY DATE (View All Schedule)
-    // ===============================
-    const filterDate = document.getElementById('filterDate');
-    const searchBtn = document.getElementById('searchBtn');
-    const clearBtn = document.getElementById('clearBtn');
-
-    if (searchBtn && filterDate) {
-        searchBtn.addEventListener('click', () => {
-            const val = filterDate.value;
-            if (!val) {
-                alert('Please select a date to filter');
-                return;
-            }
-
-            let visibleCount = 0;
-            document.querySelectorAll('#allTable tbody tr').forEach(tr => {
-                if (tr.getAttribute('data-date') === val) {
-                    tr.style.display = '';
-                    visibleCount++;
+            fetch('ajax/add_schedule.php', {
+                method: 'POST',
+                body: formData
+            })
+            .then(r => r.json())
+            .then(data => {
+                if (data.success) {
+                    alert('Schedule added successfully!');
+                    if (addScheduleForm) addScheduleForm.style.display = 'none';
+                    scheduleForm.reset();
+                    location.reload();
                 } else {
-                    tr.style.display = 'none';
+                    alert('Error: ' + data.message);
                 }
-            });
-
-            if (visibleCount === 0) {
-                alert('No schedules found for this date');
-            }
-        });
-    }
-
-    if (clearBtn) {
-        clearBtn.addEventListener('click', () => {
-            if (filterDate) filterDate.value = '';
-            document.querySelectorAll('#allTable tbody tr').forEach(tr => {
-                tr.style.display = '';
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('An error occurred while adding the schedule');
             });
         });
     }
 
     // ===============================
-    // FOR SCHEDULE PAGE - DELETE SCHEDULE
+    // CLEAR SCHEDULE FORM
     // ===============================
-    document.addEventListener('click', function (e) {
-        if (e.target.classList.contains('btn-delete')) {
-            if (confirm('Are you sure you want to delete this schedule?')) {
-                e.target.closest('tr').remove();
-                updateTodayCount();
-                updateNewCount();
-                updateAllCount();
+    const clearScheduleFormBtn = document.getElementById('clearScheduleFormBtn');
+    if (clearScheduleFormBtn && scheduleForm) {
+        clearScheduleFormBtn.addEventListener('click', function() {
+            scheduleForm.reset();
+            if (newScheduleStartTime) newScheduleStartTime.disabled = true;
+            if (newScheduleEndTime) newScheduleEndTime.disabled = true;
+            if (scheduleTimeRestriction) scheduleTimeRestriction.textContent = 'Select date first';
+        });
+    }
+
+    // ========================================================================
+    // SECTION 5: SCHEDULE PAGE - VIEW SCHEDULE MODAL
+    // ========================================================================
+
+    // ===============================
+    // VIEW SCHEDULE BUTTON - Shows appointments for this schedule
+    // ===============================
+    document.querySelectorAll('.btn-view-schedule').forEach(btn => {
+        btn.addEventListener('click', function() {
+            const schedId = this.getAttribute('data-sched-id');
+            const schedDate = this.getAttribute('data-sched-date');
+            
+            // Set modal title info
+            const viewModalSchedId = document.getElementById('view_modal_sched_id');
+            const viewModalSchedDate = document.getElementById('view_modal_sched_date');
+            const appointmentsList = document.getElementById('scheduleAppointmentsList');
+            
+            if (viewModalSchedId) viewModalSchedId.textContent = schedId;
+            if (viewModalSchedDate) viewModalSchedDate.textContent = formatDate(schedDate);
+            
+            // Show loading
+            if (appointmentsList) {
+                appointmentsList.innerHTML = '<div class="text-center"><div class="spinner-border text-primary" role="status"><span class="visually-hidden">Loading...</span></div></div>';
             }
-        }
+            
+            // Show modal
+            new bootstrap.Modal(document.getElementById('viewScheduleModal')).show();
+            
+            // Fetch appointments for this schedule
+            fetch(`ajax/get_schedule_appointments.php?sched_id=${schedId}&sched_date=${schedDate}`)
+                .then(r => r.json())
+                .then(data => {
+                    if (data.success) {
+                        if (data.appointments.length > 0) {
+                            let html = '<div class="table-responsive"><table class="table table-sm table-hover"><thead><tr><th>Appointment ID</th><th>Patient Name</th><th>Time</th><th>Status</th></tr></thead><tbody>';
+                            
+                            data.appointments.forEach(appt => {
+                                const statusBadge = appt.STATUS_NAME === 'Scheduled' ? 'warning' : 
+                                                   appt.STATUS_NAME === 'Completed' ? 'success' : 'danger';
+                                html += `<tr>
+                                    <td>${appt.APPT_ID}</td>
+                                    <td>${appt.patient_name}</td>
+                                    <td>${appt.formatted_time}</td>
+                                    <td><span class="badge bg-${statusBadge}">${appt.STATUS_NAME}</span></td>
+                                </tr>`;
+                            });
+                            
+                            html += '</tbody></table></div>';
+                            appointmentsList.innerHTML = html;
+                        } else {
+                            appointmentsList.innerHTML = '<div class="alert alert-info"><i class="bi bi-info-circle me-2"></i>No appointments scheduled for this date.</div>';
+                        }
+                    } else {
+                        appointmentsList.innerHTML = '<div class="alert alert-danger">Failed to load appointments.</div>';
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    appointmentsList.innerHTML = '<div class="alert alert-danger">An error occurred while loading appointments.</div>';
+                });
+        });
+    });
+
+    // ========================================================================
+    // SECTION 6: SCHEDULE PAGE - EDIT SCHEDULE MODAL
+    // ========================================================================
+
+    // ===============================
+    // EDIT SCHEDULE BUTTON
+    // ===============================
+    document.querySelectorAll('.btn-edit-schedule').forEach(btn => {
+        btn.addEventListener('click', function() {
+            const schedId = this.getAttribute('data-sched-id');
+            const days = this.getAttribute('data-days');
+            const startTime = this.getAttribute('data-start');
+            const endTime = this.getAttribute('data-end');
+
+            // Find a date that matches the day
+            const today = new Date();
+            const dayName = days.split(',')[0].trim();
+            const dayMap = {
+                'Sunday': 0, 'Monday': 1, 'Tuesday': 2, 'Wednesday': 3,
+                'Thursday': 4, 'Friday': 5, 'Saturday': 6
+            };
+            const targetDay = dayMap[dayName];
+            const currentDay = today.getDay();
+            let daysUntilTarget = targetDay - currentDay;
+            if (daysUntilTarget < 0) daysUntilTarget += 7;
+            
+            const targetDate = new Date(today);
+            targetDate.setDate(today.getDate() + daysUntilTarget);
+            const dateStr = targetDate.toISOString().split('T')[0];
+
+            const editSchedId = document.getElementById('edit_sched_id');
+            const editSchedIdDisplay = document.getElementById('edit_sched_id_display');
+
+            if (editSchedId) editSchedId.value = schedId;
+            if (editSchedIdDisplay) editSchedIdDisplay.value = schedId;
+            if (editSchedDate) editSchedDate.value = dateStr;
+            if (editSchedStartTime) editSchedStartTime.value = startTime;
+            if (editSchedEndTime) editSchedEndTime.value = endTime;
+
+            if (editSchedDate) editSchedDate.dispatchEvent(new Event('change'));
+
+            new bootstrap.Modal(document.getElementById('editScheduleModal')).show();
+        });
     });
 
     // ===============================
-    // FOR SCHEDULE PAGE - UPDATE COUNTS
+    // EDIT SCHEDULE FORM SUBMISSION
     // ===============================
-    function updateTodayCount() {
-        const el = document.getElementById('todayScheduleCount');
-        if (el) {
-            const count = document.querySelectorAll('#todayTable tbody tr').length;
-            el.textContent = count;
-        }
+    const editScheduleForm = document.getElementById('editScheduleForm');
+    if (editScheduleForm) {
+        editScheduleForm.addEventListener('submit', function(e) {
+            e.preventDefault();
+
+            const formData = new FormData(this);
+            if (editSchedDate) formData.append('date', editSchedDate.value);
+            if (editSchedStartTime) formData.append('start_time', editSchedStartTime.value);
+            if (editSchedEndTime) formData.append('end_time', editSchedEndTime.value);
+
+            fetch('ajax/update_schedule.php', {
+                method: 'POST',
+                body: formData
+            })
+            .then(r => r.json())
+            .then(data => {
+                if (data.success) {
+                    alert('UPDATED SUCCESSFULLY');
+                    bootstrap.Modal.getInstance(document.getElementById('editScheduleModal')).hide();
+                    location.reload();
+                } else {
+                    alert('Error: ' + data.message);
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('An error occurred while updating the schedule');
+            });
+        });
     }
 
-    function updateNewCount() {
-        const el = document.getElementById('newScheduleCount');
-        if (el) {
-            const count = document.querySelectorAll('#newTable tbody tr').length;
-            el.textContent = count;
-        }
+    // ========================================================================
+    // SECTION 7: SCHEDULE PAGE - DELETE SCHEDULE
+    // ========================================================================
+
+    // ===============================
+    // DELETE SCHEDULE BUTTON
+    // ===============================
+    document.querySelectorAll('.btn-delete-schedule').forEach(btn => {
+        btn.addEventListener('click', function() {
+            const schedId = this.getAttribute('data-sched-id');
+            const row = this.closest('tr');
+
+            if (confirm('Are you sure you want to delete this schedule?')) {
+                const formData = new FormData();
+                formData.append('sched_id', schedId);
+
+                fetch('ajax/delete_schedule.php', {
+                    method: 'POST',
+                    body: formData
+                })
+                .then(r => r.json())
+                .then(data => {
+                    if (data.success) {
+                        row.remove();
+                        alert('Schedule deleted successfully');
+                        location.reload();
+                    } else {
+                        alert('Error: ' + data.message);
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    alert('An error occurred while deleting the schedule');
+                });
+            }
+        });
+    });
+
+    // ========================================================================
+    // SECTION 8: SCHEDULE PAGE - FILTER FUNCTIONALITY
+    // ========================================================================
+
+    // ===============================
+    // SCHEDULE FILTER FUNCTIONALITY
+    // ===============================
+    const schedFilterByDate = document.getElementById('filterByDate');
+    const schedSearchScheduleId = document.getElementById('searchScheduleId');
+    const applyScheduleFilterBtn = document.getElementById('applyScheduleFilterBtn');
+    const clearScheduleFilterBtn = document.getElementById('clearScheduleFilterBtn');
+    const scheduleFilteredResultsWrapper = document.getElementById('scheduleFilteredResultsWrapper');
+    const scheduleFilteredCount = document.getElementById('scheduleFilteredCount');
+
+    if (applyScheduleFilterBtn) {
+        applyScheduleFilterBtn.addEventListener('click', function() {
+            const dateValue = schedFilterByDate ? schedFilterByDate.value : '';
+            const schedIdValue = schedSearchScheduleId ? schedSearchScheduleId.value.trim() : '';
+
+            const activeSection = document.querySelector('.table-section:not([style*="display: none"])');
+            if (!activeSection) return;
+
+            const rows = activeSection.querySelectorAll('tbody tr');
+            let visibleCount = 0;
+
+            rows.forEach(row => {
+                if (row.cells.length < 5) {
+                    row.style.display = 'none';
+                    return;
+                }
+
+                const rowSchedId = row.getAttribute('data-sched-id') || '';
+                const rowDays = row.getAttribute('data-date') || '';
+
+                let matchDate = true;
+                let matchSchedId = true;
+
+                if (dateValue) {
+                    const selectedDay = new Date(dateValue).toLocaleDateString('en-US', { weekday: 'long' });
+                    if (!rowDays.includes(selectedDay)) {
+                        matchDate = false;
+                    }
+                }
+
+                if (schedIdValue && !rowSchedId.includes(schedIdValue)) {
+                    matchSchedId = false;
+                }
+
+                if (matchDate && matchSchedId) {
+                    row.style.display = '';
+                    visibleCount++;
+                } else {
+                    row.style.display = 'none';
+                }
+            });
+
+            if (dateValue || schedIdValue) {
+                if (scheduleFilteredResultsWrapper) scheduleFilteredResultsWrapper.style.display = 'block';
+                if (scheduleFilteredCount) scheduleFilteredCount.textContent = visibleCount;
+
+                if (visibleCount === 0) {
+                    alert('No schedules match your filter criteria');
+                }
+            } else {
+                alert('Please enter at least one filter criteria');
+            }
+        });
     }
 
-    function updateAllCount() {
-        const el = document.getElementById('allScheduleCount');
-        if (el) {
-            const count = document.querySelectorAll('#allTable tbody tr').length;
-            el.textContent = count;
-        }
+    if (clearScheduleFilterBtn) {
+        clearScheduleFilterBtn.addEventListener('click', function() {
+            if (schedFilterByDate) schedFilterByDate.value = '';
+            if (schedSearchScheduleId) schedSearchScheduleId.value = '';
+
+            document.querySelectorAll('.table-section tbody tr').forEach(row => {
+                row.style.display = '';
+            });
+
+            if (scheduleFilteredResultsWrapper) {
+                scheduleFilteredResultsWrapper.style.display = 'none';
+            }
+        });
     }
 
-    // Initialize counts on page load for schedule page
-    if (document.getElementById('todayScheduleCount')) {
-        updateTodayCount();
-        updateNewCount();
-        updateAllCount();
-    }
+    // ========================================================================
+    // SECTION 9: MEDICAL RECORDS PAGE - FILTER FUNCTIONALITY
+    // ========================================================================
 
     // ===============================
     // MEDICAL RECORDS PAGE - FILTER FUNCTIONALITY
     // ===============================
     const medRecFilterBtn = document.getElementById('filterBtn');
     const medRecClearFilterBtn = document.getElementById('clearFilterBtn');
-    const filterByDate = document.getElementById('filterByDate');
-    const searchPatientName = document.getElementById('searchPatientName');
-    const searchApptId = document.getElementById('searchApptId');
+    const medRecFilterByDate = document.getElementById('filterByDate');
+    const medRecSearchPatientName = document.getElementById('searchPatientName');
+    const medRecSearchApptId = document.getElementById('searchApptId');
     const medRecTableRows = document.querySelectorAll('#medRecTable tbody tr');
     const filteredCardWrapper = document.getElementById('filteredCardWrapper');
     const filteredRecordsCount = document.getElementById('filteredRecordsCount');
 
     if (medRecFilterBtn) {
         medRecFilterBtn.addEventListener('click', function () {
-            const dateValue = filterByDate.value;
-            const nameValue = searchPatientName.value.toLowerCase().trim();
-            const apptIdValue = searchApptId.value.trim();
+            const dateValue = medRecFilterByDate ? medRecFilterByDate.value : '';
+            const nameValue = medRecSearchPatientName ? medRecSearchPatientName.value.toLowerCase().trim() : '';
+            const apptIdValue = medRecSearchApptId ? medRecSearchApptId.value.trim() : '';
 
             let visibleCount = 0;
 
@@ -336,8 +640,8 @@ document.addEventListener('DOMContentLoaded', function () {
 
             // Show filtered count card
             if (dateValue || nameValue || apptIdValue) {
-                filteredCardWrapper.style.display = 'block';
-                filteredRecordsCount.textContent = visibleCount;
+                if (filteredCardWrapper) filteredCardWrapper.style.display = 'block';
+                if (filteredRecordsCount) filteredRecordsCount.textContent = visibleCount;
             }
 
             if (visibleCount === 0) {
@@ -351,9 +655,9 @@ document.addEventListener('DOMContentLoaded', function () {
     // ===============================
     if (medRecClearFilterBtn) {
         medRecClearFilterBtn.addEventListener('click', function () {
-            if (filterByDate) filterByDate.value = '';
-            if (searchPatientName) searchPatientName.value = '';
-            if (searchApptId) searchApptId.value = '';
+            if (medRecFilterByDate) medRecFilterByDate.value = '';
+            if (medRecSearchPatientName) medRecSearchPatientName.value = '';
+            if (medRecSearchApptId) medRecSearchApptId.value = '';
             
             medRecTableRows.forEach(row => {
                 row.style.display = '';
@@ -363,6 +667,10 @@ document.addEventListener('DOMContentLoaded', function () {
         });
     }
 
+    // ========================================================================
+    // SECTION 10: MEDICAL RECORDS PAGE - VIEW & EDIT BUTTONS
+    // ========================================================================
+
     // ===============================
     // MEDICAL RECORDS - VIEW BUTTON
     // ===============================
@@ -370,6 +678,8 @@ document.addEventListener('DOMContentLoaded', function () {
         if (e.target.classList.contains('btn-view') || e.target.closest('.btn-view')) {
             const btn = e.target.classList.contains('btn-view') ? e.target : e.target.closest('.btn-view');
             const row = btn.closest('tr');
+            
+            // Check if this is a medical record view button (has data-medrec)
             const dataAttr = row.getAttribute('data-medrec');
             
             if (!dataAttr) return;
@@ -377,17 +687,29 @@ document.addEventListener('DOMContentLoaded', function () {
             const data = JSON.parse(dataAttr);
 
             // Populate view modal
-            document.getElementById('view_appt_id').textContent = data.APPT_ID || '-';
-            document.getElementById('view_patient_name').textContent = `${data.PAT_FNAME} ${data.PAT_LNAME}`;
-            document.getElementById('view_age').textContent = data.PAT_AGE || '-';
-            document.getElementById('view_gender').textContent = data.PAT_GENDER || '-';
-            document.getElementById('view_contact').textContent = data.PAT_CONTACT_NUM || '-';
-            document.getElementById('view_email').textContent = data.PAT_EMAIL || '-';
-            document.getElementById('view_service').textContent = data.SERVICE_NAME || '-';
-            document.getElementById('view_status').textContent = data.APPT_STATUS || '-';
-            document.getElementById('view_diagnosis').textContent = data.DIAGNOSIS || '-';
-            document.getElementById('view_prescription').textContent = data.PRESCRIPTION || '-';
-            document.getElementById('view_visit_date').textContent = formatDisplayDate(data.MED_REC_DATE);
+            const viewApptId = document.getElementById('view_appt_id');
+            const viewPatientName = document.getElementById('view_patient_name');
+            const viewAge = document.getElementById('view_age');
+            const viewGender = document.getElementById('view_gender');
+            const viewContact = document.getElementById('view_contact');
+            const viewEmail = document.getElementById('view_email');
+            const viewService = document.getElementById('view_service');
+            const viewStatus = document.getElementById('view_status');
+            const viewDiagnosis = document.getElementById('view_diagnosis');
+            const viewPrescription = document.getElementById('view_prescription');
+            const viewVisitDate = document.getElementById('view_visit_date');
+
+            if (viewApptId) viewApptId.textContent = data.APPT_ID || '-';
+            if (viewPatientName) viewPatientName.textContent = `${data.PAT_FIRST_NAME} ${data.PAT_LAST_NAME}`;
+            if (viewAge) viewAge.textContent = data.PAT_AGE || '-';
+            if (viewGender) viewGender.textContent = data.PAT_GENDER || '-';
+            if (viewContact) viewContact.textContent = data.PAT_CONTACT_NUM || '-';
+            if (viewEmail) viewEmail.textContent = data.PAT_EMAIL || '-';
+            if (viewService) viewService.textContent = data.SERVICE_NAME || '-';
+            if (viewStatus) viewStatus.textContent = data.APPT_STATUS || '-';
+            if (viewDiagnosis) viewDiagnosis.textContent = data.MED_REC_DIAGNOSIS || '-';
+            if (viewPrescription) viewPrescription.textContent = data.MED_REC_PRESCRIPTION || '-';
+            if (viewVisitDate) viewVisitDate.textContent = formatDisplayDate(data.MED_REC_VISIT_DATE);
 
             // Show modal
             const viewModal = new bootstrap.Modal(document.getElementById('viewModal'));
@@ -402,6 +724,8 @@ document.addEventListener('DOMContentLoaded', function () {
         if (e.target.classList.contains('btn-edit') || e.target.closest('.btn-edit')) {
             const btn = e.target.classList.contains('btn-edit') ? e.target : e.target.closest('.btn-edit');
             const row = btn.closest('tr');
+            
+            // Check if this is a medical record edit button (has data-medrec)
             const dataAttr = row.getAttribute('data-medrec');
             
             if (!dataAttr) return;
@@ -409,19 +733,33 @@ document.addEventListener('DOMContentLoaded', function () {
             const data = JSON.parse(dataAttr);
 
             // Populate edit modal
-            document.getElementById('edit_medrec_id').value = data.MEDREC_ID;
-            document.getElementById('edit_appt_id').value = data.APPT_ID;
-            document.getElementById('edit_appt_id_hidden').value = data.APPT_ID;
-            document.getElementById('edit_patient_name').value = `${data.PAT_FNAME} ${data.PAT_LNAME}`;
-            document.getElementById('edit_age').value = data.PAT_AGE || '-';
-            document.getElementById('edit_gender').value = data.PAT_GENDER || '-';
-            document.getElementById('edit_contact').value = data.PAT_CONTACT_NUM || '-';
-            document.getElementById('edit_email').value = data.PAT_EMAIL || '-';
-            document.getElementById('edit_service').value = data.SERVICE_NAME || '-';
-            document.getElementById('edit_status').value = data.APPT_STATUS || '-';
-            document.getElementById('edit_diagnosis').value = data.DIAGNOSIS || '';
-            document.getElementById('edit_prescription').value = data.PRESCRIPTION || '';
-            document.getElementById('edit_visit_date').value = data.MED_REC_DATE || '';
+            const editMedRecId = document.getElementById('edit_med_rec_id');
+            const editApptId = document.getElementById('edit_appt_id');
+            const editApptIdHidden = document.getElementById('edit_appt_id_hidden');
+            const editPatientName = document.getElementById('edit_patient_name');
+            const editAge = document.getElementById('edit_age');
+            const editGender = document.getElementById('edit_gender');
+            const editContact = document.getElementById('edit_contact');
+            const editEmail = document.getElementById('edit_email');
+            const editService = document.getElementById('edit_service');
+            const editStatus = document.getElementById('edit_status');
+            const editDiagnosis = document.getElementById('edit_diagnosis');
+            const editPrescription = document.getElementById('edit_prescription');
+            const editVisitDate = document.getElementById('edit_visit_date');
+
+            if (editMedRecId) editMedRecId.value = data.MED_REC_ID;
+            if (editApptId) editApptId.value = data.APPT_ID;
+            if (editApptIdHidden) editApptIdHidden.value = data.APPT_ID;
+            if (editPatientName) editPatientName.value = `${data.PAT_FIRST_NAME} ${data.PAT_LAST_NAME}`;
+            if (editAge) editAge.value = data.PAT_AGE || '-';
+            if (editGender) editGender.value = data.PAT_GENDER || '-';
+            if (editContact) editContact.value = data.PAT_CONTACT_NUM || '-';
+            if (editEmail) editEmail.value = data.PAT_EMAIL || '-';
+            if (editService) editService.value = data.SERVICE_NAME || '-';
+            if (editStatus) editStatus.value = data.APPT_STATUS || '-';
+            if (editDiagnosis) editDiagnosis.value = data.MED_REC_DIAGNOSIS || '';
+            if (editPrescription) editPrescription.value = data.MED_REC_PRESCRIPTION || '';
+            if (editVisitDate) editVisitDate.value = data.MED_REC_VISIT_DATE || '';
 
             // Show modal
             const editModal = new bootstrap.Modal(document.getElementById('editModal'));
@@ -432,12 +770,12 @@ document.addEventListener('DOMContentLoaded', function () {
     // ===============================
     // MEDICAL RECORDS - EDIT FORM SUBMISSION
     // ===============================
-    const editForm = document.getElementById('editForm');
-    if (editForm) {
-        editForm.addEventListener('submit', function (e) {
+    const medRecEditForm = document.getElementById('editForm');
+    if (medRecEditForm) {
+        medRecEditForm.addEventListener('submit', function (e) {
             e.preventDefault();
 
-            const formData = new FormData(editForm);
+            const formData = new FormData(medRecEditForm);
 
             fetch('ajax/update_medical_record.php', {
                 method: 'POST',
@@ -467,13 +805,17 @@ document.addEventListener('DOMContentLoaded', function () {
         });
     }
 
+    // ========================================================================
+    // SECTION 11: FORM VALIDATION FOR DOCTOR CREATION PAGE
+    // ========================================================================
+
     // ===============================
     // FORM VALIDATION FOR ../doctor_create.php
     // ===============================
-    const form = document.getElementById('doctorForm');
+    const doctorForm = document.getElementById('doctorForm');
     const nextBtn = document.getElementById('nextBtn');
-    if (form && nextBtn) {
-        const required = form.querySelectorAll('[required]');
+    if (doctorForm && nextBtn) {
+        const required = doctorForm.querySelectorAll('[required]');
 
         function validate() {
             let valid = true;
@@ -506,12 +848,13 @@ document.addEventListener('DOMContentLoaded', function () {
     }
 
     // ========================================================================
-    // DOCTOR DASHBOARD - APPOINTMENT MANAGEMENT (AJAX)
+    // SECTION 12: DASHBOARD - APPOINTMENT MANAGEMENT (AJAX)
     // This section handles all AJAX operations for the doctor dashboard
     // including: View, Edit, Delete appointments and Status updates
     // ========================================================================
 
-    // DASHBOARD - WORKING HOURS VALIDATION FOR EDIT MODAL
+    // ===============================
+    // DASHBOARD - WORKING HOURS VALIDATION FOR EDIT APPOINTMENT MODAL
     // Purpose: Validates that appointments can only be scheduled during working hours
     // Working Hours:
     // - Monday to Friday: 8:00 AM - 6:00 PM
@@ -535,7 +878,7 @@ document.addEventListener('DOMContentLoaded', function () {
                 this.value = '';
                 editApptTime.value = '';
                 editApptTime.disabled = true;
-                timeRestrictionMsg.textContent = 'Sunday is closed';
+                if (timeRestrictionMsg) timeRestrictionMsg.textContent = 'Sunday is closed';
                 return;
             }
 
@@ -547,12 +890,12 @@ document.addEventListener('DOMContentLoaded', function () {
                 // Saturday hours: 9:00 AM - 5:00 PM
                 editApptTime.min = '09:00';
                 editApptTime.max = '17:00';
-                timeRestrictionMsg.textContent = 'Saturday: 9:00 AM - 5:00 PM';
+                if (timeRestrictionMsg) timeRestrictionMsg.textContent = 'Saturday: 9:00 AM - 5:00 PM';
             } else { 
                 // Monday-Friday hours: 8:00 AM - 6:00 PM
                 editApptTime.min = '08:00';
                 editApptTime.max = '18:00';
-                timeRestrictionMsg.textContent = 'Monday-Friday: 8:00 AM - 6:00 PM';
+                if (timeRestrictionMsg) timeRestrictionMsg.textContent = 'Monday-Friday: 8:00 AM - 6:00 PM';
             }
         });
 
@@ -646,12 +989,17 @@ document.addEventListener('DOMContentLoaded', function () {
 
     // ===============================
     // DASHBOARD - VIEW PATIENT DETAILS BUTTON
-    // Purpose: Opens modal showing complete patient information; Fetches data from server via AJAX
+    // Purpose: Opens modal showing complete patient information
+    // Fetches data from server via AJAX
     // ===============================
     document.querySelectorAll('.btn-view').forEach(btn => {
         btn.addEventListener('click', function() {
             const patId = this.dataset.patId;
             const apptId = this.dataset.apptId;
+            
+            // Skip if this is a medical records view button (different handling)
+            if (!patId) return;
+            
             const modal = new bootstrap.Modal(document.getElementById('viewPatientModal'));
             const content = document.getElementById('patientDetailsContent');
 
@@ -672,11 +1020,8 @@ document.addEventListener('DOMContentLoaded', function () {
                         content.innerHTML = `
                             <p><strong>Appointment ID:</strong> ${apptId}</p>
                             <p><strong>Name:</strong> ${p.PAT_FIRST_NAME} ${p.PAT_MIDDLE_INIT}. ${p.PAT_LAST_NAME}</p>
-                            <p><strong>DOB:</strong> ${p.PAT_DOB} (Age: ${age})</p>
+                            <p><strong>Age:</strong> ${age}</p>
                             <p><strong>Gender:</strong> ${p.PAT_GENDER}</p>
-                            <p><strong>Contact:</strong> ${p.PAT_CONTACT_NUM}</p>
-                            <p><strong>Email:</strong> ${p.PAT_EMAIL}</p>
-                            <p><strong>Address:</strong> ${p.PAT_ADDRESS}</p>
                         `;
                     } else {
                         content.innerHTML = '<p class="text-danger">Failed to load patient details.</p>';
@@ -691,21 +1036,30 @@ document.addEventListener('DOMContentLoaded', function () {
 
     // ===============================
     // DASHBOARD - EDIT APPOINTMENT BUTTON
-    // Purpose: Opens modal with appointment details for editing; Pre-fills form with current appointment data
+    // Purpose: Opens modal with appointment details for editing
+    // Pre-fills form with current appointment data
     // ===============================
     document.querySelectorAll('.btn-edit').forEach(btn => {
         btn.addEventListener('click', function() {
+            // Skip if this doesn't have appointment data (medical records edit button)
+            if (!this.dataset.apptDate) return;
+            
             // Get appointment data from button's data attributes
-            document.getElementById('edit_appt_id').value = this.dataset.apptId;
-            document.getElementById('edit_appt_id_display').value = this.dataset.apptId;
-            document.getElementById('edit_appt_date').value = this.dataset.apptDate;
-            document.getElementById('edit_appt_time').value = this.dataset.apptTime;
-            document.getElementById('edit_service').value = this.dataset.serviceId;
-            document.getElementById('edit_status').value = this.dataset.status;
+            const dashEditApptId = document.getElementById('edit_appt_id');
+            const dashEditApptIdDisplay = document.getElementById('edit_appt_id_display');
+            const dashEditService = document.getElementById('edit_service');
+            const dashEditStatus = document.getElementById('edit_status');
+
+            if (dashEditApptId) dashEditApptId.value = this.dataset.apptId;
+            if (dashEditApptIdDisplay) dashEditApptIdDisplay.value = this.dataset.apptId;
+            if (editApptDate) editApptDate.value = this.dataset.apptDate;
+            if (editApptTime) editApptTime.value = this.dataset.apptTime;
+            if (dashEditService) dashEditService.value = this.dataset.serviceId;
+            if (dashEditStatus) dashEditStatus.value = this.dataset.status;
 
             // Trigger date change event to set proper time restrictions
             // This ensures the time picker shows correct min/max values
-            editApptDate.dispatchEvent(new Event('change'));
+            if (editApptDate) editApptDate.dispatchEvent(new Event('change'));
 
             // Show the edit modal
             new bootstrap.Modal(document.getElementById('editApptModal')).show();
@@ -714,7 +1068,8 @@ document.addEventListener('DOMContentLoaded', function () {
 
     // ===============================
     // DASHBOARD - EDIT APPOINTMENT FORM SUBMISSION
-    // Purpose: Submits updated appointment data to server via AJAX; Validates working hours and updates appointment details
+    // Purpose: Submits updated appointment data to server via AJAX
+    // Validates working hours and updates appointment details
     // ===============================
     const editApptForm = document.getElementById('editApptForm');
     if (editApptForm) {
@@ -748,10 +1103,14 @@ document.addEventListener('DOMContentLoaded', function () {
 
     // ===============================
     // DASHBOARD - DELETE APPOINTMENT BUTTON
-    // Purpose: Removes appointment from database; Requires confirmation before deletion
+    // Purpose: Removes appointment from database
+    // Requires confirmation before deletion
     // ===============================
     document.querySelectorAll('.btn-delete').forEach(btn => {
         btn.addEventListener('click', function() {
+            // Skip if this doesn't have appointment data
+            if (!this.dataset.apptId) return;
+            
             const apptId = this.dataset.apptId;
             const row = this.closest('tr'); // Get table row for removal
 
@@ -786,11 +1145,148 @@ document.addEventListener('DOMContentLoaded', function () {
         });
     });
 
+    // ========================================================================
+    // SECTION 13: DASHBOARD - CARD UPDATE & FILTER FUNCTIONALITY
+    // ========================================================================
+
     // ===============================
-    // UTILITY FUNCTIONS - Date & Time Formatting
+    // DASHBOARD - UPDATE APPOINTMENT COUNT CARD
+    // Updates the count card when switching between tabs
+    // ===============================
+    document.querySelectorAll('.tab-btn').forEach(btn => {
+        btn.addEventListener('click', function() {
+            const count = this.dataset.count;
+            const label = this.dataset.label;
+            
+            const appointmentCount = document.getElementById('appointmentCount');
+            const appointmentLabel = document.getElementById('appointmentLabel');
+
+            if (appointmentCount) appointmentCount.textContent = count;
+            if (appointmentLabel) appointmentLabel.textContent = label;
+        });
+    });
+
+    // ===============================
+    // DASHBOARD FILTER FUNCTIONALITY
+    // ===============================
+    
+    const dashFilterByDate = document.getElementById('filterByDate');
+    const dashSearchPatientName = document.getElementById('searchPatientName');
+    const dashSearchApptId = document.getElementById('searchApptId');
+    const applyFilterBtn = document.getElementById('applyFilterBtn');
+    const dashClearFilterBtn = document.getElementById('clearFilterBtn');
+    const filteredResultsWrapper = document.getElementById('filteredResultsWrapper');
+    const filteredCount = document.getElementById('filteredCount');
+
+    // Apply Filter Button
+    if (applyFilterBtn) {
+        applyFilterBtn.addEventListener('click', function() {
+            const dateValue = dashFilterByDate ? dashFilterByDate.value : '';
+            const nameValue = dashSearchPatientName ? dashSearchPatientName.value.toLowerCase().trim() : '';
+            const apptIdValue = dashSearchApptId ? dashSearchApptId.value.trim() : '';
+
+            // Get current active table
+            const activeSection = document.querySelector('.table-section:not([style*="display: none"])');
+            if (!activeSection) return;
+
+            const tableBody = activeSection.querySelector('tbody');
+            if (!tableBody) return;
+
+            const rows = tableBody.querySelectorAll('tr');
+            let visibleCount = 0;
+
+            rows.forEach(row => {
+                // Skip empty state rows
+                if (row.cells.length < 6) {
+                    row.style.display = 'none';
+                    return;
+                }
+
+                const rowDate = row.dataset.date;
+                const rowPatient = row.dataset.patientName || '';
+                const rowApptId = row.dataset.apptId || '';
+
+                let matchDate = true;
+                let matchName = true;
+                let matchApptId = true;
+
+                // Check date filter
+                if (dateValue && rowDate !== dateValue) {
+                    matchDate = false;
+                }
+
+                // Check name filter
+                if (nameValue && !rowPatient.includes(nameValue)) {
+                    matchName = false;
+                }
+
+                // Check appointment ID filter
+                if (apptIdValue && !rowApptId.includes(apptIdValue)) {
+                    matchApptId = false;
+                }
+
+                // Show/hide row based on all filters
+                if (matchDate && matchName && matchApptId) {
+                    row.style.display = '';
+                    visibleCount++;
+                } else {
+                    row.style.display = 'none';
+                }
+            });
+
+            // Show filtered results if any filter is applied
+            if (dateValue || nameValue || apptIdValue) {
+                if (filteredResultsWrapper) filteredResultsWrapper.style.display = 'block';
+                if (filteredCount) filteredCount.textContent = visibleCount;
+
+                if (visibleCount === 0) {
+                    alert('No appointments match your filter criteria');
+                }
+            } else {
+                alert('Please enter at least one filter criteria');
+            }
+        });
+    }
+
+    // Clear Filter Button
+    if (dashClearFilterBtn) {
+        dashClearFilterBtn.addEventListener('click', function() {
+            // Clear all input fields
+            if (dashFilterByDate) dashFilterByDate.value = '';
+            if (dashSearchPatientName) dashSearchPatientName.value = '';
+            if (dashSearchApptId) dashSearchApptId.value = '';
+
+            // Show all rows in all tables
+            document.querySelectorAll('.table-section tbody tr').forEach(row => {
+                row.style.display = '';
+            });
+
+            // Hide filtered results card
+            if (filteredResultsWrapper) {
+                filteredResultsWrapper.style.display = 'none';
+            }
+        });
+    }
+
+    // ===============================
+    // REAL-TIME SEARCH (Optional - triggers filter on Enter key)
+    // ===============================
+    [dashSearchPatientName, dashSearchApptId].forEach(input => {
+        if (input) {
+            input.addEventListener('keypress', function(e) {
+                if (e.key === 'Enter') {
+                    e.preventDefault();
+                    if (applyFilterBtn) applyFilterBtn.click();
+                }
+            });
+        }
+    });
+
+    // ========================================================================
+    // SECTION 14: UTILITY FUNCTIONS - Date & Time Formatting
     // These functions are used across multiple pages
     // Format 24-hour time to 12-hour format with AM/PM
-    // ===============================
+    // ========================================================================
 
     function formatTime(timeStr) {
         if (!timeStr) return '';
@@ -820,4 +1316,311 @@ document.addEventListener('DOMContentLoaded', function () {
             year: 'numeric'
         });
     }
+
+    // ========================================================================
+    // SECTION 15: MEDICAL RECORDS - ADD NEW RECORD FUNCTIONALITY
+    // ========================================================================
+
+    // ===============================
+    // SHOW ADD NEW RECORD FORM
+    // ===============================
+    const addNewRecordBtn = document.getElementById('addNewRecordBtn');
+    const addRecordFormWrapper = document.getElementById('addRecordFormWrapper');
+    const cancelAddRecordBtn = document.getElementById('cancelAddRecordBtn');
+    const addMedicalRecordForm = document.getElementById('addMedicalRecordForm');
+
+    if (addNewRecordBtn) {
+        addNewRecordBtn.addEventListener('click', function() {
+            if (addRecordFormWrapper) {
+                addRecordFormWrapper.style.display = 'block';
+                addRecordFormWrapper.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                
+                // Reset form
+                if (addMedicalRecordForm) addMedicalRecordForm.reset();
+                document.getElementById('new_patient_name').value = '';
+                document.getElementById('new_patient_age').value = '';
+                document.getElementById('new_patient_gender').value = '';
+                document.getElementById('new_service_name').value = '';
+            }
+        });
+    }
+
+    // ===============================
+    // CANCEL ADD NEW RECORD
+    // ===============================
+    if (cancelAddRecordBtn) {
+        cancelAddRecordBtn.addEventListener('click', function() {
+            if (addRecordFormWrapper) {
+                addRecordFormWrapper.style.display = 'none';
+            }
+            if (addMedicalRecordForm) addMedicalRecordForm.reset();
+            document.getElementById('new_patient_name').value = '';
+            document.getElementById('new_patient_age').value = '';
+            document.getElementById('new_patient_gender').value = '';
+            document.getElementById('new_service_name').value = '';
+        });
+    }
+
+    // ===============================
+    // FETCH APPOINTMENT DETAILS WHEN APPT ID IS ENTERED
+    // ===============================
+    const newApptIdInput = document.getElementById('new_appt_id');
+    if (newApptIdInput) {
+        newApptIdInput.addEventListener('blur', fetchAppointmentDetails);
+        newApptIdInput.addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                fetchAppointmentDetails();
+            }
+        });
+    }
+
+    function fetchAppointmentDetails() {
+        const apptId = newApptIdInput.value.trim();
+        if (!apptId) return;
+
+        // Show loading state
+        document.getElementById('new_patient_name').value = 'Loading...';
+        document.getElementById('new_patient_age').value = '';
+        document.getElementById('new_patient_gender').value = '';
+        document.getElementById('new_service_name').value = '';
+
+        fetch(`ajax/get_appointment_details.php?appt_id=${apptId}`)
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    const appt = data.appointment;
+                    document.getElementById('new_patient_name').value = `${appt.PAT_FIRST_NAME} ${appt.PAT_LAST_NAME}`;
+                    document.getElementById('new_patient_age').value = appt.PAT_AGE;
+                    document.getElementById('new_patient_gender').value = appt.PAT_GENDER;
+                    document.getElementById('new_service_name').value = appt.SERV_NAME;
+                } else {
+                    alert('Error: ' + data.message);
+                    document.getElementById('new_patient_name').value = '';
+                    document.getElementById('new_patient_age').value = '';
+                    document.getElementById('new_patient_gender').value = '';
+                    document.getElementById('new_service_name').value = '';
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('An error occurred while fetching appointment details');
+                document.getElementById('new_patient_name').value = '';
+            });
+    }
+
+    // ===============================
+    // SUBMIT ADD NEW MEDICAL RECORD FORM
+    // ===============================
+    if (addMedicalRecordForm) {
+        addMedicalRecordForm.addEventListener('submit', function(e) {
+            e.preventDefault();
+
+            const formData = new FormData(this);
+
+            fetch('ajax/add_medical_record.php', {
+                method: 'POST',
+                body: formData
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    alert('Medical record created successfully!');
+                    location.reload();
+                } else {
+                    alert('Error: ' + data.message);
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('An error occurred while creating the medical record');
+            });
+        });
+    }
+
+    // ========================================================================
+    // SECTION 16: MEDICAL RECORDS - UPDATE BUTTON (RENAMED FROM EDIT)
+    // ========================================================================
+
+    // ===============================
+    // UPDATE BUTTON CLICK EVENT
+    // ===============================
+    document.addEventListener('click', function (e) {
+        if (e.target.classList.contains('btn-update-medrec') || e.target.closest('.btn-update-medrec')) {
+            const btn = e.target.classList.contains('btn-update-medrec') ? e.target : e.target.closest('.btn-update-medrec');
+            const row = btn.closest('tr');
+            
+            const dataAttr = row.getAttribute('data-medrec');
+            
+            if (!dataAttr) return;
+            
+            const data = JSON.parse(dataAttr);
+
+            // Populate update modal
+            const updateMedRecId = document.getElementById('update_med_rec_id');
+            const updateMedRecIdDisplay = document.getElementById('update_med_rec_id_display');
+            const updateApptId = document.getElementById('update_appt_id');
+            const updateApptIdHidden = document.getElementById('update_appt_id_hidden');
+            const updatePatientName = document.getElementById('update_patient_name');
+            const updateService = document.getElementById('update_service');
+            const updateDiagnosis = document.getElementById('update_diagnosis');
+            const updatePrescription = document.getElementById('update_prescription');
+            const updateVisitDate = document.getElementById('update_visit_date');
+
+            if (updateMedRecId) updateMedRecId.value = data.MED_REC_ID;
+            if (updateMedRecIdDisplay) updateMedRecIdDisplay.value = data.MED_REC_ID;
+            if (updateApptId) updateApptId.value = data.APPT_ID;
+            if (updateApptIdHidden) updateApptIdHidden.value = data.APPT_ID;
+            if (updatePatientName) updatePatientName.value = `${data.PAT_FIRST_NAME} ${data.PAT_LAST_NAME}`;
+            if (updateService) updateService.value = data.SERV_NAME || '-';
+            if (updateDiagnosis) updateDiagnosis.value = data.MED_REC_DIAGNOSIS || '';
+            if (updatePrescription) updatePrescription.value = data.MED_REC_PRESCRIPTION || '';
+            if (updateVisitDate) updateVisitDate.value = data.MED_REC_VISIT_DATE || '';
+
+            // Show modal
+            const updateModal = new bootstrap.Modal(document.getElementById('updateModal'));
+            updateModal.show();
+        }
+    });
+
+    // ===============================
+    // UPDATE FORM SUBMISSION
+    // ===============================
+    const medRecUpdateForm = document.getElementById('updateForm');
+    if (medRecUpdateForm) {
+        medRecUpdateForm.addEventListener('submit', function (e) {
+            e.preventDefault();
+
+            const formData = new FormData(medRecUpdateForm);
+
+            fetch('ajax/update_medical_record.php', {
+                method: 'POST',
+                body: formData
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    alert('Medical record updated successfully!');
+                    
+                    // Close modal
+                    const updateModal = bootstrap.Modal.getInstance(document.getElementById('updateModal'));
+                    updateModal.hide();
+                    
+                    // Reload page to show updated data
+                    setTimeout(() => {
+                        window.location.reload();
+                    }, 500);
+                } else {
+                    alert('Error updating record: ' + (data.message || 'Unknown error'));
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('An error occurred while updating the record');
+            });
+        });
+    }
+
+    // ========================================================================
+    // SECTION 17: MEDICAL RECORDS - ENHANCED FILTER WITH MED REC ID
+    // ========================================================================
+
+    // ===============================
+    // FILTER BUTTON WITH MEDICAL RECORD ID SEARCH
+    // ===============================
+    const medRecFilterBtnEnhanced = document.getElementById('filterBtn');
+    const medRecClearFilterBtnEnhanced = document.getElementById('clearFilterBtn');
+    const medRecFilterByDateEnhanced = document.getElementById('filterByDate');
+    const medRecSearchPatientNameEnhanced = document.getElementById('searchPatientName');
+    const medRecSearchApptIdEnhanced = document.getElementById('searchApptId');
+    const medRecSearchMedRecId = document.getElementById('searchMedRecId');
+    const medRecTableRowsEnhanced = document.querySelectorAll('#medRecTable tbody tr');
+    const filteredCardWrapperEnhanced = document.getElementById('filteredCardWrapper');
+    const filteredRecordsCountEnhanced = document.getElementById('filteredRecordsCount');
+
+    if (medRecFilterBtnEnhanced) {
+        medRecFilterBtnEnhanced.addEventListener('click', function () {
+            const dateValue = medRecFilterByDateEnhanced ? medRecFilterByDateEnhanced.value : '';
+            const nameValue = medRecSearchPatientNameEnhanced ? medRecSearchPatientNameEnhanced.value.toLowerCase().trim() : '';
+            const apptIdValue = medRecSearchApptIdEnhanced ? medRecSearchApptIdEnhanced.value.trim() : '';
+            const medRecIdValue = medRecSearchMedRecId ? medRecSearchMedRecId.value.trim() : '';
+
+            let visibleCount = 0;
+
+            medRecTableRowsEnhanced.forEach(row => {
+                // Skip the "no records" row
+                if (row.cells.length < 7) {
+                    row.style.display = 'none';
+                    return;
+                }
+
+                const rowDate = row.getAttribute('data-date');
+                const rowPatient = row.getAttribute('data-patient');
+                const rowApptId = row.getAttribute('data-apptid');
+                const rowMedRecId = row.getAttribute('data-medrecid');
+
+                let matchDate = true;
+                let matchName = true;
+                let matchApptId = true;
+                let matchMedRecId = true;
+
+                // Check date filter
+                if (dateValue && rowDate !== dateValue) {
+                    matchDate = false;
+                }
+
+                // Check name filter
+                if (nameValue && !rowPatient.includes(nameValue)) {
+                    matchName = false;
+                }
+
+                // Check appointment ID filter
+                if (apptIdValue && rowApptId !== apptIdValue) {
+                    matchApptId = false;
+                }
+
+                // Check medical record ID filter
+                if (medRecIdValue && rowMedRecId !== medRecIdValue) {
+                    matchMedRecId = false;
+                }
+
+                // Show row if all filters match
+                if (matchDate && matchName && matchApptId && matchMedRecId) {
+                    row.style.display = '';
+                    visibleCount++;
+                } else {
+                    row.style.display = 'none';
+                }
+            });
+
+            // Show filtered count card
+            if (dateValue || nameValue || apptIdValue || medRecIdValue) {
+                if (filteredCardWrapperEnhanced) filteredCardWrapperEnhanced.style.display = 'block';
+                if (filteredRecordsCountEnhanced) filteredRecordsCountEnhanced.textContent = visibleCount;
+            }
+
+            if (visibleCount === 0) {
+                alert('No records match your filter criteria');
+            }
+        });
+    }
+
+    // ===============================
+    // CLEAR FILTER BUTTON
+    // ===============================
+    if (medRecClearFilterBtnEnhanced) {
+        medRecClearFilterBtnEnhanced.addEventListener('click', function () {
+            if (medRecFilterByDateEnhanced) medRecFilterByDateEnhanced.value = '';
+            if (medRecSearchPatientNameEnhanced) medRecSearchPatientNameEnhanced.value = '';
+            if (medRecSearchApptIdEnhanced) medRecSearchApptIdEnhanced.value = '';
+            if (medRecSearchMedRecId) medRecSearchMedRecId.value = '';
+            
+            medRecTableRowsEnhanced.forEach(row => {
+                row.style.display = '';
+            });
+
+            if (filteredCardWrapperEnhanced) filteredCardWrapperEnhanced.style.display = 'none';
+        });
+    }
+
 });
