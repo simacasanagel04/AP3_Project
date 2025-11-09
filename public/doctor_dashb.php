@@ -127,7 +127,7 @@ require_once '../includes/doctor_header.php';
     <button class="tab-btn btn btn-outline-light" data-target="upcoming" data-count="<?= count($upcomingAppts) ?>" data-label="Upcoming Appointments">
         View Upcoming Appointment
     </button>
-    <button class="tab-btn btn btn-outline-light" data-target="history" data-count="<?= count($appointments) ?>" data-label="Overall Appointments">
+    <button class="tab-btn btn btn-outline-light" data-target="history" data-count="<?= count($historyAppts) ?>" data-label="Past Appointments">
         View Appointment History
     </button>
 </div>

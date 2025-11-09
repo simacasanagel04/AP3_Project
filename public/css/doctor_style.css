@@ -30,19 +30,10 @@ body {
   z-index: 1050;
 }
 
-.sidebar.hidden {
-  transform: translateX(-100%);
-}
+.sidebar.hidden {transform: translateX(-100%);}
 
-.logo-area {
-  padding: 1.5rem 1rem;
-  text-align: center;
-  border-bottom: 1px solid #ccc;
-}
-
-.logo-img {
-  max-height: 50px;
-}
+.logo-area {text-align: center;}
+.logo-img {max-height: 75px;}
 
 .user-info {
   display: flex;
@@ -304,10 +295,6 @@ body {
   }
 }
 
-
-
-/* Add to public/css/doctor_style.css */
-
 /* ===== NAV LINK UNDERLINE EFFECT ===== */
 .sidebar .nav-link.active span {
   text-decoration: underline;
@@ -372,9 +359,7 @@ body {
   font-size: 0.85rem;
 }
 
-/* Add at the end of public/css/doctor_style.css */
-
-/* ===== MEDICAL RECORDS PAGE SPECIFIC ===== */
+/* ===== MEDICAL RECORDS PAGE ===== */
 .info-card h2 i {
   margin-right: 10px;
 }
@@ -600,4 +585,176 @@ body {
   #dynamicCountCard h3 {
     font-size: 2rem;
   }
+}
+
+/* ===== NEW RECORD CARD STYLING ===== */
+.add-new-card {
+  background: linear-gradient(135deg, #ffffff, #d1f2eb);
+  border: 2px solid #198754;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.add-new-card:hover {
+  transform: translateY(-8px);
+  box-shadow: 0 8px 20px rgba(25, 135, 84, 0.3);
+  background: linear-gradient(135deg, #d1f2eb, #ffffff);
+}
+
+.add-new-card h5 {
+  color: #198754;
+  font-weight: 600;
+}
+
+.add-new-card h2 {
+  color: #198754;
+  font-size: 3rem;
+  transition: transform 0.3s ease;
+}
+
+.add-new-card:hover h2 {
+  transform: scale(1.1) rotate(90deg);
+}
+
+/* ===== UPDATE BUTTON STYLING ===== */
+.btn-update-medrec {
+  background-color: #fff;
+  color: #41381e;
+  border-color: #ffc107;
+  font-weight: 600;
+}
+
+.btn-update-medrec:hover {
+  background-color: #d6b140;
+  color: #000;
+  border-color: #8d7018;
+}
+
+/* ===== ADD RECORD FORM WRAPPER ===== */
+#addRecordFormWrapper {
+  animation: slideDown 0.4s ease;
+}
+
+@keyframes slideDown {
+  from {
+    opacity: 0;
+    transform: translateY(-20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+#addRecordFormWrapper .info-card {
+  border-left: 5px solid #198754;
+  background: linear-gradient(135deg, #ffffff, #f8f9fa);
+}
+
+/* ===== RESPONSIVE ADJUSTMENTS FOR FILTER ===== */
+@media (max-width: 768px) {
+  #addRecordFormWrapper .col-md-6,
+  #addRecordFormWrapper .col-md-4 {
+    margin-bottom: 0.75rem;
+  }
+}
+
+/* ===== DOCTOR PROFILE PAGE - ADDITIONAL STYLES ===== */
+
+/* View Modal - Account Details Icons */
+.modal-body .user-avatar.mx-auto {
+    background: linear-gradient(135deg, var(--main-blue), #4a80a8);
+    color: #fff;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 1rem;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+/* Form Control Plaintext Styling */
+.form-control-plaintext {
+    padding-left: 0.5rem;
+    border-left: 3px solid var(--main-blue);
+    background-color: rgba(51, 109, 150, 0.05);
+    border-radius: 4px;
+    padding: 0.5rem 0.75rem;
+    min-height: 38px;
+}
+
+.form-control-plaintext.fw-bold {
+    font-weight: 600 !important;
+    color: var(--main-blue);
+}
+
+/* Icon spacing in labels */
+.form-label i {
+    margin-right: 0.4rem;
+    color: var(--main-blue);
+}
+
+/* Alert info styling in edit modal */
+.alert-info {
+    background-color: #d1ecf1;
+    border-color: #bee5eb;
+    color: #0c5460;
+}
+
+.alert-info i {
+    font-size: 1.2rem;
+    vertical-align: middle;
+}
+
+/* Required asterisk */
+.text-danger {
+    color: #dc3545 !important;
+}
+
+/* Password fields grouping */
+.col-12 hr {
+    margin: 1rem 0;
+    border-top: 2px solid #dee2e6;
+}
+
+/* Submit button icon */
+.btn i {
+    margin-right: 0.3rem;
+}
+
+/* Loading spinner in button */
+.spinner-border-sm {
+    width: 1rem;
+    height: 1rem;
+    border-width: 0.15em;
+}
+
+/* Responsive adjustments for profile page */
+@media (max-width: 768px) {
+    .modal-body .user-avatar.mx-auto {
+        width: 60px !important;
+        height: 60px !important;
+        font-size: 2rem !important;
+    }
+    
+    .col-md-6 {
+        margin-bottom: 0.75rem;
+    }
+}
+
+/* Profile cards hover effect - specific to profile page */
+.cursor-pointer .bi {
+    transition: all 0.3s ease;
+}
+
+.cursor-pointer:hover .bi {
+    transform: scale(1.15);
+}
+
+/* Two-column layout for profile page */
+@media (min-width: 768px) {
+    #viewModal .row.g-4 .col-md-6,
+    #editModal .row.g-3 .col-md-6 {
+        flex: 0 0 50%;
+        max-width: 50%;
+    }
 }
