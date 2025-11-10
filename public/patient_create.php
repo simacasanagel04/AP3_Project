@@ -1,6 +1,5 @@
 <?php
-// patient_create.php
-// inside the folder public in AP3_PROJECT root
+// public/patient_create.php
 
 session_start();
 
@@ -112,8 +111,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     <!-- Custom CSS -->
     <link rel="stylesheet" href="../public/css/style.css">
 </head>
-<body class="bg-light">
 
+<body class="bg-light">
 
 <!-- MAIN CONTENT -->
 <div class="container mt-3">
@@ -214,6 +213,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 </div>
 
 <!-- Bootstrap JS -->
+ <script src="js/patient_dashboard.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 
 <!-- FORM VALIDATION -->
