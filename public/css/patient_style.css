@@ -26,21 +26,9 @@ h1, h2, h3, h4, h5, h6, .display-4 {
     font-weight: 700;
 }
 
-.logo-font-aksyon {
-    font-family: 'The Seasons', cursive;
-    font-size: 1.8rem;
-    color: var(--blue);
-}
-
-.logo-font-medical {
-    font-family: 'Telegraph', sans-serif;
-    font-size: 1rem;
-    color: #555;
-}
-
 /* SIDEBAR */
 .sidebar {
-    background: linear-gradient(180deg, var(--light-blue) 0%, #a0c4d8 100%);
+    background: #bbc0c7;
     width: var(--sidebar-width);
     min-height: 100vh;
     padding: 1.5rem 1rem;
@@ -57,6 +45,22 @@ h1, h2, h3, h4, h5, h6, .display-4 {
     transform: translateX(-100%);
 }
 
+/* ===== CLOCK CARD ===== */
+.clock-card {
+  background: #fff;
+  padding: 1rem;
+  margin: 1rem;
+  border-radius: 12px;
+  text-align: center;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+}
+
+.clock-card strong {
+  color: var(--main-blue);
+  display: block;
+  font-size: 1.1rem;
+}
+
 /* MAIN CONTENT */
 .main-content {
     margin-left: var(--sidebar-width);
@@ -67,52 +71,6 @@ h1, h2, h3, h4, h5, h6, .display-4 {
 
 .sidebar.hidden ~ .main-content {
     margin-left: 0;
-}
-
-/* TOGGLE BUTTON */
-.sidebar-toggle-btn {
-    position: fixed;
-    top: 1rem;
-    left: 1rem;
-    z-index: 1100;
-    background: var(--blue);
-    color: white;
-    border: none;
-    width: 45px;
-    height: 45px;
-    border-radius: 50%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 1.4rem;
-    box-shadow: 0 4px 12px rgba(0,0,0,0.2);
-    cursor: pointer;
-    transition: all 0.3s ease;
-}
-
-.sidebar-toggle-btn:hover {
-    background: #285a7a;
-    transform: scale(1.05);
-}
-
-.sidebar-toggle-btn i {
-    transition: transform 0.3s ease;
-}
-
-.sidebar-toggle-btn.open i {
-    transform: rotate(90deg);
-}
-
-/* LOGO */
-.sidebar .logo-area {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    margin-bottom: 2rem;
-}
-
-.sidebar .logo-img {
-    height: 50px;
 }
 
 /* USER INFO */
@@ -141,6 +99,218 @@ h1, h2, h3, h4, h5, h6, .display-4 {
 
 .sidebar .user-details {
     max-width: 150px;
+}
+/* =====================================================================================
+ DASHBOARD HEADER 
+ ===================================================================================== */
+.dashboard-header {
+    background: linear-gradient(135deg, var(--blue) 0%, var(--teal) 100%);
+    padding: 2rem;
+    border-radius: 12px;
+    color: white;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+    margin-bottom: 2rem;
+}
+
+.dashboard-header h1 {
+    margin-bottom: 0.5rem;
+    text-shadow: 2px 2px 4px rgba(0,0,0,0.2);
+}
+
+.dashboard-header h2 {
+    font-size: 1.5rem;
+    font-weight: 400;
+    opacity: 0.95;
+}
+
+/* ===== STATS CARDS ===== */
+.stat-card {
+    background: white;
+    border-radius: 12px;
+    padding: 1.5rem;
+    display: flex;
+    align-items: center;
+    gap: 1.5rem;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.08);
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.stat-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 8px 25px rgba(0,0,0,0.15);
+}
+
+.stat-icon {
+    width: 70px;
+    height: 70px;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 2rem;
+    color: white;
+}
+
+.stat-icon.bg-primary {background: linear-gradient(135deg, #336d96 0%, #4a8bc2 100%);}
+.stat-icon.bg-warning {background: linear-gradient(135deg, #f39c12 0%, #f5b041 100%);}
+.stat-icon.bg-success {background: linear-gradient(135deg, #27ae60 0%, #52be80 100%);}
+
+.stat-info h3 {
+    font-size: 2.5rem;
+    font-weight: 700;
+    margin: 0;
+    color: #333;
+}
+
+.stat-info p {
+    margin: 0;
+    color: #666;
+    font-size: 0.95rem;
+}
+
+/* ===== APPOINTMENT SECTIONS ===== */
+.appointment-section {animation: fadeIn 0.4s ease-in;}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* ===== TABLE ENHANCEMENTS ===== */
+.table-hover tbody tr {transition: all 0.3s ease;}
+
+.table-hover tbody tr:hover {
+    background-color: #f8f9fa;
+    transform: scale(1.01);
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+}
+
+.table thead th {
+    background-color: var(--light-gray);
+    font-weight: 600;
+    color: #444;
+    border-bottom: 2px solid var(--blue);
+    text-transform: uppercase;
+    font-size: 0.85rem;
+    letter-spacing: 0.5px;
+}
+
+/* ===== BADGE STYLES ===== */
+.badge {
+    padding: 0.5rem 1rem;
+    font-size: 0.85rem;
+    font-weight: 600;
+    border-radius: 50px;
+}
+
+.badge.bg-warning {
+    background-color: #ffc107 !important;
+    color: #000;
+}
+
+.badge.bg-success {background-color: #28a745 !important;}
+.badge.bg-danger {background-color: #dc3545 !important;}
+
+/* ===== BUTTON STYLES ===== */
+.btn-sm {
+    padding: 0.4rem 0.8rem;
+    font-size: 0.85rem;
+    border-radius: 6px;
+    transition: all 0.3s ease;
+}
+
+.btn-info {
+    background-color: #17a2b8;
+    border-color: #17a2b8;
+    color: white;
+}
+
+.btn-info:hover {
+    background-color: #138496;
+    border-color: #117a8b;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(23, 162, 184, 0.3);
+}
+
+.btn-warning {
+    background-color: #ffc107;
+    border-color: #ffc107;
+    color: #000;
+}
+
+.btn-warning:hover {
+    background-color: #e0a800;
+    border-color: #d39e00;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(255, 193, 7, 0.3);
+}
+
+.btn-danger {
+    background-color: #dc3545;
+    border-color: #dc3545;
+}
+
+.btn-danger:hover {
+    background-color: #c82333;
+    border-color: #bd2130;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(220, 53, 69, 0.3);
+}
+
+/* ===== MODAL ENHANCEMENTS ===== */
+.modal-header {
+    border-bottom: 3px solid var(--blue);
+}
+
+.modal-body {padding: 2rem;}
+
+.modal-body strong {
+    color: var(--blue);
+    display: block;
+    margin-bottom: 0.25rem;
+    font-size: 0.9rem;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.modal-body p {
+    font-size: 1.1rem;
+    color: #333;
+    margin-bottom: 1rem;
+    padding-bottom: 0.5rem;
+    border-bottom: 1px solid #e9ecef;
+}
+
+/* ===== EMPTY STATE ===== */
+.text-center.py-5 {padding: 3rem !important;}
+.text-center.py-5 i {opacity: 0.3;}
+
+/* ===== RESPONSIVE ADJUSTMENTS ===== */
+@media (max-width: 768px) {
+
+    .dashboard-header h1 {font-size: 1.8rem;}
+    .dashboard-header h2 {font-size: 1.2rem;}
+    .stat-card {flex-direction: column; text-align: center;}
+
+    .stat-icon {
+        width: 60px;
+        height: 60px;
+        font-size: 1.5rem;
+    }
+
+    .stat-info h3 {font-size: 2rem;}
+    .table {font-size: 0.8rem;}
+
+    .btn-sm {
+        padding: 0.3rem 0.6rem;
+        font-size: 0.75rem;
+    }
 }
 
 /* NAV */
@@ -310,9 +480,6 @@ h1, h2, h3, h4, h5, h6, .display-4 {
     .main-content {
         margin-left: 0;
     }
-    .sidebar-toggle-btn {
-        display: flex;
-    }
 }
 
 @media (max-width: 768px) {
@@ -327,4 +494,208 @@ h1, h2, h3, h4, h5, h6, .display-4 {
         text-align: center;
         gap: 0.5rem;
     }
+}
+
+/* HISTORY TABLE */
+.history-section {
+    display: none;
+    margin-top: 2rem;
+}
+
+.history-section.active {
+    display: block;
+}
+
+.history-table {
+    background: white;
+    border-radius: 12px;
+    overflow: hidden;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+}
+
+.history-table th {
+    background: var(--light-gray);
+    font-weight: 600;
+    color: #444;
+    text-align: center;
+}
+
+.history-table td {
+    vertical-align: middle;
+    text-align: center;
+}
+
+.status-badge {
+    padding: 0.35rem 0.75rem;
+    border-radius: 50px;
+    font-size: 0.8rem;
+    font-weight: 600;
+}
+
+.status-pending { background: #fff3cd; color: #856404; }
+.status-confirmed { background: #d4edda; color: #155724; }
+.status-cancelled { background: #f8d7da; color: #721c24; }
+
+.billing-info {
+    font-size: 0.9rem;
+}
+
+.billing-info small {
+    display: block;
+    color: #6c757d;
+}
+
+/* RESPONSIVE TABLE */
+@media (max-width: 768px) {
+    .history-table {
+        font-size: 0.85rem;
+    }
+    .history-table thead {
+        display: none;
+    }
+    .history-table tr {
+        display: block;
+        margin-bottom: 1rem;
+        border: 1px solid #ddd;
+        border-radius: 8px;
+        padding: 1rem;
+    }
+    .history-table td {
+        display: block;
+        text-align: right;
+        padding: 0.5rem 0;
+    }
+    .history-table td::before {
+        content: attr(data-label);
+        float: left;
+        font-weight: 600;
+        color: #555;
+    }
+}
+
+/* ADDITIONAL – SIDEBAR TOGGLE & ACTIVE NAV */
+.sidebar-toggle {
+    position: fixed;
+    top: 1rem;
+    left: 1rem;
+    z-index: 1100;
+    background: var(--blue);
+    color: white;
+    border: none;
+    width: 45px;
+    height: 45px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.4rem;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.sidebar-toggle:hover {
+    background: #285a7a;
+    transform: scale(1.05);
+}
+
+.sidebar-toggle i {
+    transition: transform 0.3s ease;
+}
+
+.sidebar-toggle.open i {
+    transform: rotate(90deg);
+}
+
+.sidebar .nav-link.active {
+    background-color: var(--blue);
+    color: white;
+}
+
+@media (max-width: 992px) {
+    .sidebar-toggle {
+        display: flex;
+    }
+}
+
+/* NEW: TAB SWITCHING */
+#bookSection {
+    display: none;
+}
+#historySection {
+    display: block;
+}
+
+/* TABLE STYLING */
+.table th small {
+    display: block;
+    font-weight: normal;
+    color: #666;
+}
+
+/* =================================================================== */
+/* Booking Form Enhancements */
+.book-section {
+    animation: slideIn 0.3s ease-in-out;
+}
+
+@keyframes slideIn {
+    from {
+        opacity: 0;
+        transform: translateY(-20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+#dateNote {
+    display: block;
+    margin-top: 0.25rem;
+    font-size: 0.875rem;
+}
+
+/* Payment Card Styles */
+.card-form {
+    animation: fadeInUp 0.4s ease;
+}
+
+@keyframes fadeInUp {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.card-form h5 {
+    color: var(--blue);
+    margin-bottom: 1rem;
+    font-size: 1.2rem;
+}
+
+.card-form .alert {
+    border-radius: 8px;
+}
+
+.form-check-input:checked {
+    background-color: var(--blue);
+    border-color: var(--blue);
+}
+
+/* Loading spinner */
+.spinner-border-sm {
+    width: 1rem;
+    height: 1rem;
+    border-width: 0.15em;
+}
+
+/* Disabled state for book button */
+.btn-book:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
 }

@@ -18,32 +18,32 @@ class Patient {
             // Get row number (position in ordered list)
             $sqlRowNum = "SELECT COUNT(*) as row_num 
                           FROM {$this->table_patient} 
-                          WHERE pat_id <= :pat_id 
-                          ORDER BY pat_id";
+                          WHERE PAT_ID <= :pat_id 
+                          ORDER BY PAT_ID";
             $stmtRowNum = $this->conn->prepare($sqlRowNum);
             $stmtRowNum->execute([':pat_id' => (int)$pat_id]);
             $rowData = $stmtRowNum->fetch(PDO::FETCH_ASSOC);
 
             // Get patient details
             $sql = "SELECT 
-                        p.pat_id, 
-                        p.pat_first_name, 
-                        p.pat_middle_init, 
-                        p.pat_last_name, 
-                        p.pat_dob, 
-                        p.pat_gender, 
-                        p.pat_contact_num, 
-                        p.pat_email, 
-                        p.pat_address,
-                        p.pat_created_at, 
-                        p.pat_updated_at,
-                        COUNT(a.app_id) as total_appointments,
-                        DATE_FORMAT(p.pat_created_at, '%M %d, %Y %h:%i %p') as formatted_created_at,
-                        DATE_FORMAT(p.pat_updated_at, '%M %d, %Y %h:%i %p') as formatted_updated_at
+                        p.PAT_ID as pat_id, 
+                        p.PAT_FIRST_NAME as pat_first_name, 
+                        p.PAT_MIDDLE_INIT as pat_middle_init, 
+                        p.PAT_LAST_NAME as pat_last_name, 
+                        p.PAT_DOB as pat_dob, 
+                        p.PAT_GENDER as pat_gender, 
+                        p.PAT_CONTACT_NUM as pat_contact_num, 
+                        p.PAT_EMAIL as pat_email, 
+                        p.PAT_ADDRESS as pat_address,
+                        p.PAT_CREATED_AT as pat_created_at, 
+                        p.PAT_UPDATED_AT as pat_updated_at,
+                        COUNT(a.APPT_ID) as total_appointments,
+                        DATE_FORMAT(p.PAT_CREATED_AT, '%M %d, %Y %h:%i %p') as formatted_created_at,
+                        DATE_FORMAT(p.PAT_UPDATED_AT, '%M %d, %Y %h:%i %p') as formatted_updated_at
                     FROM {$this->table_patient} p
-                    LEFT JOIN {$this->table_appointment} a ON p.pat_id = a.pat_id
-                    WHERE p.pat_id = :pat_id
-                    GROUP BY p.pat_id";
+                    LEFT JOIN {$this->table_appointment} a ON p.PAT_ID = a.PAT_ID
+                    WHERE p.PAT_ID = :pat_id
+                    GROUP BY p.PAT_ID";
 
             $stmt = $this->conn->prepare($sql);
             $stmt->execute([':pat_id' => (int)$pat_id]);
@@ -64,23 +64,23 @@ class Patient {
     public function all() {
         try {
             $sql = "SELECT 
-                        p.pat_id, 
-                        p.pat_first_name, 
-                        p.pat_middle_init, 
-                        p.pat_last_name, 
-                        p.pat_dob, 
-                        p.pat_gender, 
-                        p.pat_contact_num, 
-                        p.pat_email, 
-                        p.pat_address,
-                        COUNT(a.app_id) as total_appointments,
-                        DATE_FORMAT(p.pat_created_at, '%M %d, %Y %h:%i %p') as formatted_created_at,
-                        DATE_FORMAT(p.pat_updated_at, '%M %d, %Y %h:%i %p') as formatted_updated_at,
-                        DATE_FORMAT(p.pat_dob, '%M %d, %Y') as formatted_dob
+                        p.PAT_ID as pat_id, 
+                        p.PAT_FIRST_NAME as pat_first_name, 
+                        p.PAT_MIDDLE_INIT as pat_middle_init, 
+                        p.PAT_LAST_NAME as pat_last_name, 
+                        p.PAT_DOB as pat_dob, 
+                        p.PAT_GENDER as pat_gender, 
+                        p.PAT_CONTACT_NUM as pat_contact_num, 
+                        p.PAT_EMAIL as pat_email, 
+                        p.PAT_ADDRESS as pat_address,
+                        COUNT(a.APPT_ID) as total_appointments,
+                        DATE_FORMAT(p.PAT_CREATED_AT, '%M %d, %Y %h:%i %p') as formatted_created_at,
+                        DATE_FORMAT(p.PAT_UPDATED_AT, '%M %d, %Y %h:%i %p') as formatted_updated_at,
+                        DATE_FORMAT(p.PAT_DOB, '%M %d, %Y') as formatted_dob
                     FROM {$this->table_patient} p
-                    LEFT JOIN {$this->table_appointment} a ON p.pat_id = a.pat_id
-                    GROUP BY p.pat_id
-                    ORDER BY p.pat_id";
+                    LEFT JOIN {$this->table_appointment} a ON p.PAT_ID = a.PAT_ID
+                    GROUP BY p.PAT_ID
+                    ORDER BY p.PAT_ID";
 
             $stmt = $this->conn->query($sql);
             return $stmt->fetchAll(PDO::FETCH_ASSOC);
@@ -93,23 +93,23 @@ class Patient {
     public function allPaginated($limit = 10, $offset = 0) {
         try {
             $sql = "SELECT 
-                        p.pat_id, 
-                        p.pat_first_name, 
-                        p.pat_middle_init, 
-                        p.pat_last_name, 
-                        p.pat_dob, 
-                        p.pat_gender, 
-                        p.pat_contact_num, 
-                        p.pat_email, 
-                        p.pat_address,
-                        COUNT(a.app_id) as total_appointments,
-                        DATE_FORMAT(p.pat_created_at, '%M %d, %Y %h:%i %p') as formatted_created_at,
-                        DATE_FORMAT(p.pat_updated_at, '%M %d, %Y %h:%i %p') as formatted_updated_at,
-                        DATE_FORMAT(p.pat_dob, '%M %d, %Y') as formatted_dob
+                        p.PAT_ID as pat_id, 
+                        p.PAT_FIRST_NAME as pat_first_name, 
+                        p.PAT_MIDDLE_INIT as pat_middle_init, 
+                        p.PAT_LAST_NAME as pat_last_name, 
+                        p.PAT_DOB as pat_dob, 
+                        p.PAT_GENDER as pat_gender, 
+                        p.PAT_CONTACT_NUM as pat_contact_num, 
+                        p.PAT_EMAIL as pat_email, 
+                        p.PAT_ADDRESS as pat_address,
+                        COUNT(a.APPT_ID) as total_appointments,
+                        DATE_FORMAT(p.PAT_CREATED_AT, '%M %d, %Y %h:%i %p') as formatted_created_at,
+                        DATE_FORMAT(p.PAT_UPDATED_AT, '%M %d, %Y %h:%i %p') as formatted_updated_at,
+                        DATE_FORMAT(p.PAT_DOB, '%M %d, %Y') as formatted_dob
                     FROM {$this->table_patient} p
-                    LEFT JOIN {$this->table_appointment} a ON p.pat_id = a.pat_id
-                    GROUP BY p.pat_id
-                    ORDER BY p.pat_id
+                    LEFT JOIN {$this->table_appointment} a ON p.PAT_ID = a.PAT_ID
+                    GROUP BY p.PAT_ID
+                    ORDER BY p.PAT_ID
                     LIMIT :limit OFFSET :offset";
 
             $stmt = $this->conn->prepare($sql);
@@ -127,22 +127,22 @@ class Patient {
     public function getPatientAppointments($pat_id) {
         try {
             $sql = "SELECT 
-                        a.app_id, 
-                        a.app_date, 
-                        a.app_time, 
-                        a.app_status, 
-                        a.app_reason,
-                        d.doc_first_name, 
-                        d.doc_middle_init, 
-                        d.doc_last_name, 
-                        d.doc_specialization,
-                        CONCAT(d.doc_last_name, ', ', d.doc_first_name, ' ', COALESCE(d.doc_middle_init, '')) as doctor_name,
-                        DATE_FORMAT(a.app_date, '%M %d, %Y') as formatted_app_date,
-                        DATE_FORMAT(a.app_time, '%h:%i %p') as formatted_app_time
+                        a.APPT_ID as app_id, 
+                        a.APPT_DATE as app_date, 
+                        a.APPT_TIME as app_time, 
+                        a.STAT_ID as app_status, 
+                        d.DOC_FIRST_NAME as doc_first_name, 
+                        d.DOC_MIDDLE_INIT as doc_middle_init, 
+                        d.DOC_LAST_NAME as doc_last_name, 
+                        s.SPEC_NAME as doc_specialization,
+                        CONCAT(d.DOC_LAST_NAME, ', ', d.DOC_FIRST_NAME, ' ', COALESCE(d.DOC_MIDDLE_INIT, '')) as doctor_name,
+                        DATE_FORMAT(a.APPT_DATE, '%M %d, %Y') as formatted_app_date,
+                        DATE_FORMAT(a.APPT_TIME, '%h:%i %p') as formatted_app_time
                     FROM {$this->table_appointment} a
-                    INNER JOIN {$this->table_doctor} d ON a.doc_id = d.doc_id
-                    WHERE a.pat_id = :pat_id
-                    ORDER BY a.app_date DESC, a.app_time DESC";
+                    INNER JOIN {$this->table_doctor} d ON a.DOC_ID = d.DOC_ID
+                    LEFT JOIN specialization s ON d.SPEC_ID = s.SPEC_ID
+                    WHERE a.PAT_ID = :pat_id
+                    ORDER BY a.APPT_DATE DESC, a.APPT_TIME DESC";
 
             $stmt = $this->conn->prepare($sql);
             $stmt->execute([':pat_id' => (int)$pat_id]);
@@ -168,13 +168,13 @@ class Patient {
     public function getAllForDropdown() {
         try {
             $sql = "SELECT 
-                        p.pat_id, 
-                        CONCAT(p.pat_last_name, ', ', p.pat_first_name, ' ', COALESCE(p.pat_middle_init, '')) as full_name,
-                        COUNT(a.app_id) as appointment_count
+                        p.PAT_ID as pat_id, 
+                        CONCAT(p.PAT_LAST_NAME, ', ', p.PAT_FIRST_NAME, ' ', COALESCE(p.PAT_MIDDLE_INIT, '')) as full_name,
+                        COUNT(a.APPT_ID) as appointment_count
                     FROM {$this->table_patient} p
-                    LEFT JOIN {$this->table_appointment} a ON p.pat_id = a.pat_id
-                    GROUP BY p.pat_id
-                    ORDER BY p.pat_last_name, p.pat_first_name";
+                    LEFT JOIN {$this->table_appointment} a ON p.PAT_ID = a.PAT_ID
+                    GROUP BY p.PAT_ID
+                    ORDER BY p.PAT_LAST_NAME, p.PAT_FIRST_NAME";
 
             $stmt = $this->conn->query($sql);
             return $stmt->fetchAll(PDO::FETCH_ASSOC);
@@ -187,27 +187,27 @@ class Patient {
     public function searchWithAppointments($searchTerm) {
         try {
             $sql = "SELECT 
-                        p.pat_id, 
-                        p.pat_first_name, 
-                        p.pat_middle_init, 
-                        p.pat_last_name, 
-                        p.pat_dob, 
-                        p.pat_gender, 
-                        p.pat_contact_num, 
-                        p.pat_email, 
-                        p.pat_address,
-                        COUNT(a.app_id) as total_appointments,
-                        MAX(a.app_date) as last_appointment_date,
-                        DATE_FORMAT(p.pat_created_at, '%M %d, %Y %h:%i %p') as formatted_created_at,
-                        DATE_FORMAT(MAX(a.app_date), '%M %d, %Y') as formatted_last_appointment
+                        p.PAT_ID as pat_id, 
+                        p.PAT_FIRST_NAME as pat_first_name, 
+                        p.PAT_MIDDLE_INIT as pat_middle_init, 
+                        p.PAT_LAST_NAME as pat_last_name, 
+                        p.PAT_DOB as pat_dob, 
+                        p.PAT_GENDER as pat_gender, 
+                        p.PAT_CONTACT_NUM as pat_contact_num, 
+                        p.PAT_EMAIL as pat_email, 
+                        p.PAT_ADDRESS as pat_address,
+                        COUNT(a.APPT_ID) as total_appointments,
+                        MAX(a.APPT_DATE) as last_appointment_date,
+                        DATE_FORMAT(p.PAT_CREATED_AT, '%M %d, %Y %h:%i %p') as formatted_created_at,
+                        DATE_FORMAT(MAX(a.APPT_DATE), '%M %d, %Y') as formatted_last_appointment
                     FROM {$this->table_patient} p
-                    LEFT JOIN {$this->table_appointment} a ON p.pat_id = a.pat_id
-                    WHERE p.pat_first_name LIKE :search 
-                       OR p.pat_last_name LIKE :search 
-                       OR p.pat_id LIKE :search
-                       OR p.pat_contact_num LIKE :search
-                    GROUP BY p.pat_id
-                    ORDER BY p.pat_last_name, p.pat_first_name";
+                    LEFT JOIN {$this->table_appointment} a ON p.PAT_ID = a.PAT_ID
+                    WHERE p.PAT_FIRST_NAME LIKE :search 
+                       OR p.PAT_LAST_NAME LIKE :search 
+                       OR p.PAT_ID LIKE :search
+                       OR p.PAT_CONTACT_NUM LIKE :search
+                    GROUP BY p.PAT_ID
+                    ORDER BY p.PAT_LAST_NAME, p.PAT_FIRST_NAME";
 
             $stmt = $this->conn->prepare($sql);
             $searchParam = '%' . trim($searchTerm) . '%';
@@ -225,14 +225,13 @@ class Patient {
         try {
             // INSERT PATIENT
             $sql = "INSERT INTO {$this->table_patient} 
-                    (pat_first_name, pat_middle_init, pat_last_name, pat_dob, 
-                     pat_gender, pat_contact_num, pat_email, pat_address, 
-                     pat_created_at, pat_updated_at)
+                    (PAT_FIRST_NAME, PAT_MIDDLE_INIT, PAT_LAST_NAME, PAT_DOB, 
+                     PAT_GENDER, PAT_CONTACT_NUM, PAT_EMAIL, PAT_ADDRESS, 
+                     PAT_CREATED_AT, PAT_UPDATED_AT)
                     VALUES 
                     (:pat_first_name, :pat_middle_init, :pat_last_name, :pat_dob,
                      :pat_gender, :pat_contact_num, :pat_email, :pat_address, 
                      NOW(), NOW())";
-
 
             $stmt = $this->conn->prepare($sql);
 
@@ -281,16 +280,16 @@ class Patient {
         try {
             $sql = "UPDATE {$this->table_patient} 
                     SET 
-                        pat_first_name   = :pat_first_name,
-                        pat_middle_init  = :pat_middle_init,
-                        pat_last_name    = :pat_last_name,
-                        pat_dob          = :pat_dob,
-                        pat_gender       = :pat_gender,
-                        pat_contact_num  = :pat_contact_num,
-                        pat_email        = :pat_email,
-                        pat_address      = :pat_address,
-                        pat_updated_at   = NOW()
-                    WHERE pat_id = :pat_id";
+                        PAT_FIRST_NAME   = :pat_first_name,
+                        PAT_MIDDLE_INIT  = :pat_middle_init,
+                        PAT_LAST_NAME    = :pat_last_name,
+                        PAT_DOB          = :pat_dob,
+                        PAT_GENDER       = :pat_gender,
+                        PAT_CONTACT_NUM  = :pat_contact_num,
+                        PAT_EMAIL        = :pat_email,
+                        PAT_ADDRESS      = :pat_address,
+                        PAT_UPDATED_AT   = NOW()
+                    WHERE PAT_ID = :pat_id";
 
             $stmt = $this->conn->prepare($sql);
             return $stmt->execute([
@@ -312,7 +311,7 @@ class Patient {
 
     public function delete($pat_id) {
         try {
-            $sql = "DELETE FROM {$this->table_patient} WHERE pat_id = :pat_id";
+            $sql = "DELETE FROM {$this->table_patient} WHERE PAT_ID = :pat_id";
             $stmt = $this->conn->prepare($sql);
             return $stmt->execute([':pat_id' => (int)$pat_id]);
         } catch (PDOException $e) {
