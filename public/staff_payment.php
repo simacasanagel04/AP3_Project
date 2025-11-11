@@ -1,14 +1,10 @@
 <?php
+// public/staff_payment.php
+
 session_start();
 require_once '../config/Database.php';
 require_once '../classes/Payment.php';
 include '../includes/staff_header.php';
-
-// Check if user is logged in as staff
-// if (!isset($_SESSION['user_id']) || !isset($_SESSION['staff_id'])) {
-//     header("Location: login.php");
-//     exit();
-// }
 
 $db = (new Database())->connect();
 $payment = new Payment($db);
@@ -17,55 +13,18 @@ $message = "";
 $status = "";
 
 // Handle filter
-$filterApptId = $_GET['filter_appt_id'] ?? '';
-$filterPaymtId = $_GET['filter_paymt_id'] ?? '';
-$filterPaymtStatus = $_GET['filter_pymt_stat'] ?? '';
+$filters = [
+    'appt_id' => $_GET['filter_appt_id'] ?? '',
+    'paymt_id' => $_GET['filter_paymt_id'] ?? '',
+    'pymt_stat_id' => $_GET['filter_pymt_stat'] ?? '',
+    'patient_name' => $_GET['filter_patient_name'] ?? '',
+    'pymt_meth_id' => $_GET['filter_pymt_meth'] ?? '',
+    'date_from' => $_GET['filter_date_from'] ?? '',
+    'date_to' => $_GET['filter_date_to'] ?? ''
+];
 
-// Fetch all payments with filters
-try {
-    $sql = "SELECT p.PAYMT_ID, p.PAYMT_AMOUNT_PAID, p.PAYMT_DATE, p.APPT_ID,
-            CONCAT(pat.PAT_FIRST_NAME, ' ', IFNULL(pat.PAT_MIDDLE_INIT, ''), '. ', pat.PAT_LAST_NAME) as patient_name,
-            pm.PYMT_METH_NAME, ps.PYMT_STAT_NAME,
-            DATE_FORMAT(p.PYMT_UPDATED_AT, '%M %d, %Y %h:%i %p') as formatted_updated_at,
-            s.SERV_PRICE
-            FROM payment p
-            LEFT JOIN payment_method pm ON p.PYMT_METH_ID = pm.PYMT_METH_ID
-            LEFT JOIN payment_status ps ON p.PYMT_STAT_ID = ps.PYMT_STAT_ID
-            LEFT JOIN appointment a ON p.APPT_ID = a.APPT_ID
-            LEFT JOIN patient pat ON a.PAT_ID = pat.PAT_ID
-            LEFT JOIN service s ON a.SERV_ID = s.SERV_ID
-            WHERE 1=1";
-    
-    if (!empty($filterApptId)) {
-        $sql .= " AND p.APPT_ID = :appt_id";
-    }
-    if (!empty($filterPaymtId)) {
-        $sql .= " AND p.PAYMT_ID = :paymt_id";
-    }
-    if (!empty($filterPaymtStatus)) {
-        $sql .= " AND p.PYMT_STAT_ID = :pymt_stat_id";
-    }
-    
-    $sql .= " ORDER BY p.PAYMT_ID DESC";
-    
-    $stmt = $db->prepare($sql);
-    
-    if (!empty($filterApptId)) {
-        $stmt->bindValue(':appt_id', $filterApptId, PDO::PARAM_INT);
-    }
-    if (!empty($filterPaymtId)) {
-        $stmt->bindValue(':paymt_id', $filterPaymtId, PDO::PARAM_INT);
-    }
-    if (!empty($filterPaymtStatus)) {
-        $stmt->bindValue(':pymt_stat_id', $filterPaymtStatus, PDO::PARAM_INT);
-    }
-    
-    $stmt->execute();
-    $payments = $stmt->fetchAll(PDO::FETCH_ASSOC);
-} catch (PDOException $e) {
-    error_log("Error fetching payments: " . $e->getMessage());
-    $payments = [];
-}
+// Fetch filtered payments
+$payments = $payment->allWithFilters($filters);
 
 // Fetch payment statuses for filter dropdown
 try {
@@ -73,13 +32,21 @@ try {
     $stmt = $db->query($sql);
     $paymentStatuses = $stmt->fetchAll(PDO::FETCH_ASSOC);
 } catch (PDOException $e) {
-    error_log("Error fetching payment statuses: " . $e->getMessage());
     $paymentStatuses = [];
 }
 
+// Fetch payment methods for filter dropdown
+try {
+    $sql = "SELECT PYMT_METH_ID, PYMT_METH_NAME FROM payment_method ORDER BY PYMT_METH_NAME";
+    $stmt = $db->query($sql);
+    $paymentMethods = $stmt->fetchAll(PDO::FETCH_ASSOC);
+} catch (PDOException $e) {
+    $paymentMethods = [];
+}
+
 // Calculate totals
-$totalPayments = count($payments);
-$filteredTotal = $totalPayments;
+$totalPayments = $payment->count();
+$filteredTotal = count($payments);
 ?>
 
 <!DOCTYPE html>
@@ -90,6 +57,8 @@ $filteredTotal = $totalPayments;
     <title>Staff Payment Management - AKSyon Medical Center</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
+    <link href="https://cdn.jsdelivr.net/npm/select2-bootstrap-5-theme@1.3.0/dist/select2-bootstrap-5-theme.min.css" rel="stylesheet" />
     <link href="css/staff_payments_style.css" rel="stylesheet">
 </head>
 <body>
@@ -122,12 +91,29 @@ $filteredTotal = $totalPayments;
                             <div class="col-md-3">
                                 <label for="filter_appt_id" class="form-label">Appointment ID</label>
                                 <input type="text" class="form-control" id="filter_appt_id" name="filter_appt_id" 
-                                    value="<?= htmlspecialchars($filterApptId) ?>" placeholder="Enter Appointment ID">
+                                    value="<?= htmlspecialchars($filters['appt_id']) ?>" placeholder="Enter Appointment ID">
                             </div>
                             <div class="col-md-3">
                                 <label for="filter_paymt_id" class="form-label">Payment ID</label>
                                 <input type="text" class="form-control" id="filter_paymt_id" name="filter_paymt_id" 
-                                    value="<?= htmlspecialchars($filterPaymtId) ?>" placeholder="Enter Payment ID">
+                                    value="<?= htmlspecialchars($filters['paymt_id']) ?>" placeholder="Enter Payment ID">
+                            </div>
+                            <div class="col-md-3">
+                                <label for="filter_patient_name" class="form-label">Patient Name</label>
+                                <input type="text" class="form-control" id="filter_patient_name" name="filter_patient_name" 
+                                    value="<?= htmlspecialchars($filters['patient_name']) ?>" placeholder="First or Last Name">
+                            </div>
+                            <div class="col-md-3">
+                                <label for="filter_pymt_meth" class="form-label">Payment Method</label>
+                                <select class="form-select" id="filter_pymt_meth" name="filter_pymt_meth">
+                                    <option value="">All Methods</option>
+                                    <?php foreach ($paymentMethods as $pm): ?>
+                                        <option value="<?= htmlspecialchars($pm['PYMT_METH_ID']) ?>" 
+                                            <?= ($filters['pymt_meth_id'] == $pm['PYMT_METH_ID']) ? 'selected' : '' ?>>
+                                            <?= htmlspecialchars($pm['PYMT_METH_NAME']) ?>
+                                        </option>
+                                    <?php endforeach; ?>
+                                </select>
                             </div>
                             <div class="col-md-3">
                                 <label for="filter_pymt_stat" class="form-label">Payment Status</label>
@@ -135,11 +121,21 @@ $filteredTotal = $totalPayments;
                                     <option value="">All Statuses</option>
                                     <?php foreach ($paymentStatuses as $ps): ?>
                                         <option value="<?= htmlspecialchars($ps['PYMT_STAT_ID']) ?>" 
-                                            <?= ($filterPaymtStatus == $ps['PYMT_STAT_ID']) ? 'selected' : '' ?>>
+                                            <?= ($filters['pymt_stat_id'] == $ps['PYMT_STAT_ID']) ? 'selected' : '' ?>>
                                             <?= htmlspecialchars($ps['PYMT_STAT_NAME']) ?>
                                         </option>
                                     <?php endforeach; ?>
                                 </select>
+                            </div>
+                            <div class="col-md-3">
+                                <label for="filter_date_from" class="form-label">Paid Date From</label>
+                                <input type="date" class="form-control" id="filter_date_from" name="filter_date_from" 
+                                    value="<?= htmlspecialchars($filters['date_from']) ?>">
+                            </div>
+                            <div class="col-md-3">
+                                <label for="filter_date_to" class="form-label">Paid Date To</label>
+                                <input type="date" class="form-control" id="filter_date_to" name="filter_date_to" 
+                                    value="<?= htmlspecialchars($filters['date_to']) ?>">
                             </div>
                             <div class="col-md-3 d-flex align-items-end gap-2">
                                 <button type="submit" class="btn btn-primary flex-fill">
@@ -151,7 +147,7 @@ $filteredTotal = $totalPayments;
                             </div>
                         </div>
                         <div class="mt-3">
-                            <small class="text-muted">Total Filters Applied: <strong><?= (!empty($filterApptId) ? 1 : 0) + (!empty($filterPaymtId) ? 1 : 0) + (!empty($filterPaymtStatus) ? 1 : 0) ?></strong></small>
+                            <small class="text-muted">Total Filters Applied: <strong><?= count(array_filter($filters)) ?></strong></small>
                         </div>
                     </form>
                 </div>
@@ -206,41 +202,93 @@ $filteredTotal = $totalPayments;
                     <h5 class="card-title mb-4">Add New Payment Record</h5>
                     <form id="addPaymentForm">
                         <div class="row g-3">
-                            <div class="col-md-6">
-                                <label for="add_appt_id" class="form-label">Appointment ID <span class="text-danger">*</span></label>
-                                <input type="text" class="form-control" id="add_appt_id" name="add_appt_id" required>
-                                <div class="form-text">Enter appointment ID to load details</div>
-                            </div>
-                            <div class="col-md-6">
-                                <label for="add_patient_name" class="form-label">Patient Name</label>
-                                <input type="text" class="form-control" id="add_patient_name" readonly>
-                            </div>
-                            <div class="col-md-6">
-                                <label for="add_amount" class="form-label">Amount Paid <span class="text-danger">*</span></label>
+                            <!-- Appointment Selection -->
+                            <div class="col-md-12">
+                                <label for="add_appt_id" class="form-label">Select Appointment <span class="text-danger">*</span></label>
                                 <div class="input-group">
-                                    <span class="input-group-text">₱</span>
-                                    <input type="number" step="0.01" class="form-control" id="add_amount" name="add_amount" required>
+                                    <select class="form-select" id="add_appt_id" name="add_appt_id" required>
+                                        <option value="">-- Select or Search Appointment --</option>
+                                    </select>
+                                    <button type="button" class="btn btn-outline-secondary" id="clearApptBtn">
+                                        <i class="bi bi-x-circle"></i> Clear
+                                    </button>
                                 </div>
+                                <div class="form-text">Search by Appointment ID or Patient Name</div>
                             </div>
-                            <div class="col-md-6">
-                                <label for="add_payment_method" class="form-label">Payment Method <span class="text-danger">*</span></label>
-                                <select class="form-select" id="add_payment_method" name="add_payment_method" required>
-                                    <option value="">-- Select Method --</option>
-                                </select>
-                            </div>
-                            <div class="col-md-6">
-                                <label for="add_payment_status" class="form-label">Payment Status <span class="text-danger">*</span></label>
-                                <select class="form-select" id="add_payment_status" name="add_payment_status" required>
-                                    <option value="">-- Select Status --</option>
-                                </select>
-                            </div>
-                            <div class="col-md-6">
-                                <label for="add_payment_date" class="form-label">Paid Date & Time <span class="text-danger">*</span></label>
-                                <input type="datetime-local" class="form-control" id="add_payment_date" name="add_payment_date" required>
+
+                            <!-- Appointment Details (Hidden until appointment selected) -->
+                            <div id="appointmentDetails" class="d-none">
+                                <div class="row g-3">
+                                    <div class="col-md-6">
+                                        <label class="form-label">Patient Name</label>
+                                        <input type="text" class="form-control" id="add_patient_name" readonly>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <label class="form-label">Service</label>
+                                        <input type="text" class="form-control" id="add_service_name" readonly>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <label class="form-label">Appointment Date</label>
+                                        <input type="text" class="form-control" id="add_appt_date" readonly>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <label class="form-label">Service Price</label>
+                                        <div class="input-group">
+                                            <span class="input-group-text">₱</span>
+                                            <input type="text" class="form-control" id="add_service_price" readonly>
+                                        </div>
+                                    </div>
+
+                                    <!-- Previous Payments Alert -->
+                                    <div class="col-md-12" id="previousPaymentsAlert" style="display:none;">
+                                        <div class="alert alert-warning">
+                                            <h6 class="alert-heading"><i class="bi bi-exclamation-triangle"></i> Previous Payments Exist</h6>
+                                            <p class="mb-2">This appointment already has payment records. You are adding an additional payment (e.g., installment).</p>
+                                            <div id="previousPaymentsList"></div>
+                                        </div>
+                                    </div>
+
+                                    <!-- Payment Form -->
+                                    <div class="col-md-6">
+                                        <label for="add_amount" class="form-label">New Payment Amount <span class="text-danger">*</span></label>
+                                        <div class="input-group">
+                                            <span class="input-group-text">₱</span>
+                                            <input type="number" step="0.01" class="form-control" id="add_amount" name="add_amount" required>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <label for="add_payment_method" class="form-label">Payment Method <span class="text-danger">*</span></label>
+                                        <select class="form-select" id="add_payment_method" name="add_payment_method" required>
+                                            <option value="">-- Select Method --</option>
+                                            <?php foreach ($paymentMethods as $pm): ?>
+                                                <option value="<?= htmlspecialchars($pm['PYMT_METH_ID']) ?>">
+                                                    <?= htmlspecialchars($pm['PYMT_METH_NAME']) ?>
+                                                </option>
+                                            <?php endforeach; ?>
+                                        </select>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <label for="add_payment_status" class="form-label">Payment Status <span class="text-danger">*</span></label>
+                                        <select class="form-select" id="add_payment_status" name="add_payment_status" required>
+                                            <option value="">-- Select Status --</option>
+                                            <?php foreach ($paymentStatuses as $ps): ?>
+                                                <option value="<?= htmlspecialchars($ps['PYMT_STAT_ID']) ?>">
+                                                    <?= htmlspecialchars($ps['PYMT_STAT_NAME']) ?>
+                                                </option>
+                                            <?php endforeach; ?>
+                                        </select>
+                                        <div class="form-text">Select "Paid" to enable date/time field</div>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <label for="add_payment_date" class="form-label">Paid Date & Time</label>
+                                        <input type="datetime-local" class="form-control" id="add_payment_date" name="add_payment_date" disabled>
+                                        <div class="form-text">Only required when status is "Paid"</div>
+                                    </div>
+                                </div>
                             </div>
                         </div>
                         <div class="mt-4 d-flex gap-2">
-                            <button type="submit" class="btn btn-success">
+                            <button type="submit" class="btn btn-success" id="submitPaymentBtn" disabled>
                                 <i class="bi bi-check-circle"></i> Add Payment
                             </button>
                             <button type="button" class="btn btn-secondary" id="cancelAddBtn">
@@ -262,17 +310,18 @@ $filteredTotal = $totalPayments;
                                     <th>Payment ID</th>
                                     <th>Appointment ID</th>
                                     <th>Patient Name</th>
+                                    <th>Service</th>
                                     <th>Amount Paid</th>
                                     <th>Payment Method</th>
                                     <th>Payment Status</th>
-                                    <th>Paid Date & Time</th>
+                                    <th>Updated Date & Time</th>
                                     <th>Action</th>
                                 </tr>
                             </thead>
                             <tbody>
                                 <?php if (empty($payments)): ?>
                                     <tr>
-                                        <td colspan="8" class="text-center text-muted py-4">No payment records found</td>
+                                        <td colspan="9" class="text-center text-muted py-4">No payment records found</td>
                                     </tr>
                                 <?php else: ?>
                                     <?php foreach ($payments as $p): ?>
@@ -280,6 +329,7 @@ $filteredTotal = $totalPayments;
                                             <td><?= htmlspecialchars($p['PAYMT_ID']) ?></td>
                                             <td><?= htmlspecialchars($p['APPT_ID']) ?></td>
                                             <td><?= htmlspecialchars($p['patient_name']) ?></td>
+                                            <td><?= htmlspecialchars($p['SERV_NAME'] ?? 'N/A') ?></td>
                                             <td>₱<?= number_format($p['PAYMT_AMOUNT_PAID'], 2) ?></td>
                                             <td><?= htmlspecialchars($p['PYMT_METH_NAME']) ?></td>
                                             <td>
@@ -287,14 +337,11 @@ $filteredTotal = $totalPayments;
                                                     <?= htmlspecialchars($p['PYMT_STAT_NAME']) ?>
                                                 </span>
                                             </td>
-                                            <td><?= htmlspecialchars($p['formatted_updated_at']) ?></td>
+                                            <td><?= htmlspecialchars($p['formatted_paymt_date']) ?></td>
                                             <td>
                                                 <button class="btn btn-sm btn-primary update-payment-btn" 
                                                     data-id="<?= htmlspecialchars($p['PAYMT_ID']) ?>"
-                                                    data-appt="<?= htmlspecialchars($p['APPT_ID']) ?>"
-                                                    data-patient="<?= htmlspecialchars($p['patient_name']) ?>"
-                                                    data-amount="<?= htmlspecialchars($p['PAYMT_AMOUNT_PAID']) ?>"
-                                                    data-date="<?= date('Y-m-d\TH:i', strtotime($p['PAYMT_DATE'])) ?>">
+                                                    data-appt="<?= htmlspecialchars($p['APPT_ID']) ?>">
                                                     <i class="bi bi-pencil"></i> Update
                                                 </button>
                                             </td>
@@ -330,10 +377,6 @@ $filteredTotal = $totalPayments;
                             <label for="update_appt_id" class="form-label">Appointment ID</label>
                             <input type="text" class="form-control" id="update_appt_id" readonly>
                         </div>
-                        <div class="col-md-12">
-                            <label for="update_patient_name" class="form-label">Patient Name</label>
-                            <input type="text" class="form-control" id="update_patient_name" readonly>
-                        </div>
                         <div class="col-md-6">
                             <label for="update_amount" class="form-label">Amount Paid <span class="text-danger">*</span></label>
                             <div class="input-group">
@@ -345,17 +388,28 @@ $filteredTotal = $totalPayments;
                             <label for="update_payment_method" class="form-label">Payment Method <span class="text-danger">*</span></label>
                             <select class="form-select" id="update_payment_method" name="update_payment_method" required>
                                 <option value="">-- Select Method --</option>
+                                <?php foreach ($paymentMethods as $pm): ?>
+                                    <option value="<?= htmlspecialchars($pm['PYMT_METH_ID']) ?>">
+                                        <?= htmlspecialchars($pm['PYMT_METH_NAME']) ?>
+                                    </option>
+                                <?php endforeach; ?>
                             </select>
                         </div>
                         <div class="col-md-6">
                             <label for="update_payment_status" class="form-label">Payment Status <span class="text-danger">*</span></label>
                             <select class="form-select" id="update_payment_status" name="update_payment_status" required>
                                 <option value="">-- Select Status --</option>
+                                <?php foreach ($paymentStatuses as $ps): ?>
+                                    <option value="<?= htmlspecialchars($ps['PYMT_STAT_ID']) ?>">
+                                        <?= htmlspecialchars($ps['PYMT_STAT_NAME']) ?>
+                                    </option>
+                                <?php endforeach; ?>
                             </select>
                         </div>
                         <div class="col-md-6">
-                            <label for="update_payment_date" class="form-label">Paid Date & Time <span class="text-danger">*</span></label>
-                            <input type="datetime-local" class="form-control" id="update_payment_date" name="update_payment_date" required>
+                            <label for="update_payment_date" class="form-label">Updated Date & Time</label>
+                            <input type="datetime-local" class="form-control" id="update_payment_date" name="update_payment_date">
+                            <div class="form-text">Only required when status is "Paid"</div>
                         </div>
                     </div>
                 </div>
@@ -373,7 +427,9 @@ $filteredTotal = $totalPayments;
 <!-- Alert Container -->
 <div class="alert-container" id="alertContainer"></div>
 
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
 <script src="js/staff_payments_script.js"></script>
 </body>
 </html>
