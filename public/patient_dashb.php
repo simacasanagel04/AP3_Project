@@ -1,5 +1,6 @@
 <?php 
 // public/patient_dashb.php
+
 include '../includes/patient_header.php'; 
 
 // Get filter parameters
@@ -26,12 +27,14 @@ if (!empty($filter_date)) {
 
 // Separate appointments
 $today = date('Y-m-d');
+$now = new DateTime();
+
 $today_appointments = array_filter($filtered_appointments, function($appt) use ($today) {
-    return $appt['app_date'] === $today;
+    return $appt['app_date'] === $today && $appt['app_status'] != 3; // Exclude cancelled
 });
 
 $upcoming_appointments = array_filter($filtered_appointments, function($appt) use ($today) {
-    return $appt['app_date'] >= $today && $appt['app_status'] == 1; // Status 1 = Scheduled
+    return $appt['app_date'] > $today && $appt['app_status'] == 1; // Only scheduled
 });
 
 // Count totals
@@ -295,14 +298,23 @@ $total_appointments = count($appointments);
                 <div class="modal-body">
                     <input type="hidden" id="update_app_id" name="app_id">
                     
+                    <div class="alert alert-info">
+                        <i class="bi bi-info-circle me-2"></i>
+                        <strong>Note:</strong> You can only reschedule to dates when doctors with the same specialization are available.
+                    </div>
+                    
                     <div class="row g-3">
                         <div class="col-md-6">
                             <label class="form-label">Appointment Date</label>
                             <input type="date" class="form-control" id="update_date" name="app_date" required>
+                            <small class="text-muted" id="update_date_note">Available dates will be loaded</small>
                         </div>
                         <div class="col-md-6">
                             <label class="form-label">Appointment Time</label>
-                            <input type="time" class="form-control" id="update_time" name="app_time" required>
+                            <select class="form-select" id="update_time" name="app_time" required>
+                                <option value="">-- Select Date First --</option>
+                            </select>
+                            <small class="text-muted">30-minute time slots</small>
                         </div>
                         <div class="col-12">
                             <label class="form-label">Status</label>
@@ -330,6 +342,6 @@ $total_appointments = count($appointments);
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-<script src="../public/js/patient_dashboard.js"></script>
+<script src="js/patient_dashboard.js"></script>
 </body>
 </html>
