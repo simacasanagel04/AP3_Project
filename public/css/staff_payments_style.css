@@ -242,3 +242,60 @@ select[disabled] {
     background-color: #e9ecef;
     cursor: not-allowed;
 }
+
+/* Previous Payments Table Styling */
+#previousPaymentsList .table {
+    font-size: 0.875rem;
+}
+
+#previousPaymentsList .table th {
+    background-color: #f8f9fa;
+    font-weight: 600;
+}
+
+/* Select2 Custom Styling */
+.select2-container--bootstrap-5 .select2-selection {
+    min-height: 38px;
+}
+
+.select2-container--bootstrap-5 .select2-selection--single .select2-selection__rendered {
+    line-height: 38px;
+}
+
+/* Alert Container Position */
+.alert-container {
+    position: fixed;
+    top: 80px;
+    right: 20px;
+    z-index: 9999;
+    max-width: 400px;
+}
+
+/* Appointment Details Section */
+#appointmentDetails {
+    border-top: 2px solid #e9ecef;
+    padding-top: 1rem;
+    margin-top: 1rem;
+}
+
+/* Previous Payments Alert Custom */
+#previousPaymentsAlert {
+    animation: slideDown 0.3s ease-out;
+}
+
+@keyframes slideDown {
+    from {
+        opacity: 0;
+        transform: translateY(-10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* Date field disabled state */
+input[type="datetime-local"]:disabled {
+    background-color: #e9ecef;
+    cursor: not-allowed;
+}
