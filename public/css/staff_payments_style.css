@@ -1,0 +1,244 @@
+/* Staff Payments Page Styles 
+public/staff_payments_style.css
+*/
+
+.page-title {
+    color: #032b55;
+    font-weight: 700;
+    font-size: 1.75rem;
+}
+
+.card {
+    border-radius: 12px;
+    border: none;
+}
+
+.card-title {
+    color: #032b55;
+    font-weight: 600;
+}
+
+/* Navigation Buttons */
+.btn-group .btn {
+    padding: 8px 16px;
+    font-weight: 500;
+    border-radius: 6px;
+    transition: all 0.3s ease;
+}
+
+.btn-group .btn:first-child {
+    border-top-right-radius: 0;
+    border-bottom-right-radius: 0;
+}
+
+.btn-group .btn:last-child {
+    border-top-left-radius: 0;
+    border-bottom-left-radius: 0;
+}
+
+.btn-group .btn:not(:first-child):not(:last-child) {
+    border-radius: 0;
+}
+
+/* Summary Cards */
+.summary-card {
+    border-radius: 12px;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+    cursor: default;
+}
+
+.summary-card.clickable-card {
+    cursor: pointer;
+}
+
+.summary-card.clickable-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 8px 20px rgba(0,0,0,0.15) !important;
+}
+
+.summary-card .card-subtitle {
+    font-size: 0.85rem;
+    opacity: 0.9;
+}
+
+.summary-card .card-title {
+    font-size: 2rem;
+    font-weight: 700;
+}
+
+/* Table Styles */
+.table {
+    font-size: 0.9rem;
+}
+
+.table thead th {
+    background-color: #f8f9fa;
+    color: #032b55;
+    font-weight: 600;
+    border-bottom: 2px solid #dee2e6;
+    white-space: nowrap;
+}
+
+.table tbody tr {
+    transition: background-color 0.2s ease;
+}
+
+.table tbody tr:hover {
+    background-color: #f8f9fa;
+}
+
+.table td {
+    vertical-align: middle;
+}
+
+/* Form Styles */
+.form-label {
+    font-weight: 500;
+    color: #032b55;
+    margin-bottom: 0.5rem;
+}
+
+.form-control:focus,
+.form-select:focus {
+    border-color: #0d6efd;
+    box-shadow: 0 0 0 0.25rem rgba(13, 110, 253, 0.25);
+}
+
+/* Badge Styles */
+.badge {
+    padding: 6px 12px;
+    font-weight: 500;
+    font-size: 0.85rem;
+}
+
+/* Button Styles */
+.btn {
+    border-radius: 6px;
+    font-weight: 500;
+    transition: all 0.2s ease;
+}
+
+.btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(0,0,0,0.15);
+}
+
+.btn-sm {
+    padding: 4px 12px;
+    font-size: 0.85rem;
+}
+
+/* Alert Container */
+.alert-container {
+    position: fixed;
+    top: 80px;
+    right: 20px;
+    z-index: 9999;
+    max-width: 400px;
+}
+
+.alert-container .alert {
+    border-radius: 8px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+    animation: slideIn 0.3s ease;
+}
+
+@keyframes slideIn {
+    from {
+        transform: translateX(400px);
+        opacity: 0;
+    }
+    to {
+        transform: translateX(0);
+        opacity: 1;
+    }
+}
+
+/* Modal Styles */
+.modal-content {
+    border-radius: 12px;
+    border: none;
+}
+
+.modal-header {
+    background-color: #f8f9fa;
+    border-bottom: 1px solid #dee2e6;
+    border-radius: 12px 12px 0 0;
+}
+
+.modal-title {
+    color: #032b55;
+    font-weight: 600;
+}
+
+.modal-footer {
+    border-top: 1px solid #dee2e6;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+    .page-title {
+        font-size: 1.5rem;
+    }
+    
+    .btn-group {
+        flex-direction: column;
+        width: 100%;
+    }
+    
+    .btn-group .btn {
+        border-radius: 6px !important;
+        margin-bottom: 5px;
+    }
+    
+    .summary-card .card-title {
+        font-size: 1.5rem;
+    }
+    
+    .table {
+        font-size: 0.8rem;
+    }
+    
+    .alert-container {
+        right: 10px;
+        left: 10px;
+        max-width: none;
+    }
+}
+
+/* Loading Spinner */
+.spinner-border-sm {
+    width: 1rem;
+    height: 1rem;
+    border-width: 0.15em;
+}
+
+/* Form Text */
+.form-text {
+    font-size: 0.85rem;
+    color: #6c757d;
+}
+
+/* Input Group */
+.input-group-text {
+    background-color: #e9ecef;
+    border: 1px solid #ced4da;
+    font-weight: 500;
+}
+
+/* Card Body Spacing */
+.card-body {
+    padding: 1.5rem;
+}
+
+/* Filter Form Spacing */
+#filterForm .row {
+    align-items: end;
+}
+
+/* Disabled State */
+input[readonly],
+select[disabled] {
+    background-color: #e9ecef;
+    cursor: not-allowed;
+}
