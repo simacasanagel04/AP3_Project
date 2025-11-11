@@ -1,10 +1,10 @@
 <?php
-// public/patient_update_appointment.php
+// public/ajax/patient_update_appt.php
 // for patient_dashb.php
 
 session_start();
-require_once '../config/Database.php';
-require_once '../classes/Appointment.php';
+require_once __DIR__ . '/../../config/Database.php';
+require_once __DIR__ . '/../../classes/Appointment.php';
 
 header('Content-Type: application/json');
 

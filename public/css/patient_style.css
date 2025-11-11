@@ -26,11 +26,14 @@ h1, h2, h3, h4, h5, h6, .display-4 {
     font-weight: 700;
 }
 
-/* SIDEBAR */
+/*==========================================================================
+===== SIDEBAR============= 
+============================================================================*/
+
 .sidebar {
     background: #bbc0c7;
     width: var(--sidebar-width);
-    min-height: 100vh;
+    height: 100vh;
     padding: 1.5rem 1rem;
     border-right: 1px solid #ddd;
     position: fixed;
@@ -41,37 +44,7 @@ h1, h2, h3, h4, h5, h6, .display-4 {
     transform: translateX(0);
 }
 
-.sidebar.hidden {
-    transform: translateX(-100%);
-}
-
-/* ===== CLOCK CARD ===== */
-.clock-card {
-  background: #fff;
-  padding: 1rem;
-  margin: 1rem;
-  border-radius: 12px;
-  text-align: center;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-}
-
-.clock-card strong {
-  color: var(--main-blue);
-  display: block;
-  font-size: 1.1rem;
-}
-
-/* MAIN CONTENT */
-.main-content {
-    margin-left: var(--sidebar-width);
-    padding: 2rem;
-    transition: margin-left 0.35s ease;
-    min-height: 100vh;
-}
-
-.sidebar.hidden ~ .main-content {
-    margin-left: 0;
-}
+.sidebar.hidden ~ .main-content {margin-left: 0;}
 
 /* USER INFO */
 .sidebar .user-info {
@@ -97,12 +70,97 @@ h1, h2, h3, h4, h5, h6, .display-4 {
     margin-right: 0.75rem;
 }
 
-.sidebar .user-details {
-    max-width: 150px;
+.sidebar .user-details {max-width: 150px;}
+
+/* NAV */
+.sidebar .nav-link {
+    color: #333;
+    font-weight: 500;
+    padding: 0.75rem 1rem;
+    border-radius: 8px;
+    margin-bottom: 0.5rem;
+    display: flex;
+    align-items: center;
+    transition: all 0.3s;
+    white-space: nowrap;
 }
+
+.sidebar .nav-link i {
+    width: 24px;
+    font-size: 1.1rem;
+    margin-right: 0.75rem;
+}
+
+.sidebar .nav-link span {flex: 1;}
+
+.sidebar .nav-link:hover,
+.sidebar .nav-link.active {
+    background-color: var(--blue);
+    color: white;
+}
+
+/* ADDITIONAL – SIDEBAR TOGGLE & ACTIVE NAV */
+.sidebar-toggle {
+    position: fixed;
+    top: 1rem;
+    left: 1rem;
+    z-index: 1100;
+    background: var(--blue);
+    color: white;
+    border: none;
+    width: 45px;
+    height: 45px;
+    border-radius: 50%;
+    display: none;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.4rem;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.sidebar-toggle:hover {
+    background: #285a7a;
+    transform: scale(1.01);
+}
+
+.sidebar-toggle i {transition: transform 0.3s ease;}
+.sidebar-toggle.open i {transform: rotate(90deg);}
+
+/* =============================================================================
+============ CLOCK CARD ============
+================================================================================ */
+
+.clock-card {
+  background: #fff;
+  padding: 1rem;
+  margin: 1rem;
+  border-radius: 12px;
+  text-align: center;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+}
+
+.clock-card strong {
+  color: var(--main-blue);
+  display: block;
+  font-size: 1.1rem;
+}
+
+/* ==============================================================================
+============MAIN CONTENT =========================
+==================================================================================*/
+
+.main-content {
+    margin-left: var(--sidebar-width);
+    transition: margin-left 0.35s ease;
+    padding: 2rem;
+}
+
 /* =====================================================================================
  DASHBOARD HEADER 
  ===================================================================================== */
+
 .dashboard-header {
     background: linear-gradient(135deg, var(--blue) 0%, var(--teal) 100%);
     padding: 2rem;
@@ -123,7 +181,10 @@ h1, h2, h3, h4, h5, h6, .display-4 {
     opacity: 0.95;
 }
 
-/* ===== STATS CARDS ===== */
+/* =====================================================================================
+    ===== STATS CARDS ===== 
+   =====================================================================================*/
+
 .stat-card {
     background: white;
     border-radius: 12px;
@@ -168,7 +229,10 @@ h1, h2, h3, h4, h5, h6, .display-4 {
     font-size: 0.95rem;
 }
 
-/* ===== APPOINTMENT SECTIONS ===== */
+/* ========================================================================
+===== APPOINTMENT SECTIONS ===== 
+===========================================================================*/
+
 .appointment-section {animation: fadeIn 0.4s ease-in;}
 
 @keyframes fadeIn {
@@ -182,7 +246,10 @@ h1, h2, h3, h4, h5, h6, .display-4 {
     }
 }
 
-/* ===== TABLE ENHANCEMENTS ===== */
+/* ============================================================
+============= TABLE ENHANCEMENTS ============================== 
+===============================================================*/
+
 .table-hover tbody tr {transition: all 0.3s ease;}
 
 .table-hover tbody tr:hover {
@@ -201,7 +268,10 @@ h1, h2, h3, h4, h5, h6, .display-4 {
     letter-spacing: 0.5px;
 }
 
-/* ===== BADGE STYLES ===== */
+/* ===================================================================
+==== BADGE STYLES =================== 
+======================================================================*/
+
 .badge {
     padding: 0.5rem 1rem;
     font-size: 0.85rem;
@@ -217,7 +287,10 @@ h1, h2, h3, h4, h5, h6, .display-4 {
 .badge.bg-success {background-color: #28a745 !important;}
 .badge.bg-danger {background-color: #dc3545 !important;}
 
-/* ===== BUTTON STYLES ===== */
+/* ==================================================================================== 
+===BUTTON STYLES ===== 
+======================================================================================*/
+
 .btn-sm {
     padding: 0.4rem 0.8rem;
     font-size: 0.85rem;
@@ -263,11 +336,11 @@ h1, h2, h3, h4, h5, h6, .display-4 {
     box-shadow: 0 4px 8px rgba(220, 53, 69, 0.3);
 }
 
-/* ===== MODAL ENHANCEMENTS ===== */
-.modal-header {
-    border-bottom: 3px solid var(--blue);
-}
+/* ==================================================================================
+==== MODAL ENHANCEMENTS =====
+=====================================================================================*/
 
+.modal-header {border-bottom: 3px solid var(--blue);}
 .modal-body {padding: 2rem;}
 
 .modal-body strong {
@@ -287,11 +360,17 @@ h1, h2, h3, h4, h5, h6, .display-4 {
     border-bottom: 1px solid #e9ecef;
 }
 
-/* ===== EMPTY STATE ===== */
+/* ========================================================================== 
+=======EMPTY STATE ===== 
+============================================================================*/
+
 .text-center.py-5 {padding: 3rem !important;}
 .text-center.py-5 i {opacity: 0.3;}
 
-/* ===== RESPONSIVE ADJUSTMENTS ===== */
+/* ============================================================================== 
+=== RESPONSIVE ADJUSTMENTS ===== 
+================================================================================*/
+
 @media (max-width: 768px) {
 
     .dashboard-header h1 {font-size: 1.8rem;}
@@ -313,34 +392,6 @@ h1, h2, h3, h4, h5, h6, .display-4 {
     }
 }
 
-/* NAV */
-.sidebar .nav-link {
-    color: #333;
-    font-weight: 500;
-    padding: 0.75rem 1rem;
-    border-radius: 8px;
-    margin-bottom: 0.5rem;
-    display: flex;
-    align-items: center;
-    transition: all 0.3s;
-    white-space: nowrap;
-}
-
-.sidebar .nav-link i {
-    width: 24px;
-    font-size: 1.1rem;
-    margin-right: 0.75rem;
-}
-
-.sidebar .nav-link span {
-    flex: 1;
-}
-
-.sidebar .nav-link:hover,
-.sidebar .nav-link.active {
-    background-color: var(--blue);
-    color: white;
-}
 
 /* TABS */
 .tab-btn {
@@ -477,9 +528,6 @@ h1, h2, h3, h4, h5, h6, .display-4 {
     .sidebar {
         transform: translateX(-100%);
     }
-    .main-content {
-        margin-left: 0;
-    }
 }
 
 @media (max-width: 768px) {
@@ -573,50 +621,6 @@ h1, h2, h3, h4, h5, h6, .display-4 {
     }
 }
 
-/* ADDITIONAL – SIDEBAR TOGGLE & ACTIVE NAV */
-.sidebar-toggle {
-    position: fixed;
-    top: 1rem;
-    left: 1rem;
-    z-index: 1100;
-    background: var(--blue);
-    color: white;
-    border: none;
-    width: 45px;
-    height: 45px;
-    border-radius: 50%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 1.4rem;
-    box-shadow: 0 4px 12px rgba(0,0,0,0.2);
-    cursor: pointer;
-    transition: all 0.3s ease;
-}
-
-.sidebar-toggle:hover {
-    background: #285a7a;
-    transform: scale(1.05);
-}
-
-.sidebar-toggle i {
-    transition: transform 0.3s ease;
-}
-
-.sidebar-toggle.open i {
-    transform: rotate(90deg);
-}
-
-.sidebar .nav-link.active {
-    background-color: var(--blue);
-    color: white;
-}
-
-@media (max-width: 992px) {
-    .sidebar-toggle {
-        display: flex;
-    }
-}
 
 /* NEW: TAB SWITCHING */
 #bookSection {
@@ -698,4 +702,179 @@ h1, h2, h3, h4, h5, h6, .display-4 {
 .btn-book:disabled {
     opacity: 0.6;
     cursor: not-allowed;
+}
+
+/* Responsive sidebar improvements */
+@media (max-width: 992px) {
+    .main-content {
+        width: 100%;
+        margin-left: 0;
+    }
+    
+    .sidebar-toggle {display: flex !important;}
+    .sidebar.hidden { transform: translateX(-100%);}
+
+}
+
+/* Filter card styling */
+.card {
+    border: 1px solid #e0e0e0;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+}
+
+.card-title {
+    color: var(--blue);
+    font-weight: 600;
+}
+
+/* Table responsive improvements */
+@media (max-width: 1200px) {
+    .table {
+        font-size: 0.85rem;
+    }
+    
+    .table th,
+    .table td {
+        padding: 0.5rem;
+    }
+}
+
+@media (max-width: 992px) {
+    .table-responsive {
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+    }
+    
+    .table {
+        min-width: 1000px;
+    }
+}
+
+/* Active state - slide in (for mobile) */
+.sidebar.active {
+    transform: translateX(0);
+}
+
+/* Overlay for mobile when sidebar is open */
+@media (max-width: 992px) {
+    .sidebar.active::before {
+        content: '';
+        position: fixed;
+        top: 0;
+        left: var(--sidebar-width, 260px);
+        width: calc(100vw - var(--sidebar-width, 260px));
+        height: 100vh;
+        background: rgba(0, 0, 0, 0.5);
+        z-index: -1;
+    }
+}
+
+/* Payment card enhancements */
+.card-form {
+    background: white;
+    padding: 1.5rem;
+    border-radius: 12px;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+    animation: fadeInUp 0.4s ease;
+}
+
+@keyframes fadeInUp {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.card-form h5 {
+    color: var(--blue);
+    margin-bottom: 1rem;
+    font-size: 1.2rem;
+}
+
+.card-form .alert {
+    border-radius: 8px;
+}
+
+.form-check-input:checked {
+    background-color: var(--blue);
+    border-color: var(--blue);
+}
+
+/* Date input styling */
+input[type="date"]::-webkit-calendar-picker-indicator {
+    cursor: pointer;
+    filter: invert(0.5);
+}
+
+input[type="date"]:disabled::-webkit-calendar-picker-indicator {
+    cursor: not-allowed;
+    opacity: 0.5;
+}
+
+/* Loading spinner */
+.spinner-border-sm {
+    width: 1rem;
+    height: 1rem;
+    border-width: 0.15em;
+}
+
+/* Button disabled state */
+.btn:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+}
+
+/* Status badges improvements */
+.badge {
+    padding: 0.4rem 0.8rem;
+    font-size: 0.8rem;
+    font-weight: 600;
+}
+
+/* Payment info styling */
+.table td strong {
+    color: var(--blue);
+}
+
+.table td small {
+    display: block;
+    line-height: 1.4;
+}
+
+/* Logo area */
+.logo-area .logo-img {
+    max-width: 100%;
+    height: auto;
+}
+
+/* Smooth scrolling */
+html {
+    scroll-behavior: smooth;
+}
+
+/* Focus states */
+.form-control:focus,
+.form-select:focus {
+    border-color: var(--blue);
+    box-shadow: 0 0 0 0.2rem rgba(51, 109, 150, 0.25);
+}
+
+/* Filter section improvements */
+#totalResults {
+    font-weight: 600;
+    color: var(--blue);
+}
+
+/* Empty state improvements */
+.text-center.py-4 i {
+    color: #dee2e6;
+}
+
+.text-center.py-4 p {
+    color: #6c757d;
+    font-size: 1.1rem;
 }

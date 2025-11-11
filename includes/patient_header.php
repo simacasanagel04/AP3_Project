@@ -91,6 +91,11 @@ if (!$patientData) {
             </a>
         </li>
         <li class="nav-item">
+            <a href="patient_view_patients.php" class="nav-link">
+                <i class="bi bi-people"></i><span>View Patients</span>
+            </a>
+        </li>
+        <li class="nav-item">
             <a href="patient_settings.php" class="nav-link">
                 <i class="bi bi-gear"></i> <span>Settings</span>
             </a>
@@ -102,6 +107,106 @@ if (!$patientData) {
         </li>
     </ul>
 </div>
+
+<script>
+// ===============================
+// ENHANCED SIDEBAR TOGGLE - MATCHES DOCTOR FUNCTIONALITY
+// ===============================
+(function() {
+    const sidebar = document.querySelector('.sidebar');
+    const toggleBtn = document.querySelector('.sidebar-toggle');
+
+    if (!sidebar || !toggleBtn) return;
+
+    // ===============================
+    // SIDEBAR TOGGLE BUTTON CLICK
+    // ===============================
+    toggleBtn.addEventListener('click', function() {
+        sidebar.classList.toggle('hidden');
+        sidebar.classList.toggle('active');
+    });
+
+    // ===============================
+    // RESPONSIVE BEHAVIOR - KEY FIX
+    // ===============================
+    function checkScreen() {
+        if (window.innerWidth <= 992) {
+            // Mobile/Tablet: Hide sidebar by default, show toggle button
+            sidebar.classList.add('hidden');
+            sidebar.classList.remove('active'); // Remove active on resize
+            if (toggleBtn) toggleBtn.style.display = 'flex';
+        } else {
+            // Desktop: Show sidebar, hide toggle button
+            sidebar.classList.remove('hidden');
+            sidebar.classList.remove('active');
+            if (toggleBtn) toggleBtn.style.display = 'none';
+        }
+    }
+    
+    // Initial check
+    checkScreen();
+    
+    // Re-check on window resize
+    window.addEventListener('resize', checkScreen);
+
+    // ===============================
+    // CLOSE SIDEBAR WHEN CLICKING OUTSIDE (Mobile)
+    // ===============================
+    document.addEventListener('click', function(e) {
+        if (window.innerWidth <= 992) {
+            const isClickInsideSidebar = sidebar.contains(e.target);
+            const isClickOnToggle = toggleBtn.contains(e.target);
+            
+            if (!isClickInsideSidebar && !isClickOnToggle && sidebar.classList.contains('active')) {
+                sidebar.classList.remove('active');
+                sidebar.classList.add('hidden');
+            }
+        }
+    });
+
+    // ===============================
+    // PREVENT SIDEBAR CLOSE WHEN CLICKING INSIDE
+    // ===============================
+
+    sidebar.addEventListener('click', function(e) {
+        e.stopPropagation();
+    });
+})();
+
+// ===============================
+// LIVE CLOCK UPDATE
+// ===============================
+
+function updateClock() {
+    const now = new Date();
+    const str = now.toLocaleString('en-US', {
+        month: 'short',
+        day: 'numeric',
+        year: 'numeric',
+        hour: 'numeric',
+        minute: '2-digit',
+        hour12: true
+    });
+    document.querySelectorAll('#current-time').forEach(el => el.textContent = str);
+}
+setInterval(updateClock, 1000);
+updateClock();
+
+// ===============================
+// ACTIVE NAV LINK
+// ===============================
+
+(function() {
+    const currentPage = window.location.pathname.split('/').pop();
+    const navLinks = document.querySelectorAll('.sidebar .nav-link');
+    navLinks.forEach(link => {
+        const href = link.getAttribute('href');
+        if (href === currentPage) {
+            link.classList.add('active');
+        }
+    });
+})();
+</script>
 
 <!-- MAIN CONTENT -->
 <div class="main-content">

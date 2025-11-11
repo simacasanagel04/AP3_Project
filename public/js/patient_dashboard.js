@@ -1,63 +1,6 @@
-// patient_dashboard.js
+// public/js/patient_dashboard.js
+
 document.addEventListener('DOMContentLoaded', function () {
-    // ===============================
-    // SIDEBAR TOGGLE (FIXED)
-    // ===============================
-    const sidebar = document.querySelector('.sidebar');
-    const toggleBtn = document.querySelector('.sidebar-toggle');
-
-    if (sidebar && toggleBtn) {
-        function toggleSidebar() {
-            sidebar.classList.toggle('hidden');
-            toggleBtn.classList.toggle('open');
-        }
-
-        toggleBtn.addEventListener('click', toggleSidebar);
-
-        function handleResize() {
-            if (window.innerWidth <= 992) {
-                sidebar.classList.add('hidden');
-                toggleBtn.style.display = 'flex';
-            } else {
-                sidebar.classList.remove('hidden');
-                toggleBtn.style.display = 'none';
-                toggleBtn.classList.remove('open');
-            }
-        }
-
-        handleResize();
-        window.addEventListener('resize', handleResize);
-    }
-
-    // ===============================
-    // ACTIVE NAV LINK
-    // ===============================
-    const currentPage = window.location.pathname.split('/').pop();
-    const navLinks = document.querySelectorAll('.sidebar .nav-link');
-    navLinks.forEach(link => {
-        const href = link.getAttribute('href');
-        if (href === currentPage) {
-            link.classList.add('active');
-        }
-    });
-
-    // ===============================
-    // LIVE CLOCK
-    // ===============================
-    function updateClock() {
-        const now = new Date();
-        const str = now.toLocaleString('en-US', {
-            month: 'short',
-            day: 'numeric',
-            year: 'numeric',
-            hour: 'numeric',
-            minute: '2-digit',
-            hour12: true
-        });
-        document.querySelectorAll('#current-time').forEach(el => el.textContent = str);
-    }
-    setInterval(updateClock, 1000);
-    updateClock();
 
     // ===============================
     // APPOINTMENT BOOKING FUNCTIONALITY
@@ -336,7 +279,7 @@ document.addEventListener('DOMContentLoaded', function () {
                     cardHTML = `
                         <div class="card-form active">
                             <h5><i class="bi bi-credit-card"></i> Debit Card Payment</h5>
-                            <p class="text-muted">Enter your debit card details (For simulation only - No actual charges)</p>
+                            <p class="text-muted">Enter your debit card details</p>
                             <div class="mb-3">
                                 <label class="form-label">Card Number</label>
                                 <input type="text" class="form-control" id="debitCardNumber" placeholder="1234 5678 9012 3456" maxlength="19" required>
@@ -369,7 +312,7 @@ document.addEventListener('DOMContentLoaded', function () {
                     cardHTML = `
                         <div class="card-form active">
                             <h5><i class="bi bi-credit-card-2-front"></i> Credit Card Payment</h5>
-                            <p class="text-muted">Enter your credit card details (For simulation only - No actual charges)</p>
+                            <p class="text-muted">Enter your credit card details</p>
                             <div class="mb-3">
                                 <label class="form-label">Card Number</label>
                                 <input type="text" class="form-control" id="creditCardNumber" placeholder="1234 5678 9012 3456" maxlength="19" required>
