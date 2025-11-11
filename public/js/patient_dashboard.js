@@ -1,36 +1,37 @@
+// patient_dashboard.js
 document.addEventListener('DOMContentLoaded', function () {
+    // ===============================
+    // SIDEBAR TOGGLE (FIXED)
+    // ===============================
     const sidebar = document.querySelector('.sidebar');
     const toggleBtn = document.querySelector('.sidebar-toggle');
 
-    // Toggle Sidebar
-    function toggleSidebar() {
-        sidebar.classList.toggle('hidden');
-        toggleBtn.classList.toggle('open');
-    }
-    if (toggleBtn) {
-        toggleBtn.addEventListener('click', toggleSidebar);
-    }
+    if (sidebar && toggleBtn) {
+        function toggleSidebar() {
+            sidebar.classList.toggle('hidden');
+            toggleBtn.classList.toggle('open');
+        }
 
-    // Responsive
-    function checkScreen() {
-        if (window.innerWidth <= 992) {
-            if (sidebar) sidebar.classList.add('hidden');
-            if (toggleBtn) {
-                toggleBtn.classList.add('open');
+        toggleBtn.addEventListener('click', toggleSidebar);
+
+        function handleResize() {
+            if (window.innerWidth <= 992) {
+                sidebar.classList.add('hidden');
                 toggleBtn.style.display = 'flex';
-            }
-        } else {
-            if (sidebar) sidebar.classList.remove('hidden');
-            if (toggleBtn) {
-                toggleBtn.classList.remove('open');
+            } else {
+                sidebar.classList.remove('hidden');
                 toggleBtn.style.display = 'none';
+                toggleBtn.classList.remove('open');
             }
         }
-    }
-    checkScreen();
-    window.addEventListener('resize', checkScreen);
 
-    // Active Nav Link
+        handleResize();
+        window.addEventListener('resize', handleResize);
+    }
+
+    // ===============================
+    // ACTIVE NAV LINK
+    // ===============================
     const currentPage = window.location.pathname.split('/').pop();
     const navLinks = document.querySelectorAll('.sidebar .nav-link');
     navLinks.forEach(link => {
@@ -40,7 +41,9 @@ document.addEventListener('DOMContentLoaded', function () {
         }
     });
 
-    // Live Clock
+    // ===============================
+    // LIVE CLOCK
+    // ===============================
     function updateClock() {
         const now = new Date();
         const str = now.toLocaleString('en-US', {
@@ -116,31 +119,44 @@ document.addEventListener('DOMContentLoaded', function () {
                 return;
             }
 
-            // Fetch services by specialization
-            fetch('../ajax/patient_get_serv_by_spec.php?spec_id=' + specId)
-                .then(response => response.json())
-                .then(data => {
-                    if (data.success) {
-                        serviceSelect.innerHTML = '<option value="">-- Select Service --</option>';
+        // Fetch services by specialization
+        fetch('ajax/patient_get_serv_by_spec.php?spec_id=' + specId)
+            .then(response => {
+                console.log('Response status:', response.status);
+                console.log('Response ok:', response.ok);
+                return response.text(); // Get as text first to see raw response
+            })
+            .then(text => {
+                console.log('Raw response:', text);
+                const data = JSON.parse(text); // Parse manually
+                console.log('Parsed data:', data);
+                
+                if (data.success) {
+                    serviceSelect.innerHTML = '<option value="">-- Select Service --</option>';
+                    if (data.services && data.services.length > 0) {
                         data.services.forEach(service => {
                             const option = document.createElement('option');
-                            option.value = service.SERV_ID;
-                            option.textContent = service.SERV_NAME + ' - ₱' + parseFloat(service.SERV_PRICE).toFixed(2);
-                            option.dataset.price = service.SERV_PRICE;
+                            option.value = service.serv_id;
+                            option.textContent = service.serv_name + ' - ₱' + parseFloat(service.serv_price).toFixed(2);
+                            option.dataset.price = service.serv_price;
                             serviceSelect.appendChild(option);
                         });
                         serviceSelect.disabled = false;
                     } else {
                         serviceSelect.innerHTML = '<option value="">-- No Services Available --</option>';
                     }
-                })
-                .catch(error => {
-                    console.error('Error fetching services:', error);
-                    serviceSelect.innerHTML = '<option value="">-- Error Loading Services --</option>';
-                });
+                } else {
+                    console.error('API returned error:', data.message);
+                    serviceSelect.innerHTML = '<option value="">-- No Services Available --</option>';
+                }
+            })
+            .catch(error => {
+                console.error('Error fetching services:', error);
+                serviceSelect.innerHTML = '<option value="">-- Error Loading Services --</option>';
+            });
 
             // Fetch available dates
-            fetch('../ajax/patient_get_avail_dates.php?spec_id=' + specId)
+            fetch('ajax/patient_get_avail_dates.php?spec_id=' + specId)
                 .then(response => response.json())
                 .then(data => {
                     if (data.success) {
@@ -197,11 +213,12 @@ document.addEventListener('DOMContentLoaded', function () {
             if (!dateAvailable) {
                 alert('Selected date is not available. Please choose another date.');
                 this.value = '';
+                timeSelect.innerHTML = '<option value="">-- Select Date First --</option>';
                 return;
             }
 
             // Fetch available time slots
-            fetch(`../ajax/patient_get_avail_times.php?spec_id=${specId}&date=${selectedDate}`)
+            fetch(`ajax/patient_get_avail_times.php?spec_id=${specId}&date=${selectedDate}`)
                 .then(response => response.json())
                 .then(data => {
                     if (data.success && data.timeSlots.length > 0) {
@@ -209,7 +226,7 @@ document.addEventListener('DOMContentLoaded', function () {
                         data.timeSlots.forEach(slot => {
                             const option = document.createElement('option');
                             option.value = slot.time;
-                            option.textContent = slot.formatted;
+                            option.textContent = slot.formatted + ' (Dr. ' + slot.doctor_name.split(',')[0] + ')';
                             option.dataset.doctorId = slot.doctor_id;
                             timeSelect.appendChild(option);
                         });
@@ -246,6 +263,7 @@ document.addEventListener('DOMContentLoaded', function () {
             timeSelect.innerHTML = '<option value="">-- Select Date First --</option>';
             timeSelect.disabled = true;
             document.getElementById('selectedDoctorId').value = '';
+            selectedServicePrice = 0;
         });
     }
 
@@ -300,303 +318,830 @@ document.addEventListener('DOMContentLoaded', function () {
                                 <strong>Payment Instructions:</strong>
                                 <ul class="mb-0 mt-2">
                                     <li>Pay at the clinic upon arrival</li>
-                                    <li>Bring exact amount if possible</li>
+                                    <li>Bring exact amount if possible: ₱${selectedServicePrice.toFixed(2)}</li>
                                     <li>Payment status will be marked as PENDING until confirmed by staff</li>
                                 </ul>
                             </div>
-                             <div class="form-check mt-3">
-                                    <input class="form-check-input" type="checkbox" id="confirmCash" required>
-                                        <label class="form-check-label" for="confirmCash">
-                                            I understand that I need to pay ₱${selectedServicePrice.toFixed(2)} in cash at the clinic
-                                        </label>
+                            <div class="form-check mt-3">
+                                <input class="form-check-input" type="checkbox" id="confirmCash" required>
+                                <label class="form-check-label" for="confirmCash">
+                                    I understand that I need to pay ₱${selectedServicePrice.toFixed(2)} in cash at the clinic
+                                </label>
                             </div>
-                            </div>
-                            `;
-                            break;
+                        </div>
+                    `;
+                    break;
+
                 case 'debit card':
-                cardHTML = `
-                    <div class="card-form active">
-                        <h5><i class="bi bi-credit-card"></i> Debit Card Payment</h5>
-                        <p class="text-muted">Enter your debit card details (For simulation only - No actual charges)</p>
-                        <div class="mb-3">
-                            <label class="form-label">Card Number</label>
-                            <input type="text" class="form-control" id="debitCardNumber" placeholder="1234 5678 9012 3456" maxlength="19" required>
-                        </div>
-                        <div class="row g-3 mb-3">
-                            <div class="col-6">
-                                <label class="form-label">Expiry Date</label>
-                                <input type="text" class="form-control" id="debitExpiry" placeholder="MM/YY" maxlength="5" required>
+                    cardHTML = `
+                        <div class="card-form active">
+                            <h5><i class="bi bi-credit-card"></i> Debit Card Payment</h5>
+                            <p class="text-muted">Enter your debit card details (For simulation only - No actual charges)</p>
+                            <div class="mb-3">
+                                <label class="form-label">Card Number</label>
+                                <input type="text" class="form-control" id="debitCardNumber" placeholder="1234 5678 9012 3456" maxlength="19" required>
                             </div>
-                            <div class="col-6">
-                                <label class="form-label">CVV</label>
-                                <input type="text" class="form-control" id="debitCVV" placeholder="123" maxlength="3" required>
+                            <div class="row g-3 mb-3">
+                                <div class="col-6">
+                                    <label class="form-label">Expiry Date</label>
+                                    <input type="text" class="form-control" id="debitExpiry" placeholder="MM/YY" maxlength="5" required>
+                                </div>
+                                <div class="col-6">
+                                    <label class="form-label">CVV</label>
+                                    <input type="text" class="form-control" id="debitCVV" placeholder="123" maxlength="3" required>
+                                </div>
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label">Cardholder Name</label>
+                                <input type="text" class="form-control" id="debitCardName" placeholder="JOHN DOE" required>
+                            </div>
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" id="confirmDebit" required>
+                                <label class="form-check-label" for="confirmDebit">
+                                    I confirm the card details are correct (Simulation only)
+                                </label>
                             </div>
                         </div>
-                        <div class="mb-3">
-                            <label class="form-label">Cardholder Name</label>
-                            <input type="text" class="form-control" id="debitCardName" placeholder="JOHN DOE" required>
-                        </div>
-                        <div class="form-check">
-                            <input class="form-check-input" type="checkbox" id="confirmDebit" required>
-                            <label class="form-check-label" for="confirmDebit">
-                                I confirm the card details are correct (Simulation only)
-                            </label>
-                        </div>
-                    </div>
-                `;
-                break;
+                    `;
+                    break;
 
+                case 'credit card':
+                    cardHTML = `
+                        <div class="card-form active">
+                            <h5><i class="bi bi-credit-card-2-front"></i> Credit Card Payment</h5>
+                            <p class="text-muted">Enter your credit card details (For simulation only - No actual charges)</p>
+                            <div class="mb-3">
+                                <label class="form-label">Card Number</label>
+                                <input type="text" class="form-control" id="creditCardNumber" placeholder="1234 5678 9012 3456" maxlength="19" required>
+                                <small class="text-muted">We accept Visa, MasterCard, American Express</small>
+                            </div>
+                            <div class="row g-3 mb-3">
+                                <div class="col-6">
+                                    <label class="form-label">Expiry Date</label>
+                                    <input type="text" class="form-control" id="creditExpiry" placeholder="MM/YY" maxlength="5" required>
+                                </div>
+                                <div class="col-6">
+                                    <label class="form-label">CVV</label>
+                                    <input type="text" class="form-control" id="creditCVV" placeholder="123" maxlength="4" required>
+                                </div>
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label">Cardholder Name</label>
+                                <input type="text" class="form-control" id="creditCardName" placeholder="JOHN DOE" required>
+                            </div>
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" id="confirmCredit" required>
+                                <label class="form-check-label" for="confirmCredit">
+                                    I confirm the card details are correct (Simulation only)
+                                </label>
+                            </div>
+                        </div>
+                    `;
+                    break;
+
+                case 'bank transfer':
+                    cardHTML = `
+                        <div class="card-form active">
+                            <h5><i class="bi bi-bank"></i> Bank Transfer</h5>
+                            <div class="alert alert-warning mt-3">
+                                <strong>Bank Transfer Instructions:</strong>
+                                <ul class="mb-0 mt-2">
+                                    <li><strong>Bank Name:</strong> AKSyon Bank</li>
+                                    <li><strong>Account Name:</strong> AKSyon Medical Center</li>
+                                    <li><strong>Account Number:</strong> 1234-5678-9012</li>
+                                    <li><strong>Amount:</strong> ₱${selectedServicePrice.toFixed(2)}</li>
+                                </ul>
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label">Reference Number</label>
+                                <input type="text" class="form-control" id="bankRefNumber" placeholder="Enter transfer reference number" required>
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label">Transfer Date</label>
+                                <input type="date" class="form-control" id="bankTransferDate" max="${new Date().toISOString().split('T')[0]}" required>
+                            </div>
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" id="confirmBank" required>
+                                <label class="form-check-label" for="confirmBank">
+                                    I confirm that I have completed the bank transfer (Simulation only)
+                                </label>
+                            </div>
+                        </div>
+                    `;
+                    break;
+
+                case 'mobile payment':
+                    cardHTML = `
+                        <div class="card-form active">
+                            <h5><i class="bi bi-phone"></i> Mobile Payment</h5>
+                            <div class="alert alert-info mt-3">
+                                <strong>Supported Mobile Payment Platforms:</strong>
+                                <p class="mb-0 mt-2">GCash, PayMaya, GrabPay</p>
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label">Select Platform</label>
+                                <select class="form-select" id="mobilePlatform" required>
+                                    <option value="">-- Select Platform --</option>
+                                    <option value="GCash">GCash</option>
+                                    <option value="PayMaya">PayMaya</option>
+                                    <option value="GrabPay">GrabPay</option>
+                                </select>
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label">Mobile Number</label>
+                                <input type="text" class="form-control" id="mobileNumber" placeholder="09XX XXX XXXX" maxlength="11" required>
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label">Transaction Reference</label>
+                                <input type="text" class="form-control" id="mobileRefNumber" placeholder="Enter transaction reference" required>
+                            </div>
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" id="confirmMobile" required>
+                                <label class="form-check-label" for="confirmMobile">
+                                    I confirm the mobile payment details (Simulation only)
+                                </label>
+                            </div>
+                        </div>
+                    `;
+                    break;
+
+                default:
+                    cardHTML = `
+                        <div class="card-form active">
+                            <div class="alert alert-warning">
+                                <strong>Payment method details not configured</strong>
+                            </div>
+                        </div>
+                    `;
+            }
+
+            paymentCardContainer.innerHTML = cardHTML;
+            bookBtn.disabled = false;
+
+            // Auto-format card inputs
+            formatCardInputs();
+        });
+    }
+
+    // Book appointment button
+    if (bookBtn) {
+        bookBtn.addEventListener('click', function() {
+            if (!validatePaymentForm()) {
+                alert('Please fill in all required payment fields');
+                return;
+            }
+
+            // Prepare appointment data
+            const appointmentData = {
+                pat_id: document.getElementById('patientId').value,
+                doc_id: document.getElementById('selectedDoctorId').value,
+                serv_id: serviceSelect.value,
+                appt_date: dateInput.value,
+                appt_time: timeSelect.value,
+                stat_id: 1, // Scheduled
+                pymt_meth_id: selectedPaymentMethod,
+                pymt_amount: selectedServicePrice
+            };
+
+            // Show loading state
+            bookBtn.disabled = true;
+            bookBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Booking...';
+
+            // Submit appointment
+            fetch('ajax/patient_book_appointment.php', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(appointmentData)
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    alert('✓ Appointment booked successfully! Redirecting to your dashboard...');
+                    window.location.href = 'patient_dashb.php';
+                } else {
+                    alert('✗ Error: ' + (data.message || 'Failed to book appointment'));
+                    bookBtn.disabled = false;
+                    bookBtn.innerHTML = 'BOOK APPOINTMENT';
+                }
+            })
+            .catch(error => {
+                console.error('Error booking appointment:', error);
+                alert('✗ An error occurred while booking the appointment');
+                bookBtn.disabled = false;
+                bookBtn.innerHTML = 'BOOK APPOINTMENT';
+            });
+        });
+    }
+
+    // Validate payment form based on selected method
+    function validatePaymentForm() {
+        const methodName = paymentMethodSelect.options[paymentMethodSelect.selectedIndex].text.toLowerCase();
+
+        switch(methodName) {
+            case 'cash':
+                return document.getElementById('confirmCash')?.checked;
+            
+            case 'debit card':
+                return document.getElementById('debitCardNumber')?.value &&
+                       document.getElementById('debitExpiry')?.value &&
+                       document.getElementById('debitCVV')?.value &&
+                       document.getElementById('debitCardName')?.value &&
+                       document.getElementById('confirmDebit')?.checked;
+            
             case 'credit card':
-                cardHTML = `
-                    <div class="card-form active">
-                        <h5><i class="bi bi-credit-card-2-front"></i> Credit Card Payment</h5>
-                        <p class="text-muted">Enter your credit card details (For simulation only - No actual charges)</p>
-                        <div class="mb-3">
-                            <label class="form-label">Card Number</label>
-                            <input type="text" class="form-control" id="creditCardNumber" placeholder="1234 5678 9012 3456" maxlength="19" required>
-                            <small class="text-muted">We accept Visa, MasterCard, American Express</small>
-                        </div>
-                        <div class="row g-3 mb-3">
-                            <div class="col-6">
-                                <label class="form-label">Expiry Date</label>
-                                <input type="text" class="form-control" id="creditExpiry" placeholder="MM/YY" maxlength="5" required>
-                            </div>
-                            <div class="col-6">
-                                <label class="form-label">CVV</label>
-                                <input type="text" class="form-control" id="creditCVV" placeholder="123" maxlength="4" required>
-                            </div>
-                        </div>
-                        <div class="mb-3">
-                            <label class="form-label">Cardholder Name</label>
-                            <input type="text" class="form-control" id="creditCardName" placeholder="JOHN DOE" required>
-                        </div>
-                        <div class="form-check">
-                            <input class="form-check-input" type="checkbox" id="confirmCredit" required>
-                            <label class="form-check-label" for="confirmCredit">
-                                I confirm the card details are correct (Simulation only)
-                            </label>
-                        </div>
-                    </div>
-                `;
-                break;
-
+                return document.getElementById('creditCardNumber')?.value &&
+                       document.getElementById('creditExpiry')?.value &&
+                       document.getElementById('creditCVV')?.value &&
+                       document.getElementById('creditCardName')?.value &&
+                       document.getElementById('confirmCredit')?.checked;
+            
             case 'bank transfer':
-                cardHTML = `
-                    <div class="card-form active">
-                        <h5><i class="bi bi-bank"></i> Bank Transfer</h5>
-                        <div class="alert alert-warning mt-3">
-                            <strong>Bank Transfer Instructions:</strong>
-                            <ul class="mb-0 mt-2">
-                                <li><strong>Bank Name:</strong> AKSyon Bank</li>
-                                <li><strong>Account Name:</strong> AKSyon Medical Center</li>
-                                <li><strong>Account Number:</strong> 1234-5678-9012</li>
-                                <li><strong>Amount:</strong> ₱${selectedServicePrice.toFixed(2)}</li>
-                            </ul>
-                        </div>
-                        <div class="mb-3">
-                            <label class="form-label">Reference Number</label>
-                            <input type="text" class="form-control" id="bankRefNumber" placeholder="Enter transfer reference number" required>
-                        </div>
-                        <div class="mb-3">
-                            <label class="form-label">Transfer Date</label>
-                            <input type="date" class="form-control" id="bankTransferDate" required>
-                        </div>
-                        <div class="form-check">
-                            <input class="form-check-input" type="checkbox" id="confirmBank" required>
-                            <label class="form-check-label" for="confirmBank">
-                                I confirm that I have completed the bank transfer (Simulation only)
-                            </label>
-                        </div>
-                    </div>
-                `;
-                break;
-
+                return document.getElementById('bankRefNumber')?.value &&
+                       document.getElementById('bankTransferDate')?.value &&
+                       document.getElementById('confirmBank')?.checked;
+            
             case 'mobile payment':
-                cardHTML = `
-                    <div class="card-form active">
-                        <h5><i class="bi bi-phone"></i> Mobile Payment</h5>
-                        <div class="alert alert-info mt-3">
-                            <strong>Supported Mobile Payment Platforms:</strong>
-                            <p class="mb-0 mt-2">GCash, PayMaya, GrabPay</p>
-                        </div>
-                        <div class="mb-3">
-                            <label class="form-label">Select Platform</label>
-                            <select class="form-select" id="mobilePlatform" required>
-                                <option value="">-- Select Platform --</option>
-                                <option value="GCash">GCash</option>
-                                <option value="PayMaya">PayMaya</option>
-                                <option value="GrabPay">GrabPay</option>
-                            </select>
-                        </div>
-                        <div class="mb-3">
-                            <label class="form-label">Mobile Number</label>
-                            <input type="text" class="form-control" id="mobileNumber" placeholder="09XX XXX XXXX" maxlength="11" required>
-                        </div>
-                        <div class="mb-3">
-                            <label class="form-label">Transaction Reference</label>
-                            <input type="text" class="form-control" id="mobileRefNumber" placeholder="Enter transaction reference" required>
-                        </div>
-                        <div class="form-check">
-                            <input class="form-check-input" type="checkbox" id="confirmMobile" required>
-                            <label class="form-check-label" for="confirmMobile">
-                                I confirm the mobile payment details (Simulation only)
-                            </label>
-                        </div>
-                    </div>
-                `;
-                break;
-
+                return document.getElementById('mobilePlatform')?.value &&
+                       document.getElementById('mobileNumber')?.value &&
+                       document.getElementById('mobileRefNumber')?.value &&
+                       document.getElementById('confirmMobile')?.checked;
+            
             default:
-                cardHTML = `
-                    <div class="card-form active">
-                        <div class="alert alert-warning">
-                            <strong>Payment method details not configured</strong>
-                        </div>
-                    </div>
-                `;
+                return false;
         }
+    }
 
-        paymentCardContainer.innerHTML = cardHTML;
-        bookBtn.disabled = false;
+    // Format card number inputs
+    function formatCardInputs() {
+        const cardInputs = [
+            document.getElementById('debitCardNumber'),
+            document.getElementById('creditCardNumber')
+        ];
 
-        // Auto-format card numbers
-        formatCardInputs();
-    });
+        cardInputs.forEach(input => {
+            if (input) {
+                input.addEventListener('input', function(e) {
+                    let value = e.target.value.replace(/\s/g, '');
+                    let formattedValue = value.match(/.{1,4}/g)?.join(' ') || value;
+                    e.target.value = formattedValue;
+                });
+            }
+        });
+
+        // Format expiry date
+        const expiryInputs = [
+            document.getElementById('debitExpiry'),
+            document.getElementById('creditExpiry')
+        ];
+
+        expiryInputs.forEach(input => {
+            if (input) {
+                input.addEventListener('input', function(e) {
+                    let value = e.target.value.replace(/\D/g, '');
+                    if (value.length >= 2) {
+                        value = value.slice(0, 2) + '/' + value.slice(2, 4);
+                    }
+                    e.target.value = value;
+                });
+            }
+        });
+
+        // Format mobile number
+        const mobileInput = document.getElementById('mobileNumber');
+        if (mobileInput) {
+            mobileInput.addEventListener('input', function(e) {
+                let value = e.target.value.replace(/\D/g, '');
+                e.target.value = value.slice(0, 11);
+            });
+        }
+    }
+
+    // ===============================
+    // FILTER FUNCTIONALITY
+    // ===============================
+
+    const filterApptId = document.getElementById('filterApptId');
+    const filterDate = document.getElementById('filterDate');
+    const filterStatus = document.getElementById('filterStatus');
+    const applyFilterBtn = document.getElementById('applyFilterBtn');
+    const clearFilterBtn = document.getElementById('clearFilterBtn');
+    const appointmentsTable = document.getElementById('appointmentsTable');
+    const totalResults = document.getElementById('totalResults');
+
+    if (applyFilterBtn) {
+        applyFilterBtn.addEventListener('click', function() {
+            const apptIdFilter = filterApptId.value.trim().toLowerCase();
+            const dateFilter = filterDate.value;
+            const statusFilter = filterStatus.value;
+
+            const rows = appointmentsTable.querySelectorAll('tbody tr');
+            let visibleCount = 0;
+
+            rows.forEach(row => {
+                const apptId = row.dataset.apptId?.toLowerCase() || '';
+                const date = row.dataset.date || '';
+                const status = row.dataset.status || '';
+
+                let showRow = true;
+
+                if (apptIdFilter && !apptId.includes(apptIdFilter)) {
+                    showRow = false;
+                }
+
+                if (dateFilter && date !== dateFilter) {
+                    showRow = false;
+                }
+
+                if (statusFilter && status !== statusFilter) {
+                    showRow = false;
+                }
+
+                if (showRow) {
+                    row.style.display = '';
+                    visibleCount++;
+                } else {
+                    row.style.display = 'none';
+                }
+            });
+
+            totalResults.textContent = visibleCount;
+        });
+    }
+
+    if (clearFilterBtn) {
+        clearFilterBtn.addEventListener('click', function() {
+            filterApptId.value = '';
+            filterDate.value = '';
+            filterStatus.value = '';
+
+            const rows = appointmentsTable.querySelectorAll('tbody tr');
+            rows.forEach(row => {
+                row.style.display = '';
+            });
+
+            totalResults.textContent = rows.length;
+        });
+    }
+
+    // ===============================
+    // TAB SWITCHING FOR DASHBOARD
+    // ===============================
+
+    const todayBtn = document.getElementById('todayBtn');
+    const upcomingBtn = document.getElementById('upcomingBtn');
+    const todaySection = document.getElementById('todaySection');
+    const upcomingSection = document.getElementById('upcomingSection');
+
+    if (todayBtn && upcomingBtn) {
+        todayBtn.addEventListener('click', function() {
+            todayBtn.classList.add('active');
+            upcomingBtn.classList.remove('active');
+            todaySection.style.display = 'block';
+            upcomingSection.style.display = 'none';
+        });
+
+        upcomingBtn.addEventListener('click', function() {
+            upcomingBtn.classList.add('active');
+            todayBtn.classList.remove('active');
+            upcomingSection.style.display = 'block';
+            todaySection.style.display = 'none';
+        });
+    }
+
+    // ===============================
+    // UPDATE FORM SUBMISSION HANDLER
+    // ===============================
+    const updateForm = document.getElementById('updateForm');
+
+    if (updateForm) {
+        updateForm.addEventListener('submit', function(e) {
+            e.preventDefault();
+
+            const formData = new FormData(this);
+
+            // Show loading state
+            const submitBtn = this.querySelector('button[type="submit"]');
+            const originalBtnText = submitBtn.innerHTML;
+            submitBtn.disabled = true;
+            submitBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span>Updating...';
+
+            fetch('ajax/patient_update_appt.php', {
+                method: 'POST',
+                body: formData
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    alert('✓ Appointment updated successfully!');
+                    location.reload();
+                } else {
+                    alert('✗ Error: ' + (data.message || 'Failed to update appointment'));
+                    submitBtn.disabled = false;
+                    submitBtn.innerHTML = originalBtnText;
+                }
+            })
+            .catch(error => {
+                console.error('Error updating appointment:', error);
+                alert('✗ An error occurred while updating the appointment');
+                submitBtn.disabled = false;
+                submitBtn.innerHTML = originalBtnText;
+            });
+        });
+    }
+
+        // Update modal date change handler
+        const updateDateInput = document.getElementById('update_date');
+
+        if (updateDateInput) {
+            updateDateInput.addEventListener('change', function() {
+                const selectedDate = this.value;
+                const specId = this.dataset.specId;
+                const availableDates = JSON.parse(this.dataset.availableDates || '[]');
+                
+                // Validate date is available
+                if (!availableDates.includes(selectedDate)) {
+                    alert('Selected date is not available. Please choose from available dates.');
+                    this.value = this.dataset.currentDate;
+                    return;
+                }
+                
+                // Fetch new time slots
+                fetchAvailableTimesForUpdate(specId, selectedDate, '');
+            });
+        }
+});
+
+// ===============================
+// VIEW APPOINTMENT (GLOBAL FUNCTION)
+// ===============================
+
+function viewAppointment(appt) {
+    const modal = new bootstrap.Modal(document.getElementById('viewModal'));
+    const modalBody = document.getElementById('viewModalBody');
+
+    const statusBadge = appt.app_status == 1 ? '<span class="badge bg-warning text-dark">Scheduled</span>' :
+                        appt.app_status == 2 ? '<span class="badge bg-success">Completed</span>' :
+                        '<span class="badge bg-danger">Cancelled</span>';
+
+    const serviceName = appt.service_name || 'N/A';
+    const servicePrice = appt.service_price ? '₱' + parseFloat(appt.service_price).toFixed(2) : 'N/A';
+    const paymentMethod = appt.payment_method || 'N/A';
+    const paymentAmount = appt.payment_amount ? '₱' + parseFloat(appt.payment_amount).toFixed(2) : 'N/A';
+    const paymentStatus = appt.payment_status || 'Pending';
+
+    modalBody.innerHTML = `
+        <div class="row g-3">
+            <div class="col-md-6">
+                <strong><i class="bi bi-hash"></i> Appointment ID:</strong>
+                <p class="mb-0">${appt.app_id}</p>
+            </div>
+            <div class="col-md-6">
+                <strong><i class="bi bi-person-badge"></i> Doctor:</strong>
+                <p class="mb-0">${appt.doctor_name}</p>
+            </div>
+            <div class="col-md-6">
+                <strong><i class="bi bi-heart-pulse"></i> Specialization:</strong>
+                <p class="mb-0">${appt.doc_specialization || 'N/A'}</p>
+            </div>
+            <div class="col-md-6">
+                <strong><i class="bi bi-clipboard2-pulse"></i> Service:</strong>
+                <p class="mb-0">${serviceName}</p>
+            </div>
+            <div class="col-md-6">
+                <strong><i class="bi bi-cash-coin"></i> Service Price:</strong>
+                <p class="mb-0">${servicePrice}</p>
+            </div>
+            <div class="col-md-6">
+                <strong><i class="bi bi-credit-card"></i> Payment Method:</strong>
+                <p class="mb-0">${paymentMethod}</p>
+            </div>
+            <div class="col-md-6">
+                <strong><i class="bi bi-cash-stack"></i> Amount Paid:</strong>
+                <p class="mb-0">${paymentAmount}</p>
+            </div>
+            <div class="col-md-6">
+                <strong><i class="bi bi-check-circle"></i> Payment Status:</strong>
+                <p class="mb-0"><span class="badge bg-${paymentStatus === 'Paid' ? 'success' : 'warning'}">${paymentStatus}</span></p>
+            </div>
+            <div class="col-md-6">
+                <strong><i class="bi bi-calendar-event"></i> Date:</strong>
+                <p class="mb-0">${appt.formatted_app_date}</p>
+            </div>
+            <div class="col-md-6">
+                <strong><i class="bi bi-clock"></i> Time:</strong>
+                <p class="mb-0">${appt.formatted_app_time} <small class="text-muted">(30 min)</small></p>
+            </div>
+            <div class="col-md-12">
+                <strong><i class="bi bi-info-circle"></i> Status:</strong>
+                <p class="mb-0">${statusBadge}</p>
+            </div>
+        </div>
+    `;
+
+    modal.show();
 }
 
-// Book appointment button
-if (bookBtn) {
-    bookBtn.addEventListener('click', function() {
-        if (!validatePaymentForm()) {
-            alert('Please fill in all required payment fields');
-            return;
-        }
+// ===============================
+// UPDATE APPOINTMENT (GLOBAL FUNCTION)
+// ===============================
 
-        // Prepare appointment data
-        const appointmentData = {
-            pat_id: document.getElementById('patientId').value,
-            doc_id: document.getElementById('selectedDoctorId').value,
-            serv_id: serviceSelect.value,
-            appt_date: dateInput.value,
-            appt_time: timeSelect.value,
-            stat_id: 1, // Scheduled
-            pymt_meth_id: selectedPaymentMethod,
-            pymt_amount: selectedServicePrice,
-            pymt_stat_id: 2 // Pending
-        };
+function updateAppointment(appId, appt) {
+    const modal = new bootstrap.Modal(document.getElementById('updateModal'));
+    
+    // Populate form fields
+    document.getElementById('update_app_id').value = appId;
+    document.getElementById('update_date').value = appt.app_date;
+    document.getElementById('update_time').value = appt.app_time;
+    document.getElementById('update_status').value = appt.app_status;
+    
+    // Store spec_id and current values for fetching available dates/times
+    document.getElementById('update_date').dataset.specId = appt.spec_id;
+    document.getElementById('update_date').dataset.currentDate = appt.app_date;
+    document.getElementById('update_time').dataset.docId = appt.doc_id;
+    
+    // Fetch available dates for this specialization
+    fetchAvailableDatesForUpdate(appt.spec_id, appt.app_date);
+    
+    // Fetch available times for current date
+    fetchAvailableTimesForUpdate(appt.spec_id, appt.app_date, appt.app_time);
+    
+    modal.show();
+}
 
-        // Show loading state
-        bookBtn.disabled = true;
-        bookBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Booking...';
-
-        // Submit appointment
-        fetch('../ajax/patient_book_appointment.php', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify(appointmentData)
-        })
+function fetchAvailableDatesForUpdate(specId, currentDate) {
+    fetch(`ajax/patient_get_avail_dates.php?spec_id=${specId}`)
         .then(response => response.json())
         .then(data => {
             if (data.success) {
-                alert('✓ Appointment booked successfully! You will be redirected to your dashboard.');
-                window.location.href = 'patient_dashb.php';
+                const dateInput = document.getElementById('update_date');
+                const availableDates = data.dates;
+                
+                // Set min and max date
+                const today = new Date().toISOString().split('T')[0];
+                const maxDate = new Date();
+                maxDate.setDate(maxDate.getDate() + 30);
+                dateInput.min = today;
+                dateInput.max = maxDate.toISOString().split('T')[0];
+                
+                // Store available dates
+                dateInput.dataset.availableDates = JSON.stringify(availableDates);
+                
+                // Add note
+                const noteEl = document.getElementById('update_date_note');
+                if (noteEl) {
+                    noteEl.textContent = `${availableDates.length} dates available`;
+                }
+            }
+        })
+        .catch(error => console.error('Error fetching dates:', error));
+}
+
+function fetchAvailableTimesForUpdate(specId, selectedDate, currentTime) {
+    const timeSelect = document.getElementById('update_time');
+    timeSelect.innerHTML = '<option value="">-- Loading... --</option>';
+    
+    fetch(`ajax/patient_get_avail_times.php?spec_id=${specId}&date=${selectedDate}`)
+        .then(response => response.json())
+        .then(data => {
+            if (data.success && data.timeSlots.length > 0) {
+                timeSelect.innerHTML = '<option value="">-- Select Time --</option>';
+                data.timeSlots.forEach(slot => {
+                    const option = document.createElement('option');
+                    option.value = slot.time;
+                    option.textContent = slot.formatted + ' (Dr. ' + slot.doctor_name.split(',')[0] + ')';
+                    option.dataset.doctorId = slot.doctor_id;
+                    
+                    // Select current time if it matches
+                    if (slot.time === currentTime) {
+                        option.selected = true;
+                    }
+                    
+                    timeSelect.appendChild(option);
+                });
+                
+                // Add back the current time if not in available slots
+                if (!data.timeSlots.find(s => s.time === currentTime)) {
+                    const currentOption = document.createElement('option');
+                    currentOption.value = currentTime;
+                    currentOption.textContent = new Date('1970-01-01T' + currentTime).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true }) + ' (Current)';
+                    currentOption.selected = true;
+                    timeSelect.insertBefore(currentOption, timeSelect.firstChild.nextSibling);
+                }
             } else {
-                alert('✗ Error: ' + (data.message || 'Failed to book appointment'));
-                bookBtn.disabled = false;
-                bookBtn.innerHTML = 'BOOK APPOINTMENT';
+                timeSelect.innerHTML = '<option value="">-- No Time Slots Available --</option>';
             }
         })
         .catch(error => {
-            console.error('Error booking appointment:', error);
-            alert('✗ An error occurred while booking the appointment');
-            bookBtn.disabled = false;
-            bookBtn.innerHTML = 'BOOK APPOINTMENT';
+            console.error('Error fetching time slots:', error);
+            timeSelect.innerHTML = '<option value="">-- Error Loading Times --</option>';
         });
+}
+
+// ===============================
+// CANCEL APPOINTMENT (GLOBAL FUNCTION)
+// ===============================
+
+function cancelAppointment(appId) {
+    if (!confirm('Are you sure you want to cancel this appointment?')) {
+        return;
+    }
+
+    fetch('ajax/patient_cancel_appt.php', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ app_id: appId })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            alert('✓ Appointment cancelled successfully!');
+            location.reload();
+        } else {
+            alert('✗ Error: ' + (data.message || 'Failed to cancel appointment'));
+        }
+    })
+    .catch(error => {
+        console.error('Error cancelling appointment:', error);
+        alert('✗ An error occurred while cancelling the appointment');
     });
 }
 
-// Validate payment form based on selected method
-function validatePaymentForm() {
-    const methodName = paymentMethodSelect.options[paymentMethodSelect.selectedIndex].text.toLowerCase();
+// ===============================
+// PATIENT SETTINGS - PASSWORD TOGGLE
+// ===============================
 
-    switch(methodName) {
-        case 'cash':
-            return document.getElementById('confirmCash')?.checked;
-        
-        case 'debit card':
-            return document.getElementById('debitCardNumber')?.value &&
-                   document.getElementById('debitExpiry')?.value &&
-                   document.getElementById('debitCVV')?.value &&
-                   document.getElementById('debitCardName')?.value &&
-                   document.getElementById('confirmDebit')?.checked;
-        
-        case 'credit card':
-            return document.getElementById('creditCardNumber')?.value &&
-                   document.getElementById('creditExpiry')?.value &&
-                   document.getElementById('creditCVV')?.value &&
-                   document.getElementById('creditCardName')?.value &&
-                   document.getElementById('confirmCredit')?.checked;
-        
-        case 'bank transfer':
-            return document.getElementById('bankRefNumber')?.value &&
-                   document.getElementById('bankTransferDate')?.value &&
-                   document.getElementById('confirmBank')?.checked;
-        
-        case 'mobile payment':
-            return document.getElementById('mobilePlatform')?.value &&
-                   document.getElementById('mobileNumber')?.value &&
-                   document.getElementById('mobileRefNumber')?.value &&
-                   document.getElementById('confirmMobile')?.checked;
-        
-        default:
-            return false;
+function togglePassword(fieldId) {
+    const field = document.getElementById(fieldId);
+    const icon = document.getElementById(fieldId + '_icon');
+    
+    if (field && icon) {
+        if (field.type === 'password') {
+            field.type = 'text';
+            icon.classList.remove('bi-eye');
+            icon.classList.add('bi-eye-slash');
+        } else {
+            field.type = 'password';
+            icon.classList.remove('bi-eye-slash');
+            icon.classList.add('bi-eye');
+        }
     }
 }
 
-// Format card number inputs
-function formatCardInputs() {
-    const cardInputs = [
-        document.getElementById('debitCardNumber'),
-        document.getElementById('creditCardNumber')
-    ];
+// ===============================
+// PATIENT SETTINGS - EDIT FORM SUBMISSION
+// ===============================
 
-    cardInputs.forEach(input => {
-        if (input) {
-            input.addEventListener('input', function(e) {
-                let value = e.target.value.replace(/\s/g, '');
-                let formattedValue = value.match(/.{1,4}/g)?.join(' ') || value;
-                e.target.value = formattedValue;
-            });
-        }
-    });
+// Wait for DOM to be ready before attaching event listener
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', initSettingsForm);
+} else {
+    initSettingsForm();
+}
 
-    // Format expiry date
-    const expiryInputs = [
-        document.getElementById('debitExpiry'),
-        document.getElementById('creditExpiry')
-    ];
+function initSettingsForm() {
+    const editForm = document.getElementById('editForm');
+    
+    if (editForm && !editForm.dataset.listenerAttached) {
+        editForm.dataset.listenerAttached = 'true';
+        
+        editForm.addEventListener('submit', function(e) {
+            e.preventDefault();
 
-    expiryInputs.forEach(input => {
-        if (input) {
-            input.addEventListener('input', function(e) {
-                let value = e.target.value.replace(/\D/g, '');
-                if (value.length >= 2) {
-                    value = value.slice(0, 2) + '/' + value.slice(2, 4);
+            const currentPassword = document.getElementById('current_password')?.value;
+            const newPassword = document.getElementById('new_password')?.value;
+            const confirmPassword = document.getElementById('confirm_password')?.value;
+
+            // Validate password fields if any is filled
+            if (currentPassword || newPassword || confirmPassword) {
+                if (!currentPassword) {
+                    alert('Please enter your current password');
+                    return;
                 }
-                e.target.value = value;
-            });
-        }
-    });
+                if (!newPassword) {
+                    alert('Please enter a new password');
+                    return;
+                }
+                if (!confirmPassword) {
+                    alert('Please confirm your new password');
+                    return;
+                }
+                if (newPassword !== confirmPassword) {
+                    alert('New passwords do not match');
+                    return;
+                }
+                if (newPassword.length < 6) {
+                    alert('New password must be at least 6 characters');
+                    return;
+                }
+            }
 
-    // Format mobile number
-    const mobileInput = document.getElementById('mobileNumber');
-    if (mobileInput) {
-        mobileInput.addEventListener('input', function(e) {
-            let value = e.target.value.replace(/\D/g, '');
-            e.target.value = value.slice(0, 11);
+            const formData = new FormData(this);
+            const submitBtn = this.querySelector('button[type="submit"]');
+            const originalBtnText = submitBtn.innerHTML;
+
+            // Show loading state
+            submitBtn.disabled = true;
+            submitBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Updating...';
+
+            fetch('ajax/patient_update_account.php', {
+                method: 'POST',
+                body: formData
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    alert('✓ ' + data.message);
+                    location.reload();
+                } else {
+                    alert('✗ Error: ' + data.message);
+                    submitBtn.disabled = false;
+                    submitBtn.innerHTML = originalBtnText;
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('✗ An error occurred while updating your account');
+                submitBtn.disabled = false;
+                submitBtn.innerHTML = originalBtnText;
+            });
         });
     }
 }
+
+// Make togglePassword globally accessible
+window.togglePassword = togglePassword;
+
+// ===============================
+// VIEW PATIENTS - SEARCH/FILTER
+// ===============================
+
+document.addEventListener('DOMContentLoaded', function() {
+    const searchName = document.getElementById('searchName');
+    const applySearchBtn = document.getElementById('applySearchBtn');
+    const clearSearchBtn = document.getElementById('clearSearchBtn');
+    const patientsTable = document.getElementById('patientsTable');
+    const filterTotal = document.getElementById('filterTotal');
+
+    // Apply search
+    if (applySearchBtn) {
+        applySearchBtn.addEventListener('click', function() {
+            filterPatients();
+        });
+    }
+
+    // Clear search
+    if (clearSearchBtn) {
+        clearSearchBtn.addEventListener('click', function() {
+            if (searchName) {
+                searchName.value = '';
+            }
+            filterPatients();
+        });
+    }
+
+    // Search on Enter key
+    if (searchName) {
+        searchName.addEventListener('keyup', function(e) {
+            if (e.key === 'Enter') {
+                filterPatients();
+            }
+        });
+    }
+
+    function filterPatients() {
+        if (!patientsTable) return;
+
+        const searchTerm = searchName ? searchName.value.trim().toLowerCase() : '';
+        const rows = patientsTable.querySelectorAll('tbody tr');
+        let visibleCount = 0;
+
+        rows.forEach(row => {
+            const nameData = row.dataset.name || '';
+            
+            if (!searchTerm || nameData.includes(searchTerm)) {
+                row.style.display = '';
+                visibleCount++;
+            } else {
+                row.style.display = 'none';
+            }
+        });
+
+        if (filterTotal) {
+            filterTotal.textContent = visibleCount;
+        }
+    }
+
+    // Initialize counts on page load
+    function updateInitialCounts() {
+        if (patientsTable && filterTotal) {
+            const totalRows = patientsTable.querySelectorAll('tbody tr').length;
+            filterTotal.textContent = totalRows;
+        }
+    }
+
+    updateInitialCounts();
 });
