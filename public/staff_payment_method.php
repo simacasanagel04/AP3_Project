@@ -1,4 +1,6 @@
 <?php
+// public/staff_payment_method.php
+
 session_start();
 require_once '../config/Database.php';
 include '../includes/staff_header.php';
@@ -70,37 +72,47 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
     }
 }
 
-// Handle Delete Payment Method
-if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['action'] === 'delete') {
-    $methodId = trim($_POST['method_id']);
-    
-    if (!empty($methodId)) {
-        try {
-            $sql = "DELETE FROM payment_method WHERE PYMT_METH_ID = :id";
-            $stmt = $db->prepare($sql);
-            $success = $stmt->execute([':id' => $methodId]);
-            
-            if ($success) {
-                $status = "success";
-                $message = "Payment method deleted successfully!";
-            } else {
-                $status = "error";
-                $message = "Failed to delete payment method.";
-            }
-        } catch (PDOException $e) {
-            $status = "error";
-            $message = "Cannot delete: Payment method is in use.";
-        }
-    }
-}
+// Handle search/filter
+$searchTerm = $_GET['search'] ?? '';
+$filterById = $_GET['filter_id'] ?? '';
 
-// Fetch all payment methods
+// Fetch payment methods with search/filter
 try {
-    $sql = "SELECT * FROM payment_method ORDER BY PYMT_METH_ID";
-    $stmt = $db->query($sql);
+    $sql = "SELECT PYMT_METH_ID, PYMT_METH_NAME,
+            DATE_FORMAT(PYMT_METH_CREATED_AT, '%M %d, %Y %h:%i %p') as formatted_created_at,
+            DATE_FORMAT(PYMT_METH_UPDATED_AT, '%M %d, %Y %h:%i %p') as formatted_updated_at
+            FROM payment_method
+            WHERE 1=1";
+    
+    $params = [];
+    
+    if (!empty($searchTerm)) {
+        $sql .= " AND LOWER(PYMT_METH_NAME) LIKE LOWER(:search)";
+        $params[':search'] = '%' . $searchTerm . '%';
+    }
+    
+    if (!empty($filterById)) {
+        $sql .= " AND PYMT_METH_ID = :id";
+        $params[':id'] = $filterById;
+    }
+    
+    $sql .= " ORDER BY PYMT_METH_ID";
+    
+    $stmt = $db->prepare($sql);
+    $stmt->execute($params);
     $paymentMethods = $stmt->fetchAll(PDO::FETCH_ASSOC);
 } catch (PDOException $e) {
     $paymentMethods = [];
+    error_log("Error fetching payment methods: " . $e->getMessage());
+}
+
+// Get total count
+try {
+    $countSql = "SELECT COUNT(*) as total FROM payment_method";
+    $countStmt = $db->query($countSql);
+    $totalMethods = $countStmt->fetch(PDO::FETCH_ASSOC)['total'];
+} catch (PDOException $e) {
+    $totalMethods = 0;
 }
 ?>
 
@@ -142,24 +154,52 @@ try {
                 </div>
             <?php endif; ?>
 
-            <!-- Add Payment Method Form -->
+            <!-- Search/Filter Card -->
             <div class="card shadow-sm mb-4">
                 <div class="card-body">
-                    <h5 class="card-title mb-4">Add New Payment Method</h5>
-                    <form method="POST" action="">
-                        <input type="hidden" name="action" value="add">
+                    <h6 class="mb-3">Search & Filter</h6>
+                    <form method="GET" action="" id="searchForm">
                         <div class="row g-3">
-                            <div class="col-md-8">
-                                <label for="method_name" class="form-label">Payment Method Name <span class="text-danger">*</span></label>
-                                <input type="text" class="form-control" id="method_name" name="method_name" required>
+                            <div class="col-md-5">
+                                <label for="search" class="form-label">Search by Name</label>
+                                <input type="text" class="form-control" id="search" name="search" 
+                                    value="<?= htmlspecialchars($searchTerm) ?>" 
+                                    placeholder="Enter payment method name">
+                                <div class="form-text">Search is case-insensitive and matches any part of the name</div>
                             </div>
-                            <div class="col-md-4 d-flex align-items-end">
-                                <button type="submit" class="btn btn-success w-100">
-                                    <i class="bi bi-plus-circle"></i> Add Method
+                            <div class="col-md-3">
+                                <label for="filter_id" class="form-label">Filter by ID</label>
+                                <input type="number" class="form-control" id="filter_id" name="filter_id" 
+                                    value="<?= htmlspecialchars($filterById) ?>" 
+                                    placeholder="Enter ID">
+                            </div>
+                            <div class="col-md-4 d-flex align-items-end gap-2">
+                                <button type="submit" class="btn btn-primary flex-fill">
+                                    <i class="bi bi-search"></i> Search
                                 </button>
+                                <a href="staff_payment_method.php" class="btn btn-outline-secondary flex-fill">
+                                    <i class="bi bi-x-circle"></i> Clear
+                                </a>
                             </div>
                         </div>
+                        <div class="mt-3">
+                            <small class="text-muted">
+                                Showing <strong><?= count($paymentMethods) ?></strong> of <strong><?= $totalMethods ?></strong> payment methods
+                            </small>
+                        </div>
                     </form>
+                </div>
+            </div>
+
+            <!-- Add Button Card -->
+            <div class="card shadow-sm mb-4">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <h5 class="card-title mb-0">Payment Methods Management</h5>
+                        <button type="button" class="btn btn-success" id="openAddModalBtn">
+                            <i class="bi bi-plus-circle"></i> Add New Payment Method
+                        </button>
+                    </div>
                 </div>
             </div>
 
@@ -181,25 +221,26 @@ try {
                             <tbody>
                                 <?php if (empty($paymentMethods)): ?>
                                     <tr>
-                                        <td colspan="5" class="text-center text-muted py-4">No payment methods found</td>
+                                        <td colspan="5" class="text-center text-muted py-4">
+                                            <?php if (!empty($searchTerm) || !empty($filterById)): ?>
+                                                No payment methods match your search criteria
+                                            <?php else: ?>
+                                                No payment methods found
+                                            <?php endif; ?>
+                                        </td>
                                     </tr>
                                 <?php else: ?>
                                     <?php foreach ($paymentMethods as $method): ?>
                                         <tr>
                                             <td><?= htmlspecialchars($method['PYMT_METH_ID']) ?></td>
                                             <td><?= htmlspecialchars($method['PYMT_METH_NAME']) ?></td>
-                                            <td><?= date('M d, Y h:i A', strtotime($method['PYMT_METH_CREATED_AT'])) ?></td>
-                                            <td><?= date('M d, Y h:i A', strtotime($method['PYMT_METH_UPDATED_AT'])) ?></td>
+                                            <td><?= htmlspecialchars($method['formatted_created_at']) ?></td>
+                                            <td><?= htmlspecialchars($method['formatted_updated_at']) ?></td>
                                             <td>
                                                 <button class="btn btn-sm btn-primary edit-btn" 
                                                     data-id="<?= htmlspecialchars($method['PYMT_METH_ID']) ?>"
                                                     data-name="<?= htmlspecialchars($method['PYMT_METH_NAME']) ?>">
                                                     <i class="bi bi-pencil"></i> Edit
-                                                </button>
-                                                <button class="btn btn-sm btn-danger delete-btn" 
-                                                    data-id="<?= htmlspecialchars($method['PYMT_METH_ID']) ?>"
-                                                    data-name="<?= htmlspecialchars($method['PYMT_METH_NAME']) ?>">
-                                                    <i class="bi bi-trash"></i> Delete
                                                 </button>
                                             </td>
                                         </tr>
@@ -210,6 +251,38 @@ try {
                     </div>
                 </div>
             </div>
+        </div>
+    </div>
+</div>
+
+<!-- Add Modal -->
+<div class="modal fade" id="addModal" tabindex="-1" aria-labelledby="addModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="addModalLabel">Add New Payment Method</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form method="POST" action="">
+                <input type="hidden" name="action" value="add">
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label for="add_method_name" class="form-label">Payment Method Name <span class="text-danger">*</span></label>
+                        <input type="text" class="form-control" id="add_method_name" name="method_name" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="add_created_at" class="form-label">Created At</label>
+                        <input type="text" class="form-control" id="add_created_at" readonly disabled>
+                        <div class="form-text">This will be automatically set when you submit</div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-success">
+                        <i class="bi bi-check-circle"></i> Add Method
+                    </button>
+                </div>
+            </form>
         </div>
     </div>
 </div>
@@ -242,63 +315,7 @@ try {
     </div>
 </div>
 
-<!-- Delete Modal -->
-<div class="modal fade" id="deleteModal" tabindex="-1" aria-labelledby="deleteModalLabel" aria-hidden="true">
-    <div class="modal-dialog">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title" id="deleteModalLabel">Confirm Delete</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-            </div>
-            <form method="POST" action="">
-                <input type="hidden" name="action" value="delete">
-                <input type="hidden" id="delete_method_id" name="method_id">
-                <div class="modal-body">
-                    <p>Are you sure you want to delete "<strong id="delete_method_name"></strong>"?</p>
-                    <p class="text-danger">This action cannot be undone.</p>
-                </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                    <button type="submit" class="btn btn-danger">
-                        <i class="bi bi-trash"></i> Delete
-                    </button>
-                </div>
-            </form>
-        </div>
-    </div>
-</div>
-
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
-<script>
-document.addEventListener('DOMContentLoaded', function() {
-    // Edit button
-    document.querySelectorAll('.edit-btn').forEach(btn => {
-        btn.addEventListener('click', function() {
-            const id = this.dataset.id;
-            const name = this.dataset.name;
-            
-            document.getElementById('edit_method_id').value = id;
-            document.getElementById('edit_method_name').value = name;
-            
-            const modal = new bootstrap.Modal(document.getElementById('editModal'));
-            modal.show();
-        });
-    });
-    
-    // Delete button
-    document.querySelectorAll('.delete-btn').forEach(btn => {
-        btn.addEventListener('click', function() {
-            const id = this.dataset.id;
-            const name = this.dataset.name;
-            
-            document.getElementById('delete_method_id').value = id;
-            document.getElementById('delete_method_name').textContent = name;
-            
-            const modal = new bootstrap.Modal(document.getElementById('deleteModal'));
-            modal.show();
-        });
-    });
-});
-</script>
+<script src="js/staff_payments_script.js"></script>
 </body>
 </html>

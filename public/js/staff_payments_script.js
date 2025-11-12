@@ -314,6 +314,49 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     });
 
+    // ========== PAYMENT METHOD PAGE FUNCTIONALITY ==========
+    
+    // Open Add Modal
+    document.getElementById('openAddModalBtn')?.addEventListener('click', function() {
+        // Set current date/time in the Created At field
+        const now = new Date();
+        const formatted = now.toLocaleString('en-US', { 
+            month: 'long', 
+            day: 'numeric', 
+            year: 'numeric', 
+            hour: 'numeric', 
+            minute: '2-digit', 
+            hour12: true 
+        });
+        document.getElementById('add_created_at').value = formatted;
+        
+        const modal = new bootstrap.Modal(document.getElementById('addModal'));
+        modal.show();
+    });
+    
+    // Edit button
+    document.querySelectorAll('.edit-btn').forEach(btn => {
+        btn.addEventListener('click', function() {
+            const id = this.dataset.id;
+            const name = this.dataset.name;
+            
+            document.getElementById('edit_method_id').value = id;
+            document.getElementById('edit_method_name').value = name;
+            
+            const modal = new bootstrap.Modal(document.getElementById('editModal'));
+            modal.show();
+        });
+    });
+    
+    // Auto-dismiss alerts after 5 seconds
+    const alerts = document.querySelectorAll('.alert');
+    alerts.forEach(alert => {
+        setTimeout(() => {
+            const bsAlert = new bootstrap.Alert(alert);
+            bsAlert.close();
+        }, 5000);
+    });
+
     // Utility Functions
     function showAlert(type, message) {
         const alertContainer = document.getElementById('alertContainer');

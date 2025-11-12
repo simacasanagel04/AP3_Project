@@ -299,3 +299,207 @@ input[type="datetime-local"]:disabled {
     background-color: #e9ecef;
     cursor: not-allowed;
 }
+/* =========================================================================================
+=========FOR PAYMENT STATUS ==========
+=============================================================================================*/
+
+/* ========================================
+   PAYMENT STATUS PAGE ENHANCEMENTS
+   ======================================== */
+
+/* Search & Filter Card Styling */
+.search-filter-card {
+    background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+    border-left: 4px solid #0d6efd;
+}
+
+.search-filter-card .input-group-text {
+    border: none;
+}
+
+.search-filter-card input:focus {
+    border-color: #0d6efd;
+    box-shadow: 0 0 0 0.25rem rgba(13, 110, 253, 0.15);
+}
+
+/* Add Status Card Styling */
+.add-status-card {
+    background: linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%);
+    border-left: 4px solid #198754;
+    transition: all 0.3s ease;
+}
+
+.add-status-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 16px rgba(0, 0, 0, 0.1) !important;
+}
+
+/* Add Status Button Animation */
+.add-status-btn {
+    padding: 12px 28px;
+    font-weight: 600;
+    border-radius: 8px;
+    transition: all 0.3s ease;
+    box-shadow: 0 4px 6px rgba(25, 135, 84, 0.2);
+}
+
+.add-status-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 12px rgba(25, 135, 84, 0.3);
+}
+
+.add-status-btn:active {
+    transform: translateY(0);
+}
+
+/* Button Pulse Animation */
+@keyframes pulse {
+    0% {
+        transform: scale(1);
+    }
+    50% {
+        transform: scale(1.05);
+    }
+    100% {
+        transform: scale(1);
+    }
+}
+
+.btn-pulse {
+    animation: pulse 0.6s ease-in-out;
+}
+
+/* Status Badge Enhanced */
+.badge-status {
+    padding: 8px 16px;
+    font-size: 0.9rem;
+    font-weight: 600;
+    border-radius: 20px;
+    letter-spacing: 0.5px;
+}
+
+.badge-status i {
+    font-size: 0.6rem;
+    margin-right: 4px;
+}
+
+/* Table Enhancements */
+.table thead th {
+    background: linear-gradient(180deg, #f8f9fa 0%, #e9ecef 100%);
+    font-weight: 600;
+    text-transform: uppercase;
+    font-size: 0.85rem;
+    letter-spacing: 0.5px;
+    border-bottom: 2px solid #dee2e6;
+}
+
+.table tbody tr {
+    transition: all 0.2s ease;
+}
+
+.table tbody tr:hover {
+    background-color: #f8f9fa;
+    transform: scale(1.01);
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+}
+
+/* Modal Enhancements */
+.modal-content {
+    border-radius: 12px;
+    border: none;
+    overflow: hidden;
+}
+
+.modal-header {
+    padding: 1.5rem;
+    border-bottom: none;
+}
+
+.modal-body {
+    padding: 2rem;
+}
+
+.modal-footer {
+    padding: 1.5rem;
+    border-top: 1px solid #e9ecef;
+    background-color: #f8f9fa;
+}
+
+/* Form Control Enhancements */
+.form-control-lg {
+    border-radius: 8px;
+    border: 2px solid #e9ecef;
+    padding: 12px 16px;
+}
+
+.form-control-lg:focus {
+    border-color: #0d6efd;
+    box-shadow: 0 0 0 0.25rem rgba(13, 110, 253, 0.15);
+}
+
+/* Empty State Styling */
+.table tbody td i.bi-inbox {
+    color: #adb5bd;
+}
+
+/* Search Input Group Large */
+.input-group-lg .input-group-text {
+    padding: 12px 16px;
+    font-size: 1.1rem;
+}
+
+.input-group-lg .form-control {
+    font-size: 1rem;
+}
+
+/* Button Icon Spacing */
+.btn i {
+    margin-right: 6px;
+}
+
+/* Responsive Adjustments */
+@media (max-width: 768px) {
+    .add-status-btn {
+        width: 100%;
+        margin-top: 1rem;
+    }
+    
+    .add-status-card .card-body {
+        flex-direction: column;
+        align-items: flex-start !important;
+    }
+}
+
+/* Loading Animation */
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.card {
+    animation: fadeIn 0.3s ease-out;
+}
+
+/* Badge Color Variants */
+.badge.bg-warning {
+    color: #000;
+}
+
+/* Icon Colors */
+.text-primary i {
+    color: #0d6efd;
+}
+
+.text-success i {
+    color: #198754;
+}
+
+.text-muted i {
+    color: #6c757d;
+}
