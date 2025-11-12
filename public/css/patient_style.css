@@ -9,9 +9,9 @@
     --teal: #183358;
     --pastel-green: #c1dbc5;
     --sidebar-width: 260px;
-    --orange: #f39c12;
-    --green: #27ae60;
-    --red: #e74c3c;
+    --orange: #eed462ee;
+    --green: #1c8d4b;
+    --red: #b64639;
 }
 
 body {
@@ -25,6 +25,9 @@ h1, h2, h3, h4, h5, h6, .display-4 {
     font-family: 'Times New Roman', serif;
     font-weight: 700;
 }
+
+.btn-primary {background-color: #4b6992;}
+.bg-info {background-color: #4b8d92 !important;}
 
 /*==========================================================================
 ===== SIDEBAR============= 
@@ -212,8 +215,8 @@ h1, h2, h3, h4, h5, h6, .display-4 {
     color: white;
 }
 
-.stat-icon.bg-primary {background: linear-gradient(135deg, #336d96 0%, #4a8bc2 100%);}
-.stat-icon.bg-warning {background: linear-gradient(135deg, #f39c12 0%, #f5b041 100%);}
+.stat-icon.bg-primary {background: linear-gradient(135deg, #336d96 0%, #3f7eb6 100%);}
+.stat-icon.bg-warning {background: linear-gradient(135deg, #ee9911da 0%, #f5b041ea 100%);}
 .stat-icon.bg-success {background: linear-gradient(135deg, #27ae60 0%, #52be80 100%);}
 
 .stat-info h3 {
@@ -280,12 +283,12 @@ h1, h2, h3, h4, h5, h6, .display-4 {
 }
 
 .badge.bg-warning {
-    background-color: #ffc107 !important;
-    color: #000;
+    background-color: #BC6625 !important;
+    color: #ffffff !important;
 }
 
-.badge.bg-success {background-color: #28a745 !important;}
-.badge.bg-danger {background-color: #dc3545 !important;}
+.badge.bg-success {background-color: #6fa57c !important;}
+.badge.bg-danger {background-color: #e73143c5 !important;}
 
 /* ==================================================================================== 
 ===BUTTON STYLES ===== 
@@ -312,8 +315,8 @@ h1, h2, h3, h4, h5, h6, .display-4 {
 }
 
 .btn-warning {
-    background-color: #ffc107;
-    border-color: #ffc107;
+    background-color: #D6B456;
+    border-color: #D6B456;
     color: #000;
 }
 

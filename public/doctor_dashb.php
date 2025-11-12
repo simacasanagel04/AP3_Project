@@ -196,34 +196,14 @@ require_once '../includes/doctor_header.php';
                                 <td><?= htmlspecialchars($a['service_name']) ?></td>
                                 <td><?= htmlspecialchars($a['formatted_time_start']) ?> - <?= htmlspecialchars($a['formatted_time_end']) ?></td>
                                 <td>
-                                    <select class="form-select status-select" data-appt-id="<?= $a['APPT_ID'] ?>">
-                                        <?php foreach ($statuses as $status): 
-                                            $color = $status['STATUS_NAME'] === 'Completed' ? 'success' : 
-                                                    ($status['STATUS_NAME'] === 'Scheduled' ? 'warning' : 'danger');
-                                        ?>
-                                            <option value="<?= $status['STAT_ID'] ?>" 
-                                                <?= ($a['STAT_ID'] == $status['STAT_ID']) ? 'selected' : '' ?>
-                                                data-color="<?= $color ?>">
-                                                <?= htmlspecialchars($status['STATUS_NAME']) ?>
-                                            </option>
-                                        <?php endforeach; ?>
-                                    </select>
+                                    <span class="badge bg-<?= 
+                                        $a['STATUS_NAME'] === 'Completed' ? 'success' : 
+                                        ($a['STATUS_NAME'] === 'Scheduled' ? 'warning' : 'danger')
+                                    ?>"><?= htmlspecialchars($a['STATUS_NAME']) ?></span>
                                 </td>
                                 <td class="text-center">
                                     <button class="btn btn-sm action-btn btn-view" data-pat-id="<?= $a['PAT_ID'] ?>" data-appt-id="<?= $a['APPT_ID'] ?>">
                                         View
-                                    </button>
-                                    <button class="btn btn-sm action-btn btn-edit" 
-                                        data-appt-id="<?= $a['APPT_ID'] ?>"
-                                        data-appt-date="<?= $a['APPT_DATE'] ?>"
-                                        data-appt-time="<?= substr($a['APPT_TIME'], 0, 5) ?>"
-                                        data-service-id="<?= $a['SERV_ID'] ?>"
-                                        data-service="<?= htmlspecialchars($a['service_name']) ?>"
-                                        data-status="<?= $a['STAT_ID'] ?>">
-                                        Update
-                                    </button>
-                                    <button class="btn btn-sm action-btn btn-delete btn-danger" data-appt-id="<?= $a['APPT_ID'] ?>">
-                                        Delete
                                     </button>
                                 </td>
                             </tr>
@@ -266,34 +246,15 @@ require_once '../includes/doctor_header.php';
                                 <td><?= htmlspecialchars($a['formatted_date']) ?></td>
                                 <td><?= htmlspecialchars($a['formatted_time_start']) ?> - <?= htmlspecialchars($a['formatted_time_end']) ?></td>
                                 <td>
-                                    <select class="form-select status-select" data-appt-id="<?= $a['APPT_ID'] ?>">
-                                        <?php foreach ($statuses as $status): 
-                                            $color = $status['STATUS_NAME'] === 'Completed' ? 'success' : 
-                                                    ($status['STATUS_NAME'] === 'Scheduled' ? 'warning' : 'danger');
-                                        ?>
-                                            <option value="<?= $status['STAT_ID'] ?>" 
-                                                <?= ($a['STAT_ID'] == $status['STAT_ID']) ? 'selected' : '' ?>
-                                                data-color="<?= $color ?>">
-                                                <?= htmlspecialchars($status['STATUS_NAME']) ?>
-                                            </option>
-                                        <?php endforeach; ?>
-                                    </select>
+                                    <span class="badge bg-<?= 
+                                        $a['STATUS_NAME'] === 'Completed' ? 'success' : 
+                                        ($a['STATUS_NAME'] === 'Scheduled' ? 'warning' : 'danger')
+                                        ?>"><?= htmlspecialchars($a['STATUS_NAME']) ?>
+                                    </span>
                                 </td>
                                 <td class="text-center">
                                     <button class="btn btn-sm action-btn btn-view" data-pat-id="<?= $a['PAT_ID'] ?>" data-appt-id="<?= $a['APPT_ID'] ?>">
                                         View
-                                    </button>
-                                    <button class="btn btn-sm action-btn btn-edit" 
-                                        data-appt-id="<?= $a['APPT_ID'] ?>"
-                                        data-appt-date="<?= $a['APPT_DATE'] ?>"
-                                        data-appt-time="<?= substr($a['APPT_TIME'], 0, 5) ?>"
-                                        data-service-id="<?= $a['SERV_ID'] ?>"
-                                        data-service="<?= htmlspecialchars($a['service_name']) ?>"
-                                        data-status="<?= $a['STAT_ID'] ?>">
-                                        Update
-                                    </button>
-                                    <button class="btn btn-sm action-btn btn-delete btn-danger" data-appt-id="<?= $a['APPT_ID'] ?>">
-                                        Delete
                                     </button>
                                 </td>
                             </tr>
@@ -345,18 +306,6 @@ require_once '../includes/doctor_header.php';
                                     <button class="btn btn-sm action-btn btn-view" data-pat-id="<?= $a['PAT_ID'] ?>" data-appt-id="<?= $a['APPT_ID'] ?>">
                                         View
                                     </button>
-                                    <button class="btn btn-sm action-btn btn-edit" 
-                                        data-appt-id="<?= $a['APPT_ID'] ?>"
-                                        data-appt-date="<?= $a['APPT_DATE'] ?>"
-                                        data-appt-time="<?= substr($a['APPT_TIME'], 0, 5) ?>"
-                                        data-service-id="<?= $a['SERV_ID'] ?>"
-                                        data-service="<?= htmlspecialchars($a['service_name']) ?>"
-                                        data-status="<?= $a['STAT_ID'] ?>">
-                                        Update
-                                    </button>
-                                    <button class="btn btn-sm action-btn btn-delete btn-danger" data-appt-id="<?= $a['APPT_ID'] ?>">
-                                        Delete
-                                    </button>
                                 </td>
                             </tr>
                         <?php endforeach; ?>
@@ -387,62 +336,6 @@ require_once '../includes/doctor_header.php';
             <div class="modal-footer">
                 <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
             </div>
-        </div>
-    </div>
-</div>
-
-<!-- EDIT MODAL -->
-<div class="modal fade" id="editApptModal" tabindex="-1">
-    <div class="modal-dialog">
-        <div class="modal-content">
-            <div class="modal-header bg-warning">
-                <h5 class="modal-title">Edit Appointment</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-            </div>
-            <form id="editApptForm">
-                <div class="modal-body">
-                    <input type="hidden" id="edit_appt_id" name="appt_id">
-                    <div class="mb-3">
-                        <label class="form-label"><strong>Appointment ID</strong></label>
-                        <input type="text" class="form-control" id="edit_appt_id_display" readonly>
-                    </div>
-                    <div class="mb-3">
-                        <label class="form-label"><strong>Date</strong></label>
-                        <input type="date" class="form-control" id="edit_appt_date" name="appt_date" required>
-                        <small class="text-muted">Working Hours: Mon-Fri (8AM-6PM), Sat (9AM-5PM), Sun (Closed)</small>
-                    </div>
-                    <div class="mb-3">
-                        <label class="form-label"><strong>Time</strong></label>
-                        <input type="time" class="form-control" id="edit_appt_time" name="appt_time" required>
-                        <small class="text-muted" id="time_restriction_msg">Please select a date first</small>
-                    </div>
-                    <div class="mb-3">
-                        <label class="form-label"><strong>Service</strong></label>
-                        <select class="form-select" id="edit_service" name="service_id" required>
-                            <option value="">Select Service</option>
-                            <?php foreach ($services as $service): ?>
-                                <option value="<?= $service['SERV_ID'] ?>">
-                                    <?= htmlspecialchars($service['SERV_NAME']) ?> - ₱<?= number_format($service['SERV_PRICE'], 2) ?>
-                                </option>
-                            <?php endforeach; ?>
-                        </select>
-                    </div>
-                    <div class="mb-3">
-                        <label class="form-label"><strong>Status</strong></label>
-                        <select class="form-select" id="edit_status" name="status_id" required>
-                            <?php foreach ($statuses as $status): ?>
-                                <option value="<?= $status['STAT_ID'] ?>">
-                                    <?= htmlspecialchars($status['STATUS_NAME']) ?>
-                                </option>
-                            <?php endforeach; ?>
-                        </select>
-                    </div>
-                </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                    <button type="submit" class="btn btn-primary">Update Appointment</button>
-                </div>
-            </form>
         </div>
     </div>
 </div>

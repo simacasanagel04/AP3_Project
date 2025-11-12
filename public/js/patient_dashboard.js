@@ -411,8 +411,25 @@ document.addEventListener('DOMContentLoaded', function () {
                 default:
                     cardHTML = `
                         <div class="card-form active">
+                            <h5><i class="bi bi-building"></i> ${methodName}</h5>
+                            <div class="alert alert-info mt-3">
+                                <strong><i class="bi bi-info-circle"></i> Payment at Clinic</strong>
+                                <ul class="mb-0 mt-2">
+                                    <li>Payment will be processed upon your arrival at the clinic</li>
+                                    <li>Please arrive 10-15 minutes before your scheduled appointment</li>
+                                    <li>Bring valid ID and appointment confirmation</li>
+                                    <li>Amount to pay: ₱${selectedServicePrice.toFixed(2)}</li>
+                                    <li>Payment status will be marked as PENDING until confirmed by staff</li>
+                                </ul>
+                            </div>
                             <div class="alert alert-warning">
-                                <strong>Payment method details not configured</strong>
+                                <i class="bi bi-exclamation-triangle"></i> <strong>Important:</strong> Failure to arrive on time may result in appointment cancellation.
+                            </div>
+                            <div class="form-check mt-3">
+                                <input class="form-check-input" type="checkbox" id="confirmOther" required>
+                                <label class="form-check-label" for="confirmOther">
+                                    I understand that I need to pay ₱${selectedServicePrice.toFixed(2)} at the clinic upon arrival
+                                </label>
                             </div>
                         </div>
                     `;
@@ -512,7 +529,7 @@ document.addEventListener('DOMContentLoaded', function () {
                        document.getElementById('confirmMobile')?.checked;
             
             default:
-                return false;
+                return document.getElementById('confirmOther')?.checked;
         }
     }
 

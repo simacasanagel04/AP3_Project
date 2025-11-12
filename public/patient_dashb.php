@@ -57,7 +57,7 @@ $total_appointments = count($appointments);
 
 <!-- STATS CARDS -->
 <div class="row g-3 mb-4">
-    <div class="col-md-4">
+    <div class="col-12 col-sm-6 col-lg-4">
         <div class="stat-card">
             <div class="stat-icon bg-primary">
                 <i class="bi bi-calendar-check"></i>
@@ -68,7 +68,7 @@ $total_appointments = count($appointments);
             </div>
         </div>
     </div>
-    <div class="col-md-4">
+    <div class="col-12 col-sm-6 col-lg-4">
         <div class="stat-card">
             <div class="stat-icon bg-warning">
                 <i class="bi bi-calendar-event"></i>
@@ -79,7 +79,7 @@ $total_appointments = count($appointments);
             </div>
         </div>
     </div>
-    <div class="col-md-4">
+    <div class="col-12 col-sm-6 col-lg-4">
         <div class="stat-card">
             <div class="stat-icon bg-success">
                 <i class="bi bi-calendar-plus"></i>

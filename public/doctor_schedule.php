@@ -54,10 +54,10 @@ try {
     $schedules = [];
 }
 
-// Filter today's schedules
-$today = date('l'); // Full day name (e.g., "Monday") - now using Philippine timezone
+// Filter today's schedules - compare actual dates instead of day names
+$today = date('Y-m-d'); // Get today's date in Y-m-d format (e.g., "2025-11-11")
 $todaySchedules = array_filter($schedules, function($s) use ($today) {
-    return strpos($s['SCHED_DAYS'], $today) !== false;
+    return $s['schedule_date'] === $today;
 });
 
 require_once '../includes/doctor_header.php';
