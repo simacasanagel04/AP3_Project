@@ -16,7 +16,9 @@ body {
   margin: 0;
 }
 
-/* ===== SIDEBAR ===== */
+/* =================================================================================
+======= SIDEBAR ===== 
+====================================================================================*/
 .sidebar {
   position: fixed;
   top: 0;
@@ -58,23 +60,10 @@ body {
   flex-shrink: 0;
 }
 
-/* ===== CLOCK CARD ===== */
-.clock-card {
-  background: #fff;
-  padding: 1rem;
-  margin: 1rem;
-  border-radius: 12px;
-  text-align: center;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-}
+/* ======================================================================================== 
+========NAV LINKS ===== 
+===========================================================================================*/
 
-.clock-card strong {
-  color: var(--main-blue);
-  display: block;
-  font-size: 1.1rem;
-}
-
-/* ===== NAV LINKS ===== */
 .sidebar .nav-link {
   color: #333;
   padding: 12px 20px;
@@ -97,7 +86,7 @@ body {
   font-weight: 600;
 }
 
-/* ===== SIDEBAR TOGGLE ===== */
+/* ================= SIDEBAR TOGGLE ====================== */
 .sidebar-toggle {
   position: fixed;
   top: 1rem;
@@ -123,7 +112,28 @@ body {
   color: #fff;
 }
 
-/* ===== MAIN CONTENT ===== */
+/* ===================================================================================== 
+===========CLOCK CARD ===== 
+=======================================================================================*/
+
+.clock-card {
+  background: #fff;
+  padding: 1rem;
+  margin: 1rem;
+  border-radius: 12px;
+  text-align: center;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+}
+
+.clock-card strong {
+  color: var(--main-blue);
+  display: block;
+  font-size: 1.1rem;
+}
+
+/* ==================================================================================
+========= MAIN CONTENT ===== 
+====================================================================================*/
 .main-content {
   margin-left: var(--sidebar-width);
   padding: 1.5rem;
@@ -135,7 +145,7 @@ body {
   margin-left: 0;
 }
 
-/* ===== INFO CARDS ===== */
+/* ============= INFO CARDS ===================== */
 .info-card {
   background: rgba(255,255,255,0.95);
   border-radius: 12px;
@@ -161,7 +171,10 @@ body {
   color: var(--main-blue);
 }
 
-/* ===== TABLE ===== */
+/* ==========================================================================================
+======== TABLE ===== 
+=============================================================================================*/
+
 .table-responsive {
   overflow-x: auto;
 }
@@ -261,38 +274,6 @@ body {
   font-weight: 700;
   color: var(--main-blue);
   margin: 0;
-}
-
-/* ===== RESPONSIVE ===== */
-@media (max-width: 991.98px) {
-  .sidebar {
-    transform: translateX(-100%);
-  }
-  .sidebar.active {
-    transform: translateX(0);
-  }
-  .sidebar-toggle {
-    display: flex;
-  }
-  .main-content {
-    margin-left: 0;
-    padding: 1rem;
-  }
-}
-
-@media (max-width: 576px) {
-  .action-btn {
-    font-size: 0.7rem;
-    padding: 0.2rem 0.4rem;
-  }
-  
-  .total-card {
-    max-width: 100%;
-  }
-  
-  .info-card {
-    padding: 1rem;
-  }
 }
 
 /* ===== NAV LINK UNDERLINE EFFECT ===== */
@@ -757,4 +738,36 @@ body {
         flex: 0 0 50%;
         max-width: 50%;
     }
+}
+
+/* ===== RESPONSIVE ===== */
+@media (max-width: 991.98px) {
+  .sidebar {
+    transform: translateX(-100%);
+  }
+  .sidebar.active {
+    transform: translateX(0);
+  }
+  .sidebar-toggle {
+    display: flex;
+  }
+  .main-content {
+    margin-left: 0;
+    padding: 1rem;
+  }
+}
+
+@media (max-width: 576px) {
+  .action-btn {
+    font-size: 0.7rem;
+    padding: 0.2rem 0.4rem;
+  }
+  
+  .total-card {
+    max-width: 100%;
+  }
+  
+  .info-card {
+    padding: 1rem;
+  }
 }
