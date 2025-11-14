@@ -46,17 +46,12 @@ foreach ($patientAppointments as $appt) {
 
 // Count appointments
 $todayCount = 0;
-$upcomingCount = 0;
-$completedCount = 0;
+$totalCount = count($appointmentsWithPayment);
 $today = date('Y-m-d');
 
 foreach ($appointmentsWithPayment as $appt) {
     if ($appt['app_date'] == $today) {
         $todayCount++;
-    } elseif ($appt['app_date'] > $today && $appt['app_status'] == 1) {
-        $upcomingCount++;
-    } elseif ($appt['app_status'] == 2) {
-        $completedCount++;
     }
 }
 ?>
@@ -69,7 +64,7 @@ foreach ($appointmentsWithPayment as $appt) {
 
 <!-- STATS CARDS -->
 <div class="row g-3 mb-4">
-    <div class="col-md-4">
+    <div class="col-md-6">
         <div class="stat-card">
             <div class="stat-icon bg-primary">
                 <i class="bi bi-calendar-check"></i>
@@ -80,25 +75,14 @@ foreach ($appointmentsWithPayment as $appt) {
             </div>
         </div>
     </div>
-    <div class="col-md-4">
+    <div class="col-md-6">
         <div class="stat-card">
-            <div class="stat-icon bg-warning">
-                <i class="bi bi-clock-history"></i>
+            <div class="stat-icon bg-info">
+                <i class="bi bi-calendar3"></i>
             </div>
             <div class="stat-info">
-                <h3><?= $upcomingCount ?></h3>
-                <p>Upcoming Appointments</p>
-            </div>
-        </div>
-    </div>
-    <div class="col-md-4">
-        <div class="stat-card">
-            <div class="stat-icon bg-success">
-                <i class="bi bi-check-circle"></i>
-            </div>
-            <div class="stat-info">
-                <h3><?= $completedCount ?></h3>
-                <p>Completed Appointments</p>
+                <h3><?= $totalCount ?></h3>
+                <p>Total Appointments</p>
             </div>
         </div>
     </div>
