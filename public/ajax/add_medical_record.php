@@ -37,15 +37,8 @@ try {
         exit;
     }
     
-    // Check if medical record already exists for this appointment
-    $existsQuery = "SELECT MED_REC_ID FROM MEDICAL_RECORD WHERE APPT_ID = :appt_id";
-    $existsStmt = $db->prepare($existsQuery);
-    $existsStmt->execute([':appt_id' => $appt_id]);
-    
-    if ($existsStmt->rowCount() > 0) {
-        echo json_encode(['success' => false, 'message' => 'Medical record already exists for this appointment']);
-        exit;
-    }
+    // REMOVED: Check if medical record already exists
+    // Allow multiple medical records for the same appointment (data integrity)
     
     // Insert new medical record
     $insertQuery = "INSERT INTO MEDICAL_RECORD 

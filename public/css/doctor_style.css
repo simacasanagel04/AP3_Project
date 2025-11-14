@@ -16,9 +16,13 @@ body {
   margin: 0;
 }
 
+.btn-primary {background-color: #24788F;}
+.btn-success {background-color: #671e24;}
+
 /* =================================================================================
 ======= SIDEBAR ===== 
 ====================================================================================*/
+
 .sidebar {
   position: fixed;
   top: 0;
@@ -33,7 +37,6 @@ body {
 }
 
 .sidebar.hidden {transform: translateX(-100%);}
-
 .logo-area {text-align: center;}
 .logo-img {max-height: 75px;}
 
@@ -141,9 +144,7 @@ body {
   min-height: 100vh;
 }
 
-.sidebar.hidden ~ .main-content {
-  margin-left: 0;
-}
+.sidebar.hidden ~ .main-content {margin-left: 0;}
 
 /* ============= INFO CARDS ===================== */
 .info-card {
@@ -167,17 +168,13 @@ body {
   margin-bottom: 1rem;
 }
 
-.info-card h2 {
-  color: var(--main-blue);
-}
+.info-card h2 {color: var(--main-blue);}
 
 /* ==========================================================================================
 ======== TABLE ===== 
 =============================================================================================*/
 
-.table-responsive {
-  overflow-x: auto;
-}
+.table-responsive {overflow-x: auto;}
 
 .info-card .table {
   background: #fff;
@@ -223,13 +220,8 @@ body {
 }
 
 /* ===== TAB BUTTONS ===== */
-.tab-btn {
-  transition: all 0.3s ease;
-}
-
-.tab-btn.active {
-  font-weight: 600;
-}
+.tab-btn {transition: all 0.3s ease;}
+.tab-btn.active {font-weight: 600;}
 
 /* ===== TABLE SECTIONS ===== */
 .table-section {
@@ -237,9 +229,7 @@ body {
   animation: fadeIn 0.3s ease;
 }
 
-.table-section.active {
-  display: block;
-}
+.table-section.active {display: block;}
 
 @keyframes fadeIn {
   from {
@@ -289,13 +279,9 @@ body {
   background: linear-gradient(135deg, #ffffff, #d1e7dd);
 }
 
-.filtered-card h5 {
-  color: #198754;
-}
+.filtered-card h5 {color: #198754;}
 
-.filtered-card h2 {
-  color: #198754;
-}
+.filtered-card h2 {color: #198754;}
 
 /* ===== MODAL ENHANCEMENTS ===== */
 .modal-body .form-control-plaintext {
@@ -304,14 +290,10 @@ body {
   color: #333;
 }
 
-.modal-body .border-bottom {
-  border-bottom: 1px solid #dee2e6 !important;
-}
+.modal-body .border-bottom {border-bottom: 1px solid #dee2e6 !important;}
 
 /* ===== TABLE IMPROVEMENTS ===== */
-.table tbody tr {
-  transition: all 0.2s ease;
-}
+.table tbody tr {transition: all 0.2s ease;}
 
 .table tbody tr:hover {
   background-color: rgba(51, 109, 150, 0.05);
@@ -319,9 +301,7 @@ body {
 }
 
 /* ===== BUTTON ICONS ===== */
-.btn i {
-  margin-right: 3px;
-}
+.btn i {margin-right: 3px;}
 
 /* ===== RESPONSIVE ADJUSTMENTS FOR MED REC ===== */
 @media (max-width: 768px) {
@@ -341,9 +321,7 @@ body {
 }
 
 /* ===== MEDICAL RECORDS PAGE ===== */
-.info-card h2 i {
-  margin-right: 10px;
-}
+.info-card h2 i {margin-right: 10px;}
 
 .form-control:focus,
 .form-control:active {
@@ -352,13 +330,9 @@ body {
 }
 
 /* ===== MODAL IMPROVEMENTS ===== */
-.modal-header.bg-primary {
-  background-color: var(--main-blue) !important;
-}
+.modal-header.bg-primary {background-color: var(--main-blue) !important;}
 
-.modal-header.bg-warning {
-  background-color: #ffc107 !important;
-}
+.modal-header.bg-warning {background-color: #e79e17 !important;}
 
 .modal-content {
   border-radius: 12px;
@@ -394,9 +368,7 @@ body {
 }
 
 /* ===== FILTER SECTION STYLING ===== */
-.info-card label i {
-  margin-right: 5px;
-}
+.info-card label i {margin-right: 5px;}
 
 /* ===== EMPTY STATE ===== */
 .table tbody tr td[colspan] {
@@ -407,9 +379,7 @@ body {
 
 /* ===== SMOOTH TRANSITIONS ===== */
 .total-card,
-.info-card {
-  transition: all 0.3s ease;
-}
+.info-card {transition: all 0.3s ease;}
 
 .total-card:hover {
   transform: translateY(-5px);
@@ -427,9 +397,7 @@ body {
     padding: 0.25rem 0.5rem;
   }
   
-  .action-btn i {
-    display: none;
-  }
+  .action-btn i {display: none;}
 
   /* PROFILE CARDS – CLICKABLE */
 .cursor-pointer {
@@ -444,18 +412,13 @@ body {
     box-shadow: 0 8px 20px rgba(0,0,0,0.15);
 }
 
-.cursor-pointer i {
-    transition: transform 0.3s ease;
-}
-
-.cursor-pointer:hover i {
-    transform: scale(1.2);
-}
+.cursor-pointer i {transition: transform 0.3s ease;}
+.cursor-pointer:hover i {transform: scale(1.2);}
 
 /* MODAL HEADER COLORS */
 .modal-header.bg-primary { background-color: var(--main-blue) !important; }
-.modal-header.bg-warning { background-color: #ffc107 !important; color: #000; }
-.modal-header.bg-danger { background-color: #dc3545 !important; }
+.modal-header.bg-warning { background-color: #e79e17 !important; color: #000; }
+.modal-header.bg-danger { background-color: #c05780 !important; }
 
 }
 
@@ -563,9 +526,7 @@ body {
     margin-bottom: 0.5rem;
   }
   
-  #dynamicCountCard h3 {
-    font-size: 2rem;
-  }
+  #dynamicCountCard h3 {font-size: 2rem;}
 }
 
 /* ===== NEW RECORD CARD STYLING ===== */
@@ -593,9 +554,7 @@ body {
   transition: transform 0.3s ease;
 }
 
-.add-new-card:hover h2 {
-  transform: scale(1.1) rotate(90deg);
-}
+.add-new-card:hover h2 {transform: scale(1.1) rotate(90deg);}
 
 /* ===== UPDATE BUTTON STYLING ===== */
 .btn-update-medrec {
@@ -612,9 +571,7 @@ body {
 }
 
 /* ===== ADD RECORD FORM WRAPPER ===== */
-#addRecordFormWrapper {
-  animation: slideDown 0.4s ease;
-}
+#addRecordFormWrapper {animation: slideDown 0.4s ease;}
 
 @keyframes slideDown {
   from {
@@ -687,9 +644,7 @@ body {
 }
 
 /* Required asterisk */
-.text-danger {
-    color: #dc3545 !important;
-}
+.text-danger {color: #dc3545 !important;}
 
 /* Password fields grouping */
 .col-12 hr {
@@ -698,9 +653,7 @@ body {
 }
 
 /* Submit button icon */
-.btn i {
-    margin-right: 0.3rem;
-}
+.btn i {margin-right: 0.3rem;}
 
 /* Loading spinner in button */
 .spinner-border-sm {
@@ -723,13 +676,9 @@ body {
 }
 
 /* Profile cards hover effect - specific to profile page */
-.cursor-pointer .bi {
-    transition: all 0.3s ease;
-}
+.cursor-pointer .bi {transition: all 0.3s ease;}
 
-.cursor-pointer:hover .bi {
-    transform: scale(1.15);
-}
+.cursor-pointer:hover .bi {transform: scale(1.15);}
 
 /* Two-column layout for profile page */
 @media (min-width: 768px) {
@@ -742,15 +691,10 @@ body {
 
 /* ===== RESPONSIVE ===== */
 @media (max-width: 991.98px) {
-  .sidebar {
-    transform: translateX(-100%);
-  }
-  .sidebar.active {
-    transform: translateX(0);
-  }
-  .sidebar-toggle {
-    display: flex;
-  }
+  .sidebar {transform: translateX(-100%);}
+  .sidebar.active {transform: translateX(0);}
+  .sidebar-toggle {display: flex;}
+
   .main-content {
     margin-left: 0;
     padding: 1rem;
@@ -762,12 +706,7 @@ body {
     font-size: 0.7rem;
     padding: 0.2rem 0.4rem;
   }
-  
-  .total-card {
-    max-width: 100%;
-  }
-  
-  .info-card {
-    padding: 1rem;
-  }
+
+  .total-card {max-width: 100%;}
+  .info-card {padding: 1rem;}
 }

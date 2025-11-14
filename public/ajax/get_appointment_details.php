@@ -46,8 +46,15 @@ try {
     $now = new DateTime();
     $age = $now->diff($dob)->y;
     
+    // Check if medical record already exists for this appointment
+    $checkQuery = "SELECT MED_REC_ID FROM MEDICAL_RECORD WHERE APPT_ID = :appt_id";
+    $checkStmt = $db->prepare($checkQuery);
+    $checkStmt->execute([':appt_id' => $appt_id]);
+    $recordExists = $checkStmt->rowCount() > 0;
+    
     echo json_encode([
         'success' => true,
+        'recordExists' => $recordExists,
         'appointment' => [
             'APPT_ID' => $appointment['APPT_ID'],
             'PAT_FIRST_NAME' => $appointment['PAT_FIRST_NAME'],
