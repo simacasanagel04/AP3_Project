@@ -88,10 +88,10 @@ require_once '../includes/doctor_header.php';
                 <button class="btn btn-primary tab-btn active" data-target="todaySection" data-count="<?= count($todaySchedules) ?>" data-label="Today's Total Schedules">
                     <i class="bi bi-calendar-day"></i> View Today's Schedule
                 </button>
-                <button class="btn btn-outline-primary tab-btn" data-target="allSection" data-count="<?= count($schedules) ?>" data-label="Total Schedules">
+                <button class="btn btn-primary tab-btn active" data-target="allSection" data-count="<?= count($schedules) ?>" data-label="Total Schedules">
                     <i class="bi bi-calendar3"></i> View All Schedules
                 </button>
-                <button class="btn btn-outline-success tab-btn" id="addNewScheduleBtn">
+                <button class="btn btn-success tab-btn active" id="addNewScheduleBtn">
                     <i class="bi bi-plus-circle"></i> Add New Schedule
                 </button>
             </div>
@@ -198,7 +198,7 @@ require_once '../includes/doctor_header.php';
                                             data-start="<?= $schedule['SCHED_START_TIME'] ?>"
                                             data-end="<?= $schedule['SCHED_END_TIME'] ?>">
                                             <td><?= htmlspecialchars($schedule['SCHED_ID']) ?></td>
-                                            <td><?= htmlspecialchars($schedule['SCHED_DAYS']) ?></td>
+                                            <td><?= date('M d, Y', strtotime($schedule['schedule_date'])) ?></td>
                                             <td><?= htmlspecialchars($schedule['formatted_start']) ?></td>
                                             <td><?= htmlspecialchars($schedule['formatted_end']) ?></td>
                                             <td><?= htmlspecialchars($schedule['total_appointments']) ?></td>

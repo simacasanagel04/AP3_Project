@@ -382,42 +382,37 @@ document.addEventListener('DOMContentLoaded', function () {
     // EDIT SCHEDULE BUTTON
     // ===============================
     document.querySelectorAll('.btn-edit-schedule').forEach(btn => {
-        btn.addEventListener('click', function() {
-            const schedId = this.getAttribute('data-sched-id');
-            const days = this.getAttribute('data-days');
-            const startTime = this.getAttribute('data-start');
-            const endTime = this.getAttribute('data-end');
+    btn.addEventListener('click', function() {
+        const schedId = this.getAttribute('data-sched-id');
+        const days = this.getAttribute('data-days');
+        const startTime = this.getAttribute('data-start');
+        const endTime = this.getAttribute('data-end');
 
-            // Find a date that matches the day
-            const today = new Date();
-            const dayName = days.split(',')[0].trim();
-            const dayMap = {
-                'Sunday': 0, 'Monday': 1, 'Tuesday': 2, 'Wednesday': 3,
-                'Thursday': 4, 'Friday': 5, 'Saturday': 6
-            };
-            const targetDay = dayMap[dayName];
-            const currentDay = today.getDay();
-            let daysUntilTarget = targetDay - currentDay;
-            if (daysUntilTarget < 0) daysUntilTarget += 7;
-            
-            const targetDate = new Date(today);
-            targetDate.setDate(today.getDate() + daysUntilTarget);
-            const dateStr = targetDate.toISOString().split('T')[0];
+        const editSchedId = document.getElementById('edit_sched_id');
+        const editSchedIdDisplay = document.getElementById('edit_sched_id_display');
 
-            const editSchedId = document.getElementById('edit_sched_id');
-            const editSchedIdDisplay = document.getElementById('edit_sched_id_display');
+        if (editSchedId) editSchedId.value = schedId;
+        if (editSchedIdDisplay) editSchedIdDisplay.value = schedId;
+        
+        // FIXED: Use the actual date from SCHED_DAYS instead of calculating
+        if (editSchedDate) {
+            // If days is '0000-00-00', use today's date as default
+            if (days === '0000-00-00') {
+                const today = new Date();
+                editSchedDate.value = today.toISOString().split('T')[0];
+            } else {
+                editSchedDate.value = days;
+            }
+        }
+        
+        if (editSchedStartTime) editSchedStartTime.value = startTime;
+        if (editSchedEndTime) editSchedEndTime.value = endTime;
 
-            if (editSchedId) editSchedId.value = schedId;
-            if (editSchedIdDisplay) editSchedIdDisplay.value = schedId;
-            if (editSchedDate) editSchedDate.value = dateStr;
-            if (editSchedStartTime) editSchedStartTime.value = startTime;
-            if (editSchedEndTime) editSchedEndTime.value = endTime;
+        if (editSchedDate) editSchedDate.dispatchEvent(new Event('change'));
 
-            if (editSchedDate) editSchedDate.dispatchEvent(new Event('change'));
-
-            new bootstrap.Modal(document.getElementById('editScheduleModal')).show();
-        });
+        new bootstrap.Modal(document.getElementById('editScheduleModal')).show();
     });
+});
 
     // ===============================
     // EDIT SCHEDULE FORM SUBMISSION
@@ -1088,118 +1083,152 @@ document.addEventListener('DOMContentLoaded', function () {
     // SHOW ADD NEW RECORD FORM
     // ===============================
     const addNewRecordBtn = document.getElementById('addNewRecordBtn');
-    const addRecordFormWrapper = document.getElementById('addRecordFormWrapper');
-    const cancelAddRecordBtn = document.getElementById('cancelAddRecordBtn');
-    const addMedicalRecordForm = document.getElementById('addMedicalRecordForm');
+const addRecordFormWrapper = document.getElementById('addRecordFormWrapper');
+const cancelAddRecordBtn = document.getElementById('cancelAddRecordBtn');
+const addMedicalRecordForm = document.getElementById('addMedicalRecordForm');
 
-    if (addNewRecordBtn) {
-        addNewRecordBtn.addEventListener('click', function() {
-            if (addRecordFormWrapper) {
-                addRecordFormWrapper.style.display = 'block';
-                addRecordFormWrapper.scrollIntoView({ behavior: 'smooth', block: 'start' });
-                
-                // Reset form
-                if (addMedicalRecordForm) addMedicalRecordForm.reset();
-                document.getElementById('new_patient_name').value = '';
-                document.getElementById('new_patient_age').value = '';
-                document.getElementById('new_patient_gender').value = '';
-                document.getElementById('new_service_name').value = '';
-            }
-        });
-    }
-
-    // ===============================
-    // CANCEL ADD NEW RECORD
-    // ===============================
-    if (cancelAddRecordBtn) {
-        cancelAddRecordBtn.addEventListener('click', function() {
-            if (addRecordFormWrapper) {
-                addRecordFormWrapper.style.display = 'none';
-            }
+if (addNewRecordBtn) {
+    addNewRecordBtn.addEventListener('click', function() {
+        if (addRecordFormWrapper) {
+            addRecordFormWrapper.style.display = 'block';
+            addRecordFormWrapper.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            
+            // Reset form
             if (addMedicalRecordForm) addMedicalRecordForm.reset();
             document.getElementById('new_patient_name').value = '';
             document.getElementById('new_patient_age').value = '';
             document.getElementById('new_patient_gender').value = '';
             document.getElementById('new_service_name').value = '';
-        });
-    }
+            
+            // Remove any existing warning messages
+            const existingWarning = document.getElementById('existingRecordWarning');
+            if (existingWarning) existingWarning.remove();
+        }
+    });
+}
 
-    // ===============================
-    // FETCH APPOINTMENT DETAILS WHEN APPT ID IS ENTERED
-    // ===============================
-    const newApptIdInput = document.getElementById('new_appt_id');
-    if (newApptIdInput) {
-        newApptIdInput.addEventListener('blur', fetchAppointmentDetails);
-        newApptIdInput.addEventListener('keypress', function(e) {
-            if (e.key === 'Enter') {
-                e.preventDefault();
-                fetchAppointmentDetails();
-            }
-        });
-    }
-
-    function fetchAppointmentDetails() {
-        const apptId = newApptIdInput.value.trim();
-        if (!apptId) return;
-
-        // Show loading state
-        document.getElementById('new_patient_name').value = 'Loading...';
+// ===============================
+// CANCEL ADD NEW RECORD
+// ===============================
+if (cancelAddRecordBtn) {
+    cancelAddRecordBtn.addEventListener('click', function() {
+        if (addRecordFormWrapper) {
+            addRecordFormWrapper.style.display = 'none';
+        }
+        if (addMedicalRecordForm) addMedicalRecordForm.reset();
+        document.getElementById('new_patient_name').value = '';
         document.getElementById('new_patient_age').value = '';
         document.getElementById('new_patient_gender').value = '';
         document.getElementById('new_service_name').value = '';
+        
+        // Remove any existing warning messages
+        const existingWarning = document.getElementById('existingRecordWarning');
+        if (existingWarning) existingWarning.remove();
+    });
+}
 
-        fetch(`ajax/get_appointment_details.php?appt_id=${apptId}`)
-            .then(response => response.json())
-            .then(data => {
-                if (data.success) {
-                    const appt = data.appointment;
-                    document.getElementById('new_patient_name').value = `${appt.PAT_FIRST_NAME} ${appt.PAT_LAST_NAME}`;
-                    document.getElementById('new_patient_age').value = appt.PAT_AGE;
-                    document.getElementById('new_patient_gender').value = appt.PAT_GENDER;
-                    document.getElementById('new_service_name').value = appt.SERV_NAME;
-                } else {
-                    alert('Error: ' + data.message);
-                    document.getElementById('new_patient_name').value = '';
-                    document.getElementById('new_patient_age').value = '';
-                    document.getElementById('new_patient_gender').value = '';
-                    document.getElementById('new_service_name').value = '';
-                }
-            })
-            .catch(error => {
-                console.error('Error:', error);
-                alert('An error occurred while fetching appointment details');
-                document.getElementById('new_patient_name').value = '';
-            });
-    }
-
-    // ===============================
-    // SUBMIT ADD NEW MEDICAL RECORD FORM
-    // ===============================
-    if (addMedicalRecordForm) {
-        addMedicalRecordForm.addEventListener('submit', function(e) {
+// ===============================
+// FETCH APPOINTMENT DETAILS WHEN APPT ID IS ENTERED
+// ===============================
+const newApptIdInput = document.getElementById('new_appt_id');
+if (newApptIdInput) {
+    newApptIdInput.addEventListener('blur', fetchAppointmentDetails);
+    newApptIdInput.addEventListener('keypress', function(e) {
+        if (e.key === 'Enter') {
             e.preventDefault();
+            fetchAppointmentDetails();
+        }
+    });
+}
 
-            const formData = new FormData(this);
+function fetchAppointmentDetails() {
+    const apptId = newApptIdInput.value.trim();
+    if (!apptId) return;
 
-            fetch('ajax/add_medical_record.php', {
-                method: 'POST',
-                body: formData
-            })
-            .then(response => response.json())
-            .then(data => {
-                if (data.success) {
-                    alert('Medical record created successfully!');
-                    location.reload();
-                } else {
-                    alert('Error: ' + data.message);
+    // Show loading state
+    document.getElementById('new_patient_name').value = 'Loading...';
+    document.getElementById('new_patient_age').value = '';
+    document.getElementById('new_patient_gender').value = '';
+    document.getElementById('new_service_name').value = '';
+    
+    // Remove any existing warning messages
+    const existingWarning = document.getElementById('existingRecordWarning');
+    if (existingWarning) existingWarning.remove();
+
+    fetch(`ajax/get_appointment_details.php?appt_id=${apptId}`)
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                const appt = data.appointment;
+                document.getElementById('new_patient_name').value = `${appt.PAT_FIRST_NAME} ${appt.PAT_LAST_NAME}`;
+                document.getElementById('new_patient_age').value = appt.PAT_AGE;
+                document.getElementById('new_patient_gender').value = appt.PAT_GENDER;
+                document.getElementById('new_service_name').value = appt.SERV_NAME;
+                
+                // Show warning if record already exists
+                if (data.recordExists) {
+                    const warningDiv = document.createElement('div');
+                    warningDiv.id = 'existingRecordWarning';
+                    warningDiv.className = 'alert alert-warning mt-3';
+                    warningDiv.innerHTML = '<i class="bi bi-exclamation-triangle-fill me-2"></i><strong>Note:</strong> A medical record already exists for this appointment. You can still add another record.';
+                    
+                    // Insert warning after the service name field
+                    const serviceCol = document.getElementById('new_service_name').closest('.col-md-4');
+                    serviceCol.parentNode.insertBefore(warningDiv, serviceCol.nextSibling);
                 }
-            })
-            .catch(error => {
-                console.error('Error:', error);
-                alert('An error occurred while creating the medical record');
-            });
+            } else {
+                alert('Error: ' + data.message);
+                document.getElementById('new_patient_name').value = '';
+                document.getElementById('new_patient_age').value = '';
+                document.getElementById('new_patient_gender').value = '';
+                document.getElementById('new_service_name').value = '';
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert('An error occurred while fetching appointment details');
+            document.getElementById('new_patient_name').value = '';
         });
-    }
+}
+
+// ===============================
+// SUBMIT ADD NEW MEDICAL RECORD FORM
+// ===============================
+if (addMedicalRecordForm) {
+    addMedicalRecordForm.addEventListener('submit', function(e) {
+        e.preventDefault();
+
+        const formData = new FormData(this);
+
+        // Show loading state on submit button
+        const submitBtn = this.querySelector('button[type="submit"]');
+        const originalBtnText = submitBtn.innerHTML;
+        submitBtn.disabled = true;
+        submitBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Creating...';
+
+        fetch('ajax/add_medical_record.php', {
+            method: 'POST',
+            body: formData
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                alert('Medical record created successfully!');
+                location.reload();
+            } else {
+                alert('Error: ' + data.message);
+                submitBtn.disabled = false;
+                submitBtn.innerHTML = originalBtnText;
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert('An error occurred while creating the medical record');
+            submitBtn.disabled = false;
+            submitBtn.innerHTML = originalBtnText;
+        });
+    });
+}
 
     // ========================================================================
     // SECTION 16: MEDICAL RECORDS - UPDATE BUTTON (RENAMED FROM EDIT)

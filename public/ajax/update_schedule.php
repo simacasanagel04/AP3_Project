@@ -65,8 +65,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     SCHED_UPDATED_AT = NOW() 
                 WHERE SCHED_ID = ? AND DOC_ID = ?";
         $stmt = $db->prepare($sql);
-        $dayName = date('l', strtotime($date));
-        $result = $stmt->execute([$dayName, $start_time, $end_time, $sched_id, $doc_id]);
+        $result = $stmt->execute([$date, $start_time, $end_time, $sched_id, $doc_id]);
 
         if ($result && $stmt->rowCount() > 0) {
             echo json_encode(['success' => true, 'message' => 'Schedule updated successfully']);
