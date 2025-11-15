@@ -33,7 +33,7 @@ try {
     exit();
 }
 
-// === Fetch counts and recent patients ===
+// === Fetch counts ===
 try {
     $stmt = $db->prepare("SELECT COUNT(*) FROM doctor");
     $stmt->execute();
@@ -42,19 +42,6 @@ try {
     $stmt = $db->prepare("SELECT COUNT(*) FROM staff");
     $stmt->execute();
     $total_staff = (int)$stmt->fetchColumn();
-
-    $stmt = $db->prepare("SELECT COUNT(*) FROM patient");
-    $stmt->execute();
-    $total_patients = (int)$stmt->fetchColumn();
-
-    $today = date('Y-m-d');
-    $stmt = $db->prepare("SELECT COUNT(*) FROM appointment WHERE APPT_DATE = ?");
-    $stmt->execute([$today]);
-    $appointments_today = (int)$stmt->fetchColumn();
-
-    $stmt = $db->prepare("SELECT PAT_FIRST_NAME, PAT_LAST_NAME, PAT_CREATED_AT FROM patient ORDER BY PAT_CREATED_AT DESC LIMIT 5");
-    $stmt->execute();
-    $recent_patients = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
 } catch (Throwable $e) {
     echo '<div style="padding:20px; font-family:Arial, sans-serif;">';
@@ -123,7 +110,6 @@ $quickActions = [
     }
     .quick-text .title { font-weight:700; margin:0; }
     .quick-text .desc  { font-size: .875rem; color: var(--muted); margin:0; }
-    .recent-list li { border-left: 5px solid var(--accent); margin-bottom: 8px; background: #fff; padding: 12px; border-radius: 8px; box-shadow: 0 2px 6px rgba(0,0,0,0.04); }
     footer { color: var(--muted); }
     @media (max-width: 767px) {
       .quick-icon { width: 48px; height:48px; font-size:1.25rem; }
@@ -143,39 +129,25 @@ $quickActions = [
 
     <!-- Top Stats -->
     <div class="row g-4 mb-4">
-      <div class="col-6 col-md-3">
+      <div class="col-12 col-md-6">
         <div class="card-stat text-center">
           <h6 class="text-muted">Total Doctors</h6>
           <h2 class="fw-bold text-primary"><?= htmlspecialchars($total_doctors) ?></h2>
           <small class="text-muted">Active Doctors</small>
         </div>
       </div>
-      <div class="col-6 col-md-3">
+      <div class="col-12 col-md-6">
         <div class="card-stat text-center">
           <h6 class="text-muted">Total Staff</h6>
           <h2 class="fw-bold text-success"><?= htmlspecialchars($total_staff) ?></h2>
           <small class="text-muted">Including Admins</small>
         </div>
       </div>
-      <div class="col-6 col-md-3">
-        <div class="card-stat text-center">
-          <h6 class="text-muted">Total Patients</h6>
-          <h2 class="fw-bold text-info"><?= htmlspecialchars($total_patients) ?></h2>
-          <small class="text-muted">Registered Patients</small>
-        </div>
-      </div>
-      <div class="col-6 col-md-3">
-        <div class="card-stat text-center">
-          <h6 class="text-muted">Appointments Today</h6>
-          <h2 class="fw-bold text-danger"><?= htmlspecialchars($appointments_today) ?></h2>
-          <small class="text-muted">Pending + Completed</small>
-        </div>
-      </div>
     </div>
 
     <div class="row g-4">
-      <!-- Quick Actions (Icon Cards) - 3 per row -->
-      <div class="col-12 col-lg-8">
+      <!-- Quick Actions (Icon Cards) -->
+      <div class="col-12">
         <div class="card shadow-sm border-0">
           <div class="card-header bg-primary text-white fw-bold">
             <i class="bi bi-lightning-charge me-2"></i> Quick Actions
@@ -196,29 +168,6 @@ $quickActions = [
                 </div>
               <?php endforeach; ?>
             </div>
-          </div>
-        </div>
-      </div>
-
-      <!-- Recent Patients -->
-      <div class="col-12 col-lg-4">
-        <div class="card shadow-sm border-0">
-          <div class="card-header bg-secondary text-white fw-bold">
-            <i class="bi bi-clock-history me-2"></i> Recent Patients
-          </div>
-          <div class="card-body">
-            <?php if (!empty($recent_patients)): ?>
-              <ul class="list-group list-group-flush recent-list small">
-                <?php foreach ($recent_patients as $row): ?>
-                  <li class="list-group-item d-flex justify-content-between align-items-center">
-                    <?= htmlspecialchars($row['PAT_FIRST_NAME'] . ' ' . $row['PAT_LAST_NAME']) ?>
-                    <small class="text-muted"><?= htmlspecialchars(date('M d, Y', strtotime($row['PAT_CREATED_AT'] ?? 'now'))) ?></small>
-                  </li>
-                <?php endforeach; ?>
-              </ul>
-            <?php else: ?>
-              <p class="text-muted mb-0">No recent patient records found.</p>
-            <?php endif; ?>
           </div>
         </div>
       </div>

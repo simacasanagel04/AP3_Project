@@ -1,4 +1,4 @@
-<footer class="main-footer bg-teal text-white ">
+<footer class="main-footer bg-teal text-white" id="contact">
     <div class="container">
         <div class="row align-items-start g-4">
 

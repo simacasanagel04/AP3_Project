@@ -1,8 +1,7 @@
+<!-- index.php -->
 <!DOCTYPE html>
 <html lang="en">
-<?php
-include 'includes/header.php';
-?>
+<?php include 'includes/header.php'; ?>
 
 <body>
 
@@ -45,7 +44,7 @@ include 'includes/header.php';
                 </div>
             </div>
             <div class="col-lg-6">
-                <img src="assets/images/1.png" 
+                <img src="https://res.cloudinary.com/dibojpqg2/image/upload/v1763154282/1_xiulxy.png" 
                 alt="Medical Team" 
                 class="img-fluid rounded soft-edge">
             </div>
@@ -55,7 +54,7 @@ include 'includes/header.php';
 
 <!-- QUICK ACTIONS -->
 <section class="quick-actions py-5" style="margin-top: -40px; position: relative; z-index: 10;">
-    <div class="container">
+    <div id="about" class="container">
         <div class="row g-4">
 
             <!-- OPENING HOURS-->
@@ -162,7 +161,7 @@ include 'includes/header.php';
 
       <!-- IMAGE -->
       <div class="pic_2 col-lg-4 text-center">
-        <img src="assets/images/2.png" alt="Doctor" class="img-fluid rounded shadow w-75">
+        <img src="https://res.cloudinary.com/dibojpqg2/image/upload/v1763154282/2_jmbage.png" alt="Doctor" class="img-fluid rounded shadow w-75">
       </div>
     </div>
   </div>
@@ -181,7 +180,7 @@ include 'includes/header.php';
             <!-- Pediatrics 1 -->
             <div class="col-6 col-md-4 col-lg-3">
                 <div class="specialist-card rounded-3 overflow-hidden shadow-sm h-100">
-                    <img src="assets/images/3.png" alt="Dr. Angela Dela Cruz" class="w-100" style="height: 250px; object-fit: cover;">
+                    <img src="https://res.cloudinary.com/dibojpqg2/image/upload/v1763154282/3_nfybwt.png" alt="Dr. Angela Dela Cruz" class="w-100" style="height: 250px; object-fit: cover;">
                     <div class="p-2 bg-primary text-white text-center">
                         <h6 class="mb-1 small">Dr. Angela Dela Cruz</h6>
                         <p class="x-small mb-0">MD, FPCPS<br>Pediatrics</p>
@@ -192,7 +191,7 @@ include 'includes/header.php';
             <!-- Pediatrics 2 -->
             <div class="col-6 col-md-4 col-lg-3">
                 <div class="specialist-card rounded-3 overflow-hidden shadow-sm h-100">
-                    <img src="assets/images/8.png" alt="Dr. Angela Dela Cruz" class="w-100" style="height: 250px; object-fit: cover;">
+                    <img src="https://res.cloudinary.com/dibojpqg2/image/upload/v1763154284/8_jrtdsg.jpg" alt="Dr. Angela Dela Cruz" class="w-100" style="height: 250px; object-fit: cover;">
                     <div class="p-2 bg-primary text-white text-center">
                         <h6 class="mb-1 small">Dr. Flordeliza Booc</h6>
                         <p class="x-small mb-0">MD, FPCPS<br>Pediatrics</p>
@@ -203,7 +202,7 @@ include 'includes/header.php';
             <!-- Cardiology 1 -->
             <div class="col-6 col-md-4 col-lg-3">
                 <div class="specialist-card rounded-3 overflow-hidden shadow-sm h-100">
-                    <img src="assets/images/4.png" alt="Dr. Rafael Santos" class="w-100" style="height: 250px; object-fit: cover;">
+                    <img src="https://res.cloudinary.com/dibojpqg2/image/upload/v1763154283/4_oixvoi.jpg" alt="Dr. Rafael Santos" class="w-100" style="height: 250px; object-fit: cover;">
                     <div class="p-2 bg-primary text-white text-center">
                         <h6 class="mb-1 small">Dr. Rafael Santos</h6>
                         <p class="x-small mb-0">MD, FPCC<br>Cardiology</p>
@@ -214,7 +213,7 @@ include 'includes/header.php';
             <!-- Cardiology 2 -->
             <div class="col-6 col-md-4 col-lg-3">
                 <div class="specialist-card rounded-3 overflow-hidden shadow-sm h-100">
-                    <img src="assets/images/9.png" alt="Dr. Rafael Santos" class="w-100" style="height: 250px; object-fit: cover;">
+                    <img src="https://res.cloudinary.com/dibojpqg2/image/upload/v1763154283/9_amzdra.webp" alt="Dr. Rafael Santos" class="w-100" style="height: 250px; object-fit: cover;">
                     <div class="p-2 bg-primary text-white text-center">
                         <h6 class="mb-1 small">Dr. Joy Manawari</h6>
                         <p class="x-small mb-0">MD, FPCC<br>Cardiology</p>
@@ -225,7 +224,7 @@ include 'includes/header.php';
             <!-- Neurology 1 -->
             <div class="col-6 col-md-4 col-lg-3">
                 <div class="specialist-card rounded-3 overflow-hidden shadow-sm h-100">
-                    <img src="assets/images/5.png" alt="Dr. Miguel Ramirez" class="w-100" style="height: 250px; object-fit: cover;">
+                    <img src="https://res.cloudinary.com/dibojpqg2/image/upload/v1763154283/5_b9kfjq.jpg" alt="Dr. Miguel Ramirez" class="w-100" style="height: 250px; object-fit: cover;">
                     <div class="p-2 bg-primary text-white text-center">
                         <h6 class="mb-1 small">Dr. Miguel Ramirez</h6>
                         <p class="x-small mb-0">MD, FPNA<br>Neurology</p>
@@ -236,7 +235,7 @@ include 'includes/header.php';
             <!-- Neurology 2 -->
             <div class="col-6 col-md-4 col-lg-3">
                 <div class="specialist-card rounded-3 overflow-hidden shadow-sm h-100">
-                    <img src="assets/images/10.png" alt="Dr. Miguel Ramirez" class="w-100" style="height: 250px; object-fit: cover;">
+                    <img src="https://res.cloudinary.com/dibojpqg2/image/upload/v1763154283/10_ivakd0.jpg" alt="Dr. Miguel Ramirez" class="w-100" style="height: 250px; object-fit: cover;">
                     <div class="p-2 bg-primary text-white text-center">
                         <h6 class="mb-1 small">Dr. Kendric Rodriguez</h6>
                         <p class="x-small mb-0">MD, FPNA<br>Neurology</p>
@@ -247,7 +246,7 @@ include 'includes/header.php';
             <!-- Ophthalmology 1 -->
             <div class="col-6 col-md-4 col-lg-3">
                 <div class="specialist-card rounded-3 overflow-hidden shadow-sm h-100">
-                    <img src="assets/images/6.png" alt="Dr. Kristine Bautista" class="w-100" style="height: 250px; object-fit: cover;">
+                    <img src="https://res.cloudinary.com/dibojpqg2/image/upload/v1763154282/6_uyyimo.jpg" alt="Dr. Kristine Bautista" class="w-100" style="height: 250px; object-fit: cover;">
                     <div class="p-2 bg-primary text-white text-center">
                         <h6 class="mb-1 small">Dr. Kristine Bautista</h6>
                         <p class="x-small mb-0">MD, FPAO<br>Ophthalmology</p>
@@ -258,7 +257,7 @@ include 'includes/header.php';
             <!-- Ophthalmology 2 -->
             <div class="col-6 col-md-4 col-lg-3">
                 <div class="specialist-card rounded-3 overflow-hidden shadow-sm h-100">
-                    <img src="assets/images/11.png" alt="Dr. Kristine Bautista" class="w-100" style="height: 250px; object-fit: cover;">
+                    <img src="https://res.cloudinary.com/dibojpqg2/image/upload/v1763154284/11_fcvo8p.jpg" alt="Dr. Kristine Bautista" class="w-100" style="height: 250px; object-fit: cover;">
                     <div class="p-2 bg-primary text-white text-center">
                         <h6 class="mb-1 small">Dr. Antonio Aquilino</h6>
                         <p class="x-small mb-0">MD, FPAO<br>Ophthalmology</p>
@@ -269,7 +268,7 @@ include 'includes/header.php';
             <!-- Dental Care 1 -->
             <div class="col-6 col-md-4 col-lg-3">
                 <div class="specialist-card rounded-3 overflow-hidden shadow-sm h-100">
-                    <img src="assets/images/7.png" alt="Dr. Carlo Reyes" class="w-100" style="height: 250px; object-fit: cover;">
+                    <img src="https://res.cloudinary.com/dibojpqg2/image/upload/v1763154283/7_n4yeyw.jpg" alt="Dr. Carlo Reyes" class="w-100" style="height: 250px; object-fit: cover;">
                     <div class="p-2 bg-primary text-white text-center">
                         <h6 class="mb-1 small">Dr. Carlo Reyes</h6>
                         <p class="x-small mb-0">DMD<br>Dental Care</p>
@@ -280,7 +279,7 @@ include 'includes/header.php';
             <!-- Dental Care 2 -->
             <div class="col-6 col-md-4 col-lg-3">
                 <div class="specialist-card rounded-3 overflow-hidden shadow-sm h-100">
-                    <img src="assets/images/12.png" alt="Dr. Carlo Reyes" class="w-100" style="height: 250px; object-fit: cover;">
+                    <img src="https://res.cloudinary.com/dibojpqg2/image/upload/v1763154284/12_xzhzb4.webp" alt="Dr. Carlo Reyes" class="w-100" style="height: 250px; object-fit: cover;">
                     <div class="p-2 bg-primary text-white text-center">
                         <h6 class="mb-1 small">Dr. Luna Consuelo</h6>
                         <p class="x-small mb-0">DMD<br>Dental Care</p>
@@ -309,7 +308,7 @@ include 'includes/header.php';
 
                     <!-- Pediatric service 1 -->
                     <div  class="service-card flex-shrink-0">
-                        <img src="assets/images/pedia_ser1.jpg" alt="Well Baby Clinic" class="w-100">
+                        <img src="https://res.cloudinary.com/dibojpqg2/image/upload/v1763154287/pedia_ser1_txz3aq.jpg" alt="Well Baby Clinic" class="w-100">
                         <div class="service-content">
                             <h5>GENERAL CHECK-UP FOR CHILDREN</h5>
                             <p>Regular health assessments to monitor your child's overall well-being.</p>
@@ -318,7 +317,7 @@ include 'includes/header.php';
 
                     <!-- Pediatric service 2 -->
                     <div class="service-card flex-shrink-0">
-                        <img src="assets/images/pedia_ser2.jpg" alt="Immunization" class="w-100">
+                        <img src="https://res.cloudinary.com/dibojpqg2/image/upload/v1763154287/pedia_ser2_zkq2qv.webp" alt="Immunization" class="w-100">
                         <div class="service-content">
                             <h5>VACCINATIONS / IMMUNIZATIONS</h5>
                             <p>Protects children from common and preventable diseases.</p>
@@ -327,7 +326,7 @@ include 'includes/header.php';
 
                     <!-- Pediatric service 3 -->
                     <div class="service-card flex-shrink-0">
-                        <img src="assets/images/pedia_ser3.jpg" alt="Newborn Screening" class="w-100">
+                        <img src="https://res.cloudinary.com/dibojpqg2/image/upload/v1763154287/pedia_ser3_imbvyi.webp" alt="Newborn Screening" class="w-100">
                         <div class="service-content">
                             <h5>GROWTH AND DEVELOPMENT ASSESSMENT</h5>
                             <p>Tracks your child's physical and mental development milestones.</p>
@@ -336,7 +335,7 @@ include 'includes/header.php';
 
                     <!-- Pediatric service 4 -->
                     <div class="service-card flex-shrink-0">
-                        <img src="assets/images/pedia_ser4.jpg" alt="Nutritional Assessment" class="w-100">
+                        <img src="https://res.cloudinary.com/dibojpqg2/image/upload/v1763154287/pedia_ser4_u7y7ni.webp" alt="Nutritional Assessment" class="w-100">
                         <div class="service-content">
                             <h5>NUTRITIONAL COUNSELING</h5>
                             <p>Provides guidance for healthy eating habits and balanced diets.</p>
@@ -345,7 +344,7 @@ include 'includes/header.php';
 
                     <!-- Pediatric service 5 -->
                     <div class="service-card flex-shrink-0">
-                        <img src="assets/images/pedia_ser5.jpg" alt="Pediatric Consultation" class="w-100">
+                        <img src="https://res.cloudinary.com/dibojpqg2/image/upload/v1763154292/pedia_ser5_tfe3hq.webp" alt="Pediatric Consultation" class="w-100">
                         <div class="service-content">
                             <h5>FEVER / ILLNESS CONSULTATION</h5>
                             <p>Expert care and treatment for childhood fevers and illnesses.</p>
@@ -364,7 +363,7 @@ include 'includes/header.php';
 
                     <!-- Cardiology service 1 -->
                     <div class="service-card flex-shrink-0">
-                        <img src="assets/images/car_ser1.jpg" alt="ECG" class="w-100">
+                        <img src="https://res.cloudinary.com/dibojpqg2/image/upload/v1763154284/car_ser1_jqtr3r.webp" alt="ECG" class="w-100">
                         <div class="service-content">
                             <h5>ECG / ELECTROCARDIOGRAM</h5>
                             <p>Records heart activity to detect irregular rhythms and heart problems.</p>
@@ -373,7 +372,7 @@ include 'includes/header.php';
 
                     <!-- Cardiology service 2 -->
                     <div class="service-card flex-shrink-0">
-                        <img src="assets/images/car_ser2.jpg" alt="2D Echo" class="w-100">
+                        <img src="https://res.cloudinary.com/dibojpqg2/image/upload/v1763154285/car_ser2_bc8wet.webp" alt="2D Echo" class="w-100">
                         <div class="service-content">
                             <h5>STRESS TEST / TREADMILL TEST</h5>
                             <p>Measures how your heart responds to physical activity.</p>
@@ -382,7 +381,7 @@ include 'includes/header.php';
 
                     <!-- Cardiology service 3 -->
                     <div class="service-card flex-shrink-0">
-                        <img src="assets/images/car_ser3.jpg" alt="Stress Test" class="w-100">
+                        <img src="https://res.cloudinary.com/dibojpqg2/image/upload/v1763154281/car_ser3_nbhlqs.webp" alt="Stress Test" class="w-100">
                         <div class="service-content">
                             <h5>ECHOCARDIOGRAM</h5>
                             <p>Uses ultrasound to examine your heart's structure and function.</p>
@@ -391,7 +390,7 @@ include 'includes/header.php';
 
                     <!-- Cardiology service 4 -->
                     <div class="service-card flex-shrink-0">
-                        <img src="assets/images/car_ser4.jpg" alt="Holter Monitoring" class="w-100">
+                        <img src="https://res.cloudinary.com/dibojpqg2/image/upload/v1763154281/car_ser4_jocbqj.webp" alt="Holter Monitoring" class="w-100">
                         <div class="service-content">
                             <h5>BLOOD PRESSURE MONITORING</h5>
                             <p>Tracks blood pressure levels to prevent heart-related issues.</p>
@@ -400,7 +399,7 @@ include 'includes/header.php';
 
                     <!-- Cardiology service 5 -->
                     <div class="service-card flex-shrink-0">
-                        <img src="assets/images/car_ser5.jpg" alt="Blood Pressure Monitoring" class="w-100">
+                        <img src="https://res.cloudinary.com/dibojpqg2/image/upload/v1763154281/car_ser5_kn7jnv.webp" alt="Blood Pressure Monitoring" class="w-100">
                         <div class="service-content">
                             <h5>HEART DISEASE CONSULTATION</h5>
                             <p>Professional evaluation and management for heart conditions.</p>
@@ -419,7 +418,7 @@ include 'includes/header.php';
 
                     <!-- Neurology service 1 -->
                     <div class="service-card flex-shrink-0">
-                        <img src="assets/images/neu_ser1.jpg" alt="Neurological Consultation" class="w-100">
+                        <img src="https://res.cloudinary.com/dibojpqg2/image/upload/v1763154286/neu_ser1_h91rwz.webp" alt="Neurological Consultation" class="w-100">
                         <div class="service-content">
                             <h5>EEG (ELECTROENCEPHALOGRAM)</h5>
                             <p>Measures brain activity to detect neurological disorders.</p>
@@ -428,7 +427,7 @@ include 'includes/header.php';
 
                     <!-- Neurology service 2 -->
                     <div class="service-card flex-shrink-0">
-                        <img src="assets/images/neu_ser2.jpg" alt="EEG" class="w-100">
+                        <img src="https://res.cloudinary.com/dibojpqg2/image/upload/v1763154285/neu_ser2_urobox.webp" alt="EEG" class="w-100">
                         <div class="service-content">
                             <h5>HEADACHE / MIGRAINE CONSULTATION</h5>
                             <p>Diagnosis and treatment for recurring headaches and migraines.</p>
@@ -437,7 +436,7 @@ include 'includes/header.php';
 
                     <!-- Neurology service 3 -->
                     <div class="service-card flex-shrink-0">
-                        <img src="assets/images/neu_ser3.jpg" alt="Nerve Conduction Study" class="w-100">
+                        <img src="https://res.cloudinary.com/dibojpqg2/image/upload/v1763154285/neu_ser3_ncbxd8.jpg" alt="Nerve Conduction Study" class="w-100">
                         <div class="service-content">
                             <h5>STROKE RISK ASSESSMENT</h5>
                             <p>Identifies factors that increase the chance of stroke.</p>
@@ -446,7 +445,7 @@ include 'includes/header.php';
 
                     <!-- Neurology service 4 -->
                     <div class="service-card flex-shrink-0">
-                        <img src="assets/images/neu_ser4.jpg" alt="EMG" class="w-100">
+                        <img src="https://res.cloudinary.com/dibojpqg2/image/upload/v1763154285/neu_ser4_c2r2zo.webp" alt="EMG" class="w-100">
                         <div class="service-content">
                             <h5>NERVE CONDUCTION STUDY</h5>
                             <p>Tests how well electrical signals move through your nerves.</p>
@@ -455,7 +454,7 @@ include 'includes/header.php';
 
                     <!-- Neurology service 5 -->
                     <div class="service-card flex-shrink-0">
-                        <img src="assets/images/neu_ser5.jpg" alt="Stroke Management" class="w-100">
+                        <img src="https://res.cloudinary.com/dibojpqg2/image/upload/v1763154286/neu_ser5_s1au8m.png" alt="Stroke Management" class="w-100">
                         <div class="service-content">
                             <h5>MEMORY / COGNITIVE EVALUATION</h5>
                             <p>Assesses memory, focus, and cognitive functions.</p>
@@ -474,7 +473,7 @@ include 'includes/header.php';
 
                     <!-- Ophthalmology service 1 -->
                     <div class="service-card flex-shrink-0">
-                        <img src="assets/images/opt_ser1.jpg" alt="Eye Examination" class="w-100">
+                        <img src="https://res.cloudinary.com/dibojpqg2/image/upload/v1763154286/opt_ser1_yl4zou.jpg" alt="Eye Examination" class="w-100">
                         <div class="service-content">
                             <h5>EYE CHECK-UP / VISION SCREENING</h5>
                             <p>Tests vision clarity and detects eye health issues early.</p>
@@ -483,7 +482,7 @@ include 'includes/header.php';
 
                     <!-- Ophthalmology service 2 -->
                     <div class="service-card flex-shrink-0">
-                        <img src="assets/images/opt_ser2.jpg" alt="Refraction" class="w-100">
+                        <img src="https://res.cloudinary.com/dibojpqg2/image/upload/v1763154287/opt_ser2_txqspd.webp" alt="Refraction" class="w-100">
                         <div class="service-content">
                             <h5>CATARACT CONSULTATION</h5>
                             <p>Evaluation and advice for cataract treatment or surgery.</p>
@@ -492,7 +491,7 @@ include 'includes/header.php';
 
                     <!-- Ophthalmology service 3 -->
                     <div class="service-card flex-shrink-0">
-                        <img src="assets/images/opt_ser3.jpg" alt="Contact Lens Fitting" class="w-100">
+                        <img src="https://res.cloudinary.com/dibojpqg2/image/upload/v1763154286/opt_ser3_iccbza.webp" alt="Contact Lens Fitting" class="w-100">
                         <div class="service-content">
                             <h5>GLAUCOMA TEST</h5>
                             <p>Measures eye pressure to prevent vision loss from glaucoma.</p>
@@ -501,7 +500,7 @@ include 'includes/header.php';
 
                     <!-- Ophthalmology service 4 -->
                     <div class="service-card flex-shrink-0">
-                        <img src="assets/images/opt_ser4.jpg" alt="Glaucoma Screening" class="w-100">
+                        <img src="https://res.cloudinary.com/dibojpqg2/image/upload/v1763154286/opt_ser4_ofhjkf.webp" alt="Glaucoma Screening" class="w-100">
                         <div class="service-content">
                             <h5>LASER EYE TREATMENT</h5>
                             <p>Corrects certain vision problems using laser technology.</p>
@@ -510,7 +509,7 @@ include 'includes/header.php';
 
                     <!-- Ophthalmology service 5 -->
                     <div class="service-card flex-shrink-0">
-                        <img src="assets/images/opt_ser5.jpg" alt="Cataract Evaluation" class="w-100">
+                        <img src="https://res.cloudinary.com/dibojpqg2/image/upload/v1763154287/opt_ser5_jochde.webp" alt="Cataract Evaluation" class="w-100">
                         <div class="service-content">
                             <h5>PRESCRIPTION GLASSES / CONTACT LENS CONSULTATION</h5>
                             <p>Guidance for choosing the right eyewear for your vision needs.</p>
@@ -529,7 +528,7 @@ include 'includes/header.php';
 
                     <!-- Dental Care service 1 -->
                     <div class="service-card flex-shrink-0">
-                        <img src="assets/images/den_ser1.jpg" alt="Oral Prophylaxis" class="w-100">
+                        <img src="https://res.cloudinary.com/dibojpqg2/image/upload/v1763154282/den_ser1_xcnsgv.webp" alt="Oral Prophylaxis" class="w-100">
                         <div class="service-content">
                             <h5>TEETH CLEANING / PROPHYLAXIS</h5>
                             <p>Removes plaque and tartar for a healthier smile.</p>
@@ -538,7 +537,7 @@ include 'includes/header.php';
 
                     <!-- Dental Care service 2 -->
                     <div class="service-card flex-shrink-0">
-                        <img src="assets/images/den_ser2.jpg" alt="Tooth Extraction" class="w-100">
+                        <img src="https://res.cloudinary.com/dibojpqg2/image/upload/v1763154282/den_ser2_ahozdl.jpg" alt="Tooth Extraction" class="w-100">
                         <div class="service-content">
                             <h5>TOOTH EXTRACTION</h5>
                             <p>Safe removal of damaged or decayed teeth.</p>
@@ -547,7 +546,7 @@ include 'includes/header.php';
 
                     <!-- Dental Care service 3 -->
                     <div class="service-card flex-shrink-0">
-                        <img src="assets/images/den_ser3.jpg" alt="Dental Filling" class="w-100">
+                        <img src="https://res.cloudinary.com/dibojpqg2/image/upload/v1763154283/den_ser3_arrpy0.webp" alt="Dental Filling" class="w-100">
                         <div class="service-content">
                             <h5>CAVITY FILLING</h5>
                             <p>Restores teeth damaged by cavities or decay.</p>
@@ -556,7 +555,7 @@ include 'includes/header.php';
 
                     <!-- Dental Care service 4 -->
                     <div class="service-card flex-shrink-0">
-                        <img src="assets/images/den_ser4.jpg" alt="Teeth Whitening" class="w-100">
+                        <img src="https://res.cloudinary.com/dibojpqg2/image/upload/v1763154284/den_ser4_i4vjzq.jpg" alt="Teeth Whitening" class="w-100">
                         <div class="service-content">
                             <h5>TEETH WHITENING</h5>
                             <p>Enhances your smile with safe whitening procedures.</p>
@@ -565,7 +564,7 @@ include 'includes/header.php';
 
                     <!-- Dental Care service 5 -->
                     <div class="service-card flex-shrink-0">
-                        <img src="assets/images/den_ser5.jpg" alt="Orthodontics" class="w-100">
+                        <img src="https://res.cloudinary.com/dibojpqg2/image/upload/v1763154284/den_ser5_k6tdtq.jpg" alt="Orthodontics" class="w-100">
                         <div class="service-content">
                             <h5>ORTHODONTIC CONSULTATION</h5>
                             <p>Professional advice for braces or alignment treatments.</p>
@@ -580,7 +579,7 @@ include 'includes/header.php';
 
     <!-- Bottom Image Section -->
     <section class="bottom-image">
-        <img src="assets/images/footer.png" alt="Medical Team Footer" class="img-fluid w-100">
+        <img src="https://res.cloudinary.com/dibojpqg2/image/upload/v1763154285/footer_q6t3il.png" alt="Medical Team Footer" class="img-fluid w-100">
     </section>
 
     <?php include 'includes/footer.php'; ?>
