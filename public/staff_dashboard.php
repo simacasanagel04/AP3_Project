@@ -4,7 +4,6 @@ session_start();
 
 // Adjust path to your Database.php if it's located elsewhere
 require_once __DIR__ . '/../config/Database.php';
-require_once __DIR__ . '/../includes/staff_header.php';
 
 // Optional: if you use a Staff class for user info, require it
 // require_once __DIR__ . '/../classes/Staff.php';
@@ -52,12 +51,12 @@ try {
 }
 
 $quickActions = [
-    ['label' => 'Staff',              'icon' => 'person-lines-fill',    'link' => '../public/staff_manage.php',     'desc' => 'Manage staff accounts'],
-    ['label' => 'Specialization',     'icon' => 'star-fill',            'link' => '../public/staff_specialization_manage.php','desc' => 'Doctor specializations'],
-    ['label' => 'Status',             'icon' => 'check2-square',        'link' => '../public/staff_status.php',        'desc' => 'Appointment statuses'],
-    ['label' => 'Service',            'icon' => 'gear-fill',            'link' => '../public/staff_service.php',      'desc' => 'Manage services'],
-    ['label' => 'Medical Records',    'icon' => 'folder2-open',         'link' => '../public/staff_medical_records.php','desc' => 'Patient records'],
-    ['label' => 'Payment',            'icon' => 'credit-card-2-back-fill','link' => '../public/staff_payment.php',      'desc' => 'Payment records'],
+    ['label' => 'Staff',              'icon' => 'person-lines-fill',    'link' => 'staff_manage.php',     'desc' => 'Manage staff accounts'],
+    ['label' => 'Specialization',     'icon' => 'star-fill',            'link' => 'staff_specialization_manage.php','desc' => 'Doctor specializations'],
+    ['label' => 'Status',             'icon' => 'check2-square',        'link' => 'staff_status.php',        'desc' => 'Appointment statuses'],
+    ['label' => 'Service',            'icon' => 'gear-fill',            'link' => 'staff_service.php',      'desc' => 'Manage services'],
+    ['label' => 'Medical Records',    'icon' => 'folder2-open',         'link' => 'staff_medical_records.php','desc' => 'Patient records'],
+    ['label' => 'Payment',            'icon' => 'credit-card-2-back-fill','link' => 'staff_payment.php',      'desc' => 'Payment records'],
 ];
 ?>
 <!doctype html>
@@ -80,7 +79,7 @@ $quickActions = [
       --card-bg: #ffffff;
       --page-bg: #f4f7fb;
     }
-    body { background: var(--page-bg); font-family: "Segoe UI", Roboto, Arial, sans-serif; color: #111827; }
+    body { background: var(--page-bg); font-family: "Segoe UI", Roboto, Arial, sans-serif; color: #111827; margin: 0; padding: 0; }
     .dashboard-title { font-size: 1.9rem; font-weight: 800; color: var(--accent); }
     .card-stat { border-radius: 14px; padding: 20px; background: var(--card-bg); border: none; box-shadow: 0 6px 18px rgba(2,6,23,0.06); transition: .18s; }
     .card-stat:hover { transform: translateY(-6px); box-shadow: 0 14px 30px rgba(2,6,23,0.08); }
@@ -117,6 +116,9 @@ $quickActions = [
   </style>
 </head>
 <body>
+
+  <?php require_once __DIR__ . '/../includes/staff_header.php'; ?>
+
   <div class="container py-4">
 
     <div class="d-flex justify-content-between align-items-center mb-4 flex-wrap">
@@ -175,7 +177,7 @@ $quickActions = [
     </div>
 
     <footer class="text-center mt-4">
-      <p class="mt-3 mb-0">Â© <?= date('Y') ?> AKSyon Medical Center. All Rights Reserved.</p>
+      <p class="mt-3 mb-0">© <?= date('Y') ?> AKSyon Medical Center. All Rights Reserved.</p>
     </footer>
 
   </div>
@@ -193,7 +195,7 @@ $quickActions = [
     updateClock();
   </script>
 
-  <!-- Bootstrap JS (optional) -->
+  <!-- Bootstrap JS -->
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 </body>
 </html>

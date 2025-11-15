@@ -8,8 +8,8 @@ session_start();
 require_once '../config/Database.php';
 require_once '../classes/Service.php';
 
-// Check if logged in BEFORE including header
-if (!isset($_SESSION['staff_id'])) {
+// Check if logged in (correct session variable)
+if (!isset($_SESSION['user_id'])) {
     header("Location: login.php");
     exit();
 }
@@ -27,7 +27,8 @@ if (isset($_POST['update'])) {
     $service->serv_name        = trim($_POST['serv_name']);
     $service->serv_description = trim($_POST['serv_description']);
     $service->serv_price       = (float)$_POST['serv_price'];
-    $service->serv_updated_at  = date('Y-m-d H:i:s'); // ✅ Set update timestamp
+    $service->spec_id          = (int)$_POST['spec_id'];
+    $service->serv_updated_at  = date('Y-m-d H:i:s');
 
     if ($service->update()) {
         $message = "<div class='alert alert-success text-center'>Service updated successfully.</div>";
@@ -38,17 +39,19 @@ if (isset($_POST['update'])) {
 
 // ✅ Load single service for editing
 $editMode = false;
+$editData = null;
 if (isset($_GET['edit'])) {
     $service->serv_id = (int)$_GET['edit'];
-    if (!$service->readSingle()) {
+    $editData = $service->readSingle();
+    if (!$editData) {
         $message = "<div class='alert alert-danger text-center'>Service not found.</div>";
     } else {
         $editMode = true;
     }
 }
 
-// ✅ Fetch all services
-$stmt = $service->read();
+// ✅ Fetch all services (returns ARRAY)
+$serviceList = $service->read();
 
 // NOW include header after all logic
 require_once '../includes/staff_header.php';
@@ -58,8 +61,10 @@ require_once '../includes/staff_header.php';
 <html lang="en">
 <head>
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Service Management | AKSyon Medical Center</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet">
     <style>
         body {
             background-color: #f8f9fa;
@@ -71,7 +76,7 @@ require_once '../includes/staff_header.php';
             flex: 1;
         }
         footer {
-            background: #f1f1f1;
+            background: #e5e2e2;
             color: #333;
             text-align: center;
             padding: 15px 0;
@@ -82,7 +87,7 @@ require_once '../includes/staff_header.php';
 </head>
 
 <body>
-<main class="container mt-5">
+<main class="container mt-5 mb-5">
     <h2 class="text-center text-primary fw-bold mb-4">Service Management</h2>
 
     <?= $message ?>
@@ -114,6 +119,13 @@ require_once '../includes/staff_header.php';
                                value="<?= htmlspecialchars($service->serv_price) ?>" required>
                     </div>
 
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">Specialization ID <span class="text-danger">*</span></label>
+                        <input type="number" name="spec_id" class="form-control" 
+                               value="<?= htmlspecialchars($service->spec_id) ?>" required readonly>
+                        <small class="text-muted">Specialization cannot be changed</small>
+                    </div>
+
                     <p class="text-muted small">
                         Created: <?= htmlspecialchars($service->serv_created_at) ?> |
                         Updated: <?= htmlspecialchars($service->serv_updated_at ?? 'Never') ?>
@@ -132,43 +144,61 @@ require_once '../includes/staff_header.php';
     <div class="card shadow-sm">
         <div class="card-header bg-dark text-white">Service List</div>
         <div class="card-body">
-            <table class="table table-hover align-middle">
-                <thead class="table-light text-uppercase">
-                    <tr>
-                        <th>ID</th>
-                        <th>Service Name</th>
-                        <th>Description</th>
-                        <th>Price (₱)</th>
-                        <th>Created</th>
-                        <th>Action</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    <?php if ($stmt && $stmt->rowCount() > 0): ?>
-                        <?php while ($row = $stmt->fetch(PDO::FETCH_ASSOC)): ?>
-                            <tr>
-                                <td><?= htmlspecialchars($row['SERV_ID']) ?></td>
-                                <td><?= htmlspecialchars($row['SERV_NAME']) ?></td>
-                                <td><?= htmlspecialchars($row['SERV_DESCRIPTION'] ?? '-') ?></td>
-                                <td>₱ <?= number_format($row['SERV_PRICE'], 2) ?></td>
-                                <td><?= date('d/m/Y h:i A', strtotime($row['SERV_CREATED_AT'])) ?></td>
-                                <td>
-                                    <a href="?edit=<?= htmlspecialchars($row['SERV_ID']) ?>" class="btn btn-sm btn-warning">Edit</a>
-                                </td>
-                            </tr>
-                        <?php endwhile; ?>
-                    <?php else: ?>
+            <div class="table-responsive">
+                <table class="table table-hover align-middle">
+                    <thead class="table-light text-uppercase">
                         <tr>
-                            <td colspan="6" class="text-center text-muted">No services found.</td>
+                            <th>ID</th>
+                            <th>Service Name</th>
+                            <th>Description</th>
+                            <th>Price (₱)</th>
+                            <th>Specialization</th>
+                            <th>Created</th>
+                            <th>Action</th>
                         </tr>
-                    <?php endif; ?>
-                </tbody>
-            </table>
+                    </thead>
+                    <tbody>
+                        <?php if ($serviceList && count($serviceList) > 0): ?>
+                            <?php foreach ($serviceList as $row): ?>
+                                <tr>
+                                    <td><?= htmlspecialchars($row['SERV_ID']) ?></td>
+                                    <td><?= htmlspecialchars($row['SERV_NAME']) ?></td>
+                                    <td><?= htmlspecialchars($row['SERV_DESCRIPTION'] ?? '-') ?></td>
+                                    <td>₱ <?= number_format($row['SERV_PRICE'], 2) ?></td>
+                                    <td><?= htmlspecialchars($row['SPEC_NAME'] ?? 'N/A') ?></td>
+                                    <td><?= date('d/m/Y h:i A', strtotime($row['SERV_CREATED_AT'])) ?></td>
+                                    <td>
+                                        <a href="?edit=<?= htmlspecialchars($row['SERV_ID']) ?>" class="btn btn-sm btn-warning">Edit</a>
+                                    </td>
+                                </tr>
+                            <?php endforeach; ?>
+                        <?php else: ?>
+                            <tr>
+                                <td colspan="7" class="text-center text-muted">No services found.</td>
+                            </tr>
+                        <?php endif; ?>
+                    </tbody>
+                </table>
+            </div>
         </div>
     </div>
 </main>
 
-<!-- ✅ Footer Always Visible -->
-<?php require_once '../includes/footer.php'; ?>
+<footer>
+    <div class="container">
+        <div class="row align-items-center small">
+            <div class="col-md-8 text-center text-md-start">
+                <p class="mb-0 text-black">© 2025 AKSyon Medical Center. All rights reserved.</p>
+            </div>
+            <div class="col-md-4 text-center text-md-end">
+                <a href="https://www.facebook.com/" class="text-black mx-2"><i class="bi bi-facebook fs-5"></i></a>
+                <a href="https://www.instagram.com/" class="text-black mx-2"><i class="bi bi-instagram fs-5"></i></a>
+                <a href="https://www.linkedin.com/" class="text-black mx-2"><i class="bi bi-linkedin fs-5"></i></a>
+            </div>
+        </div>
+    </div>
+</footer>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 </body>
 </html>

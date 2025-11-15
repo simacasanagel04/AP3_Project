@@ -3,41 +3,45 @@
 
 require_once '../config/Database.php';
 require_once '../classes/Specialization.php'; 
-require_once '../includes/staff_header.php'; // ✅ keep the same header layout
 
 $database = new Database();
 $db = $database->connect();
 $specialization = new Specialization($db);
 
-$search = $_GET['search'] ?? '';
-$specList = $specialization->readAll($search);
-
-// ✅ Handle Create or Update
+// ✅ Handle Create or Update BEFORE any output
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     if ($_POST['action'] === 'create') {
         $specialization->create($_POST);
-        header("Location: staff_myprofile.php");
+        header("Location: staff_specialization_manage.php");
         exit;
     } elseif ($_POST['action'] === 'update') {
         $specialization->update($_POST);
-        header("Location: staff_myprofile.php");
+        header("Location: staff_specialization_manage.php");
         exit;
     }
 }
+
+$search = $_GET['search'] ?? '';
+$specList = $specialization->readAll($search);
 
 // ✅ Handle Edit
 $editData = null;
 if (isset($_GET['edit'])) {
     $editData = $specialization->readOne($_GET['edit']);
 }
+
+// NOW include the header AFTER all processing
+require_once '../includes/staff_header.php';
 ?>
 
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Specialization Management | AKSyon Medical Center</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet">
 
     <style>
         body {
@@ -49,8 +53,14 @@ if (isset($_GET['edit'])) {
         main {
             flex: 1;
         }
+        .card {
+            border-radius: 10px;
+        }
+        .table-responsive {
+            overflow-x: auto;
+        }
         footer {
-            background-color: #f1f1f1;
+            background: #e5e2e2;
             color: #333;
             text-align: center;
             padding: 15px 0;
@@ -61,7 +71,7 @@ if (isset($_GET['edit'])) {
 </head>
 
 <body>
-    <main class="container mt-5">
+    <main class="container mt-5 mb-5">
         <h2 class="text-center mb-4 text-primary fw-bold">Specialization Management</h2>
 
         <!-- 🔍 Search Form -->
@@ -74,7 +84,7 @@ if (isset($_GET['edit'])) {
 
         <!-- 📝 Add/Edit Form -->
         <div class="card mb-4 shadow-sm">
-            <div class="card-header bg-primary text-white">
+            <div class="card-header bg-primary text-white fw-bold">
                 <?= $editData ? "Edit Specialization" : "Add New Specialization" ?>
             </div>
             <div class="card-body">
@@ -99,7 +109,7 @@ if (isset($_GET['edit'])) {
                             <?= $editData ? 'Update' : 'Add' ?>
                         </button>
                         <?php if ($editData): ?>
-                            <a href="staff_myprofile.php" class="btn btn-secondary">Cancel</a>
+                            <a href="staff_specialization_manage.php" class="btn btn-secondary">Cancel</a>
                         <?php endif; ?>
                     </div>
                 </form>
@@ -108,43 +118,60 @@ if (isset($_GET['edit'])) {
 
         <!-- 📋 Specialization Table -->
         <div class="card shadow-sm">
-            <div class="card-header bg-dark text-white">Specialization List</div>
+            <div class="card-header bg-dark text-white fw-bold">Specialization List</div>
             <div class="card-body">
-                <table class="table table-hover align-middle">
-                    <thead class="table-light text-uppercase">
-                        <tr>
-                            <th>SPEC ID</th>
-                            <th>SPEC NAME</th>
-                            <th>CREATED AT</th>
-                            <th>UPDATED AT</th>
-                            <th>ACTION</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <?php if ($specList): ?>
-                            <?php foreach ($specList as $spec): ?>
-                                <tr>
-                                    <td><?= htmlspecialchars($spec['SPEC_ID']) ?></td>
-                                    <td><?= htmlspecialchars($spec['SPEC_NAME']) ?></td>
-                                    <td><?= htmlspecialchars($spec['SPEC_CREATED_AT']) ?></td>
-                                    <td><?= htmlspecialchars($spec['SPEC_UPDATED_AT'] ?? '—') ?></td>
-                                    <td>
-                                        <a href="?edit=<?= $spec['SPEC_ID'] ?>" class="btn btn-sm btn-warning">Edit</a>
-                                    </td>
-                                </tr>
-                            <?php endforeach; ?>
-                        <?php else: ?>
+                <div class="table-responsive">
+                    <table class="table table-hover align-middle">
+                        <thead class="table-light text-uppercase">
                             <tr>
-                                <td colspan="5" class="text-center text-muted">No Specializations Found</td>
+                                <th>SPEC ID</th>
+                                <th>SPEC NAME</th>
+                                <th>CREATED AT</th>
+                                <th>UPDATED AT</th>
+                                <th>ACTION</th>
                             </tr>
-                        <?php endif; ?>
-                    </tbody>
-                </table>
+                        </thead>
+                        <tbody>
+                            <?php if ($specList): ?>
+                                <?php foreach ($specList as $spec): ?>
+                                    <tr>
+                                        <td><?= htmlspecialchars($spec['SPEC_ID']) ?></td>
+                                        <td><?= htmlspecialchars($spec['SPEC_NAME']) ?></td>
+                                        <td><?= htmlspecialchars($spec['formatted_created_at'] ?? '—') ?></td>
+                                        <td><?= htmlspecialchars($spec['formatted_updated_at'] ?? '—') ?></td>
+                                        <td>
+                                            <a href="?edit=<?= $spec['SPEC_ID'] ?>" class="btn btn-sm btn-warning">Edit</a>
+                                        </td>
+                                    </tr>
+                                <?php endforeach; ?>
+                            <?php else: ?>
+                                <tr>
+                                    <td colspan="5" class="text-center text-muted">No Specializations Found</td>
+                                </tr>
+                            <?php endif; ?>
+                        </tbody>
+                    </table>
+                </div>
             </div>
         </div>
     </main>
+    
+    <footer>
+        <div class="container">
+            <div class="row align-items-center small">
+                <div class="col-md-8 text-center text-md-start">
+                    <p class="mb-0 text-black">© 2025 AKSyon Medical Center. All rights reserved.</p>
+                </div>
+                <div class="col-md-4 text-center text-md-end">
+                    <a href="https://www.facebook.com/" class="text-black mx-2"><i class="bi bi-facebook fs-5"></i></a>
+                    <a href="https://www.instagram.com/" class="text-black mx-2"><i class="bi bi-instagram fs-5"></i></a>
+                    <a href="https://www.linkedin.com/" class="text-black mx-2"><i class="bi bi-linkedin fs-5"></i></a>
+                </div>
+            </div>
+        </div>
+    </footer>
 
-    <!-- ✅ Visible Footer (Always at Bottom) -->
-    <?php require_once '../includes/footer.php'; ?>
+    <!-- Bootstrap JS Bundle (includes Popper) -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 </body>
 </html>
