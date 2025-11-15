@@ -1,6 +1,6 @@
 <?php
-// CRITICAL: Adjust these paths based on where you place this file
-// Example assumes this file is in 'api' and the classes/config folders are two levels up.
+// public/api/gdoc-by-service.php
+
 require_once dirname(__DIR__, 2) . '/config/database.php'; 
 require_once dirname(__DIR__, 2) . '/classes/Service.php';
 require_once dirname(__DIR__, 2) . '/classes/Doctor.php';
@@ -19,8 +19,9 @@ if (isset($_GET['serv_id']) && is_numeric($_GET['serv_id'])) {
         $service = new Service($db);
         $doctor = new Doctor($db); 
 
-        // 1. Get the service data to find the SPEC_ID
-        $service_data = $service->readOne($serv_id);
+        // 1. Set the service ID first, then call readOne()
+        $service->setServId($serv_id);
+        $service_data = $service->readOne();
         
         if ($service_data && !empty($service_data['SPEC_ID'])) {
             $spec_id = $service_data['SPEC_ID'];

@@ -120,7 +120,7 @@ $records = $paymentStatus->all();
                                                 <option value="Refunded" <?= $r['pymt_stat_name'] == 'Refunded' ? 'selected' : '' ?>>Refunded</option>
                                             </select>
                                         </td>
-                                        <td><?= date('M d, Y H:i A', strtotime($r['PYMT_STAT_CREATED_AT'])) ?></td>
+                                        <td><?= $r['formatted_created_at'] ?? 'N/A' ?></td>
                                         <td class="text-nowrap">
                                             <button type="submit" name="update_status" class="btn btn-sm btn-success">Update</button>
                                             <button type="submit" name="delete_status" value="<?= $r['pymt_stat_id'] ?>" 

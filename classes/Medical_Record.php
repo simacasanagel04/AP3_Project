@@ -1,5 +1,5 @@
 <?php
-// MedicalRecord.php
+// classes/MedicalRecord.php
 
 class MedicalRecord {
     private $conn;
@@ -32,7 +32,114 @@ class MedicalRecord {
     public function getCreatedAt() { return $this->created_at; }
     public function getApptId() { return $this->appt_id; }
 
-    // CRUD methods
+    // --- Utility Methods for Module (Required by Controller logic) ---
+    
+    /**
+     * Fetches all medical records with patient and doctor details.
+     * @return array|false Returns an array of associative arrays or false on failure.
+     */
+    public function all() {
+        try {
+            $stmt = $this->readAllWithDetails();
+            return $stmt->fetchAll(PDO::FETCH_ASSOC);
+        } catch (PDOException $e) {
+            error_log("Error in MedicalRecord::all(): " . $e->getMessage());
+            return false;
+        }
+    }
+    
+    /**
+     * Fetches a single medical record by ID, including join data.
+     * @param int $id The medical record ID.
+     * @return array|false Returns a single associative array or false if not found.
+     */
+    public function get($id) {
+        try {
+            $stmt = $this->readAllWithDetails($id);
+            $row = $stmt->fetch(PDO::FETCH_ASSOC);
+            return $row ? $row : false;
+        } catch (PDOException $e) {
+            error_log("Error in MedicalRecord::get(): " . $e->getMessage());
+            return false;
+        }
+    }
+    
+    /**
+     * Prepares data and calls the internal create method.
+     * @param array $data Associative array with form data (appt_id, diagnosis, prescription, visit_date).
+     * @return bool|string True on success, error message string on failure.
+     */
+    public function createRecord(array $data): bool|string {
+        if (empty($data['appt_id']) || empty($data['diagnosis']) || empty($data['prescription']) || empty($data['visit_date'])) {
+            return "Missing required fields.";
+        }
+        
+        $this->setApptId($data['appt_id']);
+        $this->setDiagnosis($data['diagnosis']);
+        $this->setPrescription($data['prescription']);
+        $this->setVisitDate($data['visit_date']);
+        $this->setCreatedAt(date('Y-m-d H:i:s'));
+
+        try {
+            if ($this->create()) {
+                return true;
+            } else {
+                return "Database execution failed.";
+            }
+        } catch (PDOException $e) {
+            // Log the error for debugging, but return a user-friendly message
+            error_log("MedicalRecord Create Error: " . $e->getMessage());
+            return "Database Error: Please ensure Appointment ID is valid and exists. Error details: " . $e->getMessage();
+        }
+    }
+
+    /**
+     * Prepares data and calls the internal update method.
+     * @param array $data Associative array with form data (medrec_id, diagnosis, prescription, visit_date).
+     * @return bool|string True on success, error message string on failure.
+     */
+    public function updateRecord(array $data): bool|string {
+        if (empty($data['medrec_id']) || empty($data['diagnosis']) || empty($data['prescription']) || empty($data['visit_date'])) {
+            return "Missing required fields.";
+        }
+        
+        $this->setMedRecId($data['medrec_id']);
+        $this->setDiagnosis($data['diagnosis']);
+        $this->setPrescription($data['prescription']);
+        $this->setVisitDate($data['visit_date']);
+
+        try {
+            if ($this->update()) {
+                return true;
+            } else {
+                return "Database execution failed. Record might not exist.";
+            }
+        } catch (PDOException $e) {
+            error_log("MedicalRecord Update Error: " . $e->getMessage());
+            return "Database Error: " . $e->getMessage();
+        }
+    }
+
+    /**
+     * Sets ID and calls the internal delete method.
+     * @param int $id The medical record ID.
+     * @return bool|string True on success, error message string on failure.
+     */
+    public function deleteRecord(int $id): bool|string {
+        $this->setMedRecId($id);
+        try {
+            if ($this->delete()) {
+                return true;
+            } else {
+                return "Database execution failed. Record might not exist.";
+            }
+        } catch (PDOException $e) {
+            error_log("MedicalRecord Delete Error: " . $e->getMessage());
+            return "Database Error: " . $e->getMessage();
+        }
+    }
+
+    // --- Core CRUD methods (PDO Statement Executors) ---
     public function create(){
         $query = "INSERT INTO {$this->table_name} (MED_REC_DIAGNOSIS, MED_REC_PRESCRIPTION, MED_REC_VISIT_DATE, MED_REC_CREATED_AT, APPT_ID)
                   VALUES (:diagnosis, :prescription, :visit_date, :created_at, :appt_id)";
@@ -67,7 +174,7 @@ class MedicalRecord {
                 MR.MED_REC_CREATED_AT,
                 A.APPT_ID,
                 CONCAT(P.PAT_FIRST_NAME, ' ', P.PAT_LAST_NAME) AS PATIENT_NAME,
-                CONCAT(D.DOC_FIRST_NAME, ' ', D.DOC_LAST_NAME) AS DOCTOR_NAME
+                CONCAT('Dr. ', D.DOC_FIRST_NAME, ' ', D.DOC_LAST_NAME) AS DOCTOR_NAME
             FROM
                 MEDICAL_RECORD MR
             JOIN
@@ -143,6 +250,42 @@ class MedicalRecord {
         $stmt = $this->conn->prepare($query);
         $stmt->bindParam(':medrec_id', $this->medrec_id);
         return $stmt->execute();
+    }
+
+    public function search($keyword) {
+        $keyword = '%' . $keyword . '%';
+        $query = "
+            SELECT
+                MR.MED_REC_ID,
+                MR.MED_REC_VISIT_DATE,
+                MR.MED_REC_DIAGNOSIS,
+                MR.MED_REC_PRESCRIPTION,
+                MR.APPT_ID,
+                CONCAT(P.PAT_FIRST_NAME, ' ', P.PAT_LAST_NAME) AS PATIENT_NAME,
+                CONCAT('Dr. ', D.DOC_FIRST_NAME, ' ', D.DOC_LAST_NAME) AS DOCTOR_NAME
+            FROM MEDICAL_RECORD MR
+            JOIN APPOINTMENT A ON MR.APPT_ID = A.APPT_ID
+            JOIN PATIENT P ON A.PAT_ID = P.PAT_ID
+            JOIN DOCTOR D ON A.DOC_ID = D.DOC_ID
+            WHERE 
+                MR.APPT_ID LIKE :keyword OR
+                CONCAT(P.PAT_FIRST_NAME, ' ', P.PAT_LAST_NAME) LIKE :keyword OR
+                CONCAT(D.DOC_FIRST_NAME, ' ', D.DOC_LAST_NAME) LIKE :keyword OR
+                MR.MED_REC_DIAGNOSIS LIKE :keyword OR
+                MR.MED_REC_PRESCRIPTION LIKE :keyword
+            ORDER BY MR.MED_REC_VISIT_DATE DESC
+            LIMIT 100
+        ";
+
+        try {
+            $stmt = $this->conn->prepare($query);
+            $stmt->bindParam(':keyword', $keyword, PDO::PARAM_STR);
+            $stmt->execute();
+            return $stmt->fetchAll(PDO::FETCH_ASSOC);
+        } catch (PDOException $e) {
+            error_log("Search Error: " . $e->getMessage());
+            return [];
+        }
     }
 
     /**

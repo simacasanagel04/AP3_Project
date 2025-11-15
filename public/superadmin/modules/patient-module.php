@@ -114,8 +114,8 @@ $records = $patient->all();
 </div>
 <div class="card p-3 shadow-sm">
 <h5>All Patient Records</h5>
-<div class="table-responsive">
-<table class="table table-bordered table-striped align-middle mt-3">
+<div class="table-responsive" style="overflow-x: auto;">
+<table class="table table-bordered table-striped align-middle mt-3" style="min-width: 1200px;">
 <thead class="table-light">
 <tr>
 <th>ID</th><th>First</th><th>Middle</th><th>Last</th><th>DOB</th><th>Gender</th>

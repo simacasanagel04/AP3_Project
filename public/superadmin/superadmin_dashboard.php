@@ -1,9 +1,14 @@
 <?php
+// public/superadmin/superadmin_dashboard.php
+
 session_start();
 require_once '../../config/Database.php';
 
 $database = new Database();
 $db = $database->connect();
+if (!$db) {
+    die("Critical Error: Database connection failed in dashboard.");
+}
 
 // Access Control
 if (!isset($_SESSION['user_type']) || $_SESSION['user_type'] !== 'super_admin') {
@@ -86,8 +91,7 @@ $summary = getSummaryCounts($db, $summary_modules);
 <div class="sidebar" id="sidebar">
     <div>
         <div class="brand text-center">
-            <img src="../images/logo.png" alt="AKSyon Logo" class="brand-logo mb-2"><br>
-            <span>AKSyon Medical Center</span>
+            <a href="../../index.php"><img src="https://res.cloudinary.com/dibojpqg2/image/upload/v1763156755/logo_jbpnwf.png" alt="AKSyon Logo" class="brand-logo mb-2" style="height: 80px;"></a><br>
         </div>
 
         <div class="p-3">
@@ -140,19 +144,21 @@ $summary = getSummaryCounts($db, $summary_modules);
         <?php endforeach; ?>
     </div>
 <?php else: ?>
-    <?php
-    $file = 'modules/' . $module . '-module.php';
-    if (file_exists($file)) {
-        include $file;
-    } else {
-        $label = $all_modules[$module] ?? 'Settings';
-        echo "<h2 class='fw-bold mb-4'>" . htmlspecialchars($label) . " Management</h2>";
-        echo "<div class='alert alert-warning'>
-                <h4>Module File Missing:</h4>
-                <p>Please create <code>modules/{$module}-module.php</code></p>
-              </div>";
-    }
-    ?>
+            <?php
+        $file = __DIR__ . '/modules/' . $module . '-module.php';
+        if (file_exists($file)) {
+            // Explicitly pass $db to the included file
+            require $file;
+        } else {
+            $label = $all_modules[$module] ?? 'Settings';
+            echo "<h2 class='fw-bold mb-4'>" . htmlspecialchars($label) . " Management</h2>";
+            echo "<div class='alert alert-warning'>
+                    <h4>Module File Missing:</h4>
+                    <p>Please create <code>modules/{$module}-module.php</code></p>
+                    <p class='mb-0'>Checked path: <code>{$file}</code></p>
+                </div>";
+        }
+        ?>  
 <?php endif; ?>
 </div>
 </div>

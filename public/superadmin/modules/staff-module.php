@@ -41,8 +41,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             'email'         => trim($_POST['staff_email'] ?? '')
         ];
         
-        // staffId will be the new ID (integer) on success, or an error string on failure
-        $staffId = $staff->addStaff($data, $user_type); 
+        // FIXED: Changed from addStaff() to create()
+        $staffId = $staff->create($data, $user_type); 
 
         // --- FIX IS HERE: Check for a valid positive integer ID ---
         if (is_numeric($staffId) && $staffId > 0) {
@@ -93,8 +93,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             'phone'         => $_POST['staff_contact_num'],
             'email'         => $_POST['staff_email']
         ];
-        // updateStaff returns a message string ("✅ Staff ID: X updated successfully." or "❌ Failed to update...")
-        $message = $staff->updateStaff($data, $user_type);
+        // FIXED: Changed from updateStaff() to update()
+        $message = $staff->update($data, $user_type);
     }
     
     // --- 3. Handle DELETE Staff ---
@@ -150,8 +150,8 @@ if (!empty($search)) {
 
 <div class="card p-3 shadow-sm">
     <h5>All Staff Records</h5>
-    <div class="table-responsive">
-        <table class="table table-bordered table-striped align-middle mt-3">
+    <div class="table-responsive" style="overflow-x: auto;">
+        <table class="table table-bordered table-striped align-middle mt-3" style="min-width: 1200px;">
             <thead class="table-light">
                 <tr>
                     <th>ID</th><th>First</th><th>Middle</th><th>Last</th>
