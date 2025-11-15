@@ -77,7 +77,7 @@ $currentPage = basename($_SERVER['PHP_SELF']);
 <!-- SIDEBAR -->
 <div class="sidebar">
     <div class="logo-area">
-        <a href="../index.php"><img src="../assets/logo/logo.png" alt="Logo" class="logo-img"></a>
+        <a href="../index.php"><img src="https://res.cloudinary.com/dibojpqg2/image/upload/v1763156755/logo_jbpnwf.png" alt="Logo" class="logo-img"></a>
     </div>
 
     <div class="user-info">
