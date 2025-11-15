@@ -1,16 +1,27 @@
 <?php
-if (session_status() === PHP_SESSION_NONE) {
-  session_start();
-}
 
-require_once dirname(__DIR__, 3) . '/classes/Appointment.php';
-require_once dirname(__DIR__, 3) . '/classes/Patient.php';
-require_once dirname(__DIR__, 3) . '/classes/Doctor.php';
-require_once dirname(__DIR__, 3) . '/classes/Status.php';
-require_once dirname(__DIR__, 3) . '/classes/Service.php';
+require_once __DIR__ . '/../../../classes/Appointment.php';
+require_once __DIR__ . '/../../../classes/Patient.php';
+require_once __DIR__ . '/../../../classes/Doctor.php';
+require_once __DIR__ . '/../../../classes/Status.php';
+require_once __DIR__ . '/../../../classes/Service.php';
 
+// ============================================
+// CRITICAL: Check if accessed properly
+// ============================================
 if (!isset($db)) {
-  die('<div class="alert alert-danger">Database connection ($db) not available.</div>');
+  die('
+    <div class="alert alert-danger">
+      <h4><i class="bi bi-exclamation-triangle"></i> Access Error</h4>
+      <p><strong>This module cannot be accessed directly.</strong></p>
+      <p>Please access it through the Super Admin Dashboard:</p>
+      <p class="mb-0">
+        <a href="../superadmin_dashboard.php?module=appointment" class="btn btn-primary">
+          Go to Dashboard → Appointments
+        </a>
+      </p>
+    </div>
+  ');
 }
 
 $user_type = $_SESSION['user_type'] ?? null;
@@ -37,7 +48,7 @@ $is_staff = ($user_type_lower === 'staff');
 $is_patient = ($user_type_lower === 'patient');
 
 // Access Control
-if (!$is_superadmin) {
+if (!$is_superadmin && !$is_staff) {
   echo '<div class="alert alert-danger">Access denied. Only administrators can manage appointments.</div>';
   return;
 }
@@ -212,19 +223,19 @@ $url_params = http_build_query($current_params);
       <?php endif; ?>
     </div>
   <?php else: ?>
-  <div class="table-responsive">
-    <table class="table table-hover align-middle">
+  <div class="table-responsive" style="overflow-x: auto;">
+    <table class="table table-hover align-middle" style="min-width: 1400px;">
       <thead class="table-light">
         <tr>
-          <th>ID</th>
-          <th>Patient</th>
-          <th>Doctor</th>
-          <th>Service</th>
-          <th>Service Fee</th>
-          <th>Date & Time</th>
-          <th>Status</th>
-          <th>Created</th>
-          <th>Actions</th>
+          <th style="min-width: 140px;">ID</th>
+          <th style="min-width: 180px;">Patient</th>
+          <th style="min-width: 180px;">Doctor</th>
+          <th style="min-width: 200px;">Service</th>
+          <th style="min-width: 100px;">Service Fee</th>
+          <th style="min-width: 180px;">Date & Time</th>
+          <th style="min-width: 150px;">Status</th>
+          <th style="min-width: 150px;">Created</th>
+          <th style="min-width: 120px;">Actions</th>
         </tr>
       </thead>
       <tbody>
@@ -234,8 +245,8 @@ $url_params = http_build_query($current_params);
               <input type="hidden" name="APPT_ID" value="<?= htmlspecialchars($a['APPT_ID']) ?>">
               <td class="text-center fw-bold"><?= htmlspecialchars($a['APPT_ID']) ?></td>
               <td>
-                <?= htmlspecialchars($a['patient_last_name'] . ', ' . $a['patient_first_name']) ?>
-                <select name="PAT_ID" class="form-select form-select-sm mt-1">
+                <div class="mb-1 small"><?= htmlspecialchars($a['patient_last_name'] . ', ' . $a['patient_first_name']) ?></div>
+                <select name="PAT_ID" class="form-select form-select-sm">
                   <?php foreach ($patients as $p):
                     $id = $p['pat_id'] ?? $p['PAT_ID'];
                     $name = ($p['pat_last_name'] ?? $p['PAT_LAST_NAME']) . ', ' . ($p['pat_first_name'] ?? $p['PAT_FIRST_NAME']);
@@ -247,8 +258,8 @@ $url_params = http_build_query($current_params);
                 </select>
               </td>
               <td>
-                <?= htmlspecialchars('Dr. ' . $a['doctor_last_name'] . ', ' . $a['doctor_first_name']) ?>
-                <select name="DOC_ID" class="form-select form-select-sm mt-1">
+                <div class="mb-1 small"><?= htmlspecialchars('Dr. ' . $a['doctor_last_name'] . ', ' . $a['doctor_first_name']) ?></div>
+                <select name="DOC_ID" class="form-select form-select-sm">
                   <?php foreach ($doctors as $d):
                     $id = $d['doc_id'] ?? $d['DOC_ID'];
                     $name = ($d['doc_last_name'] ?? $d['DOC_LAST_NAME']) . ', ' . ($d['doc_first_name'] ?? $d['DOC_FIRST_NAME']);
@@ -260,8 +271,8 @@ $url_params = http_build_query($current_params);
                 </select>
               </td>
               <td>
-                <?= htmlspecialchars($a['service_name']) ?>
-                <select name="SERV_ID" class="form-select form-select-sm mt-1">
+                <div class="mb-1 small"><?= htmlspecialchars($a['service_name']) ?></div>
+                <select name="SERV_ID" class="form-select form-select-sm">
                   <?php foreach ($services as $s): ?>
                     <?php $label = "{$s['SERV_NAME']} - ₱" . number_format($s['SERV_PRICE'] ?? 0, 2); ?>
                     <option value="<?= $s['SERV_ID'] ?>" <?= $a['SERV_ID'] == $s['SERV_ID'] ? 'selected' : '' ?>>
@@ -275,14 +286,14 @@ $url_params = http_build_query($current_params);
                   $service_match = array_filter($services, fn($srv) => $srv['SERV_ID'] == $a['SERV_ID']);
                   $price = $service_match ? number_format(array_values($service_match)[0]['SERV_PRICE'], 2) : '0.00';
                 ?>
-                ₱<?= $price ?>
+                <strong>₱<?= $price ?></strong>
               </td>
               <td>
                 <input type="date" name="APPT_DATE" value="<?= htmlspecialchars($a['APPT_DATE']) ?>" class="form-control form-control-sm mb-1">
                 <input type="time" name="APPT_TIME" value="<?= htmlspecialchars($a['APPT_TIME']) ?>" class="form-control form-control-sm">
               </td>
               <td>
-                <?= htmlspecialchars($a['status_name']) ?>
+                <div class="mb-1 small"><?= htmlspecialchars($a['status_name']) ?></div>
                 <select name="STAT_ID" class="form-select form-select-sm">
                   <?php foreach ($statuses as $st):
                     $id = $st['stat_id'] ?? $st['STAT_ID'];
@@ -295,9 +306,9 @@ $url_params = http_build_query($current_params);
                 </select>
               </td>
               <td class="text-nowrap small text-muted"><?= formatDateTime($a['APPT_CREATED_AT']) ?></td>
-              <td class="text-center">
-                <button type="submit" name="update" class="btn btn-sm btn-success mb-1">Update</button>
-                <button type="button" class="btn btn-sm btn-danger" data-bs-toggle="modal" data-bs-target="#deleteApptModal" data-appt-id="<?= htmlspecialchars($a['APPT_ID']) ?>">Delete</button>
+              <td class="text-center text-nowrap">
+                <button type="submit" name="update" class="btn btn-sm btn-success mb-1 w-100">Update</button>
+                <button type="button" class="btn btn-sm btn-danger w-100" data-bs-toggle="modal" data-bs-target="#deleteApptModal" data-appt-id="<?= htmlspecialchars($a['APPT_ID']) ?>">Delete</button>
               </td>
             </form>
           </tr>
@@ -349,7 +360,7 @@ document.addEventListener('DOMContentLoaded', function() {
       return;
     }
 
-    fetch(`../api/gdoc-by-service.php?serv_id=${servId}`)
+    fetch(`../../api/gdoc-by-service.php?serv_id=${servId}`)
       .then(r => r.ok ? r.json() : Promise.reject('Network error'))
       .then(data => {
         doctorSel.innerHTML = '<option value="">Select Doctor</option>';

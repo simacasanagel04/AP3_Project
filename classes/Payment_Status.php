@@ -1,4 +1,5 @@
 <?php
+// /classes/Payment_Status.php
 class Payment_Status {
     private $conn;
     private $table_payment_status = "payment_status";
@@ -13,25 +14,25 @@ class Payment_Status {
             // Get row number
             $sqlRowNum = "SELECT COUNT(*) as row_num FROM {$this->table_payment_status} WHERE pymt_stat_id <= :pymt_stat_id ORDER BY pymt_stat_id";
             $stmtRowNum = $this->conn->prepare($sqlRowNum);
-            $stmtRowNum->execute([':pymt_stat_id' => trim($pymt_stat_id)]);
+            $stmtRowNum->execute([':pymt_stat_id' => (int)trim($pymt_stat_id)]);
             $rowData = $stmtRowNum->fetch(PDO::FETCH_ASSOC);
 
             // Get payment status data
-            $sql = "SELECT pymt_stat_id, pymt_stat_name,
-                    DATE_FORMAT(pymt_stat_created_at, '%M %d, %Y %h:%i %p') as formatted_created_at,
-                    DATE_FORMAT(pymt_stat_updated_at, '%M %d, %Y %h:%i %p') as formatted_updated_at
-                    FROM {$this->table_payment_status}
+            $sql = "SELECT 
+                        pymt_stat_id,
+                        pymt_stat_name,
+                        DATE_FORMAT(PYMT_STAT_CREATED_AT, '%M %d, %Y %h:%i %p') as formatted_created_at,
+                        DATE_FORMAT(PYMT_STAT_UPDATED_AT, '%M %d, %Y %h:%i %p') as formatted_updated_at
+                    FROM {$this->table_payment_status} 
                     WHERE pymt_stat_id = :pymt_stat_id";
-
             $stmt = $this->conn->prepare($sql);
-            $stmt->execute([':pymt_stat_id' => trim($pymt_stat_id)]);
+            $stmt->execute([':pymt_stat_id' => (int)trim($pymt_stat_id)]);
             $status = $stmt->fetch(PDO::FETCH_ASSOC);
 
             if ($status) {
                 $status['row_number'] = $rowData['row_num'];
                 return $status;
             }
-
             // Return 0 if payment status does not exist
             return 0;
         } catch (PDOException $e) {
@@ -43,12 +44,13 @@ class Payment_Status {
     // Display all payment statuses
     public function all() {
         try {
-            $sql = "SELECT pymt_stat_id, pymt_stat_name,
-                    DATE_FORMAT(pymt_stat_created_at, '%M %d, %Y %h:%i %p') as formatted_created_at,
-                    DATE_FORMAT(pymt_stat_updated_at, '%M %d, %Y %h:%i %p') as formatted_updated_at
-                    FROM {$this->table_payment_status}
+            $sql = "SELECT 
+                        pymt_stat_id,
+                        pymt_stat_name,
+                        DATE_FORMAT(PYMT_STAT_CREATED_AT, '%M %d, %Y %h:%i %p') as formatted_created_at,
+                        DATE_FORMAT(PYMT_STAT_UPDATED_AT, '%M %d, %Y %h:%i %p') as formatted_updated_at
+                    FROM {$this->table_payment_status} 
                     ORDER BY pymt_stat_id";
-
             $stmt = $this->conn->query($sql);
             return $stmt->fetchAll(PDO::FETCH_ASSOC);
         } catch (PDOException $e) {
@@ -60,18 +62,18 @@ class Payment_Status {
     // Display all with pagination
     public function allPaginated($limit = 10, $offset = 0) {
         try {
-            $sql = "SELECT pymt_stat_id, pymt_stat_name,
-                    DATE_FORMAT(pymt_stat_created_at, '%M %d, %Y %h:%i %p') as formatted_created_at,
-                    DATE_FORMAT(pymt_stat_updated_at, '%M %d, %Y %h:%i %p') as formatted_updated_at
-                    FROM {$this->table_payment_status}
-                    ORDER BY pymt_stat_id
+            $sql = "SELECT 
+                        pymt_stat_id,
+                        pymt_stat_name,
+                        DATE_FORMAT(PYMT_STAT_CREATED_AT, '%M %d, %Y %h:%i %p') as formatted_created_at,
+                        DATE_FORMAT(PYMT_STAT_UPDATED_AT, '%M %d, %Y %h:%i %p') as formatted_updated_at
+                    FROM {$this->table_payment_status} 
+                    ORDER BY pymt_stat_id 
                     LIMIT :limit OFFSET :offset";
-
             $stmt = $this->conn->prepare($sql);
             $stmt->bindValue(':limit', $limit, PDO::PARAM_INT);
             $stmt->bindValue(':offset', $offset, PDO::PARAM_INT);
             $stmt->execute();
-
             return $stmt->fetchAll(PDO::FETCH_ASSOC);
         } catch (PDOException $e) {
             error_log("Error fetching paginated payment statuses: " . $e->getMessage());
@@ -85,7 +87,7 @@ class Payment_Status {
             $sql = "SELECT COUNT(*) as total FROM {$this->table_payment_status}";
             $stmt = $this->conn->query($sql);
             $result = $stmt->fetch(PDO::FETCH_ASSOC);
-            return $result['total'];
+            return (int)$result['total'];
         } catch (PDOException $e) {
             error_log("Error counting payment statuses: " . $e->getMessage());
             return 0;
@@ -95,10 +97,9 @@ class Payment_Status {
     // Get payment status names for dropdown
     public function getAllForDropdown() {
         try {
-            $sql = "SELECT pymt_stat_id, pymt_stat_name
-                    FROM {$this->table_payment_status}
+            $sql = "SELECT pymt_stat_id, pymt_stat_name 
+                    FROM {$this->table_payment_status} 
                     ORDER BY pymt_stat_name";
-
             $stmt = $this->conn->query($sql);
             return $stmt->fetchAll(PDO::FETCH_ASSOC);
         } catch (PDOException $e) {
@@ -110,13 +111,14 @@ class Payment_Status {
     // Search payment statuses
     public function search($searchTerm) {
         try {
-            $sql = "SELECT pymt_stat_id, pymt_stat_name,
-                    DATE_FORMAT(pymt_stat_created_at, '%M %d, %Y %h:%i %p') as formatted_created_at,
-                    DATE_FORMAT(pymt_stat_updated_at, '%M %d, %Y %h:%i %p') as formatted_updated_at
-                    FROM {$this->table_payment_status}
-                    WHERE pymt_stat_name LIKE :search
+            $sql = "SELECT 
+                        pymt_stat_id,
+                        pymt_stat_name,
+                        DATE_FORMAT(PYMT_STAT_CREATED_AT, '%M %d, %Y %h:%i %p') as formatted_created_at,
+                        DATE_FORMAT(PYMT_STAT_UPDATED_AT, '%M %d, %Y %h:%i %p') as formatted_updated_at
+                    FROM {$this->table_payment_status} 
+                    WHERE pymt_stat_name LIKE :search 
                     ORDER BY pymt_stat_id";
-
             $stmt = $this->conn->prepare($sql);
             $searchParam = '%' . trim($searchTerm) . '%';
             $stmt->execute([':search' => $searchParam]);
@@ -127,17 +129,16 @@ class Payment_Status {
         }
     }
 
-    // CREATE
-    public function create($payment_Status) {
+    // CREATE - Accepts array or string (backward compatible)
+    public function create($data) {
         try {
-            $sql = "INSERT INTO {$this->table_payment_status}
-                    (pymt_stat_name, pymt_stat_created_at, pymt_stat_updated_at)
-                    VALUES (:pymt_stat_name, NOW(), NOW())";
+            $name = is_array($data) ? trim($data['pymt_stat_name']) : trim($data);
 
+            $sql = "INSERT INTO {$this->table_payment_status} 
+                    (pymt_stat_name, PYMT_STAT_CREATED_AT, PYMT_STAT_UPDATED_AT) 
+                    VALUES (:pymt_stat_name, NOW(), NOW())";
             $stmt = $this->conn->prepare($sql);
-            $success = $stmt->execute([
-                ':pymt_stat_name' => trim($payment_Status['pymt_stat_name'])
-            ]);
+            $success = $stmt->execute([':pymt_stat_name' => $name]);
 
             if ($success) {
                 $newPymtStatId = $this->conn->lastInsertId();
@@ -150,18 +151,25 @@ class Payment_Status {
         }
     }
 
-    // UPDATE
-    public function update($payment_Status) {
+    // UPDATE - Accepts array or (id, name) args
+    public function update($data, $new_name = null) {
         try {
-            $sql = "UPDATE {$this->table_payment_status}
-                    SET pymt_stat_name = :pymt_stat_name,
-                        pymt_stat_updated_at = NOW()
-                    WHERE pymt_stat_id = :pymt_stat_id";
+            if (is_array($data)) {
+                $id = (int)trim($data['pymt_stat_id']);
+                $name = trim($data['pymt_stat_name']);
+            } else {
+                $id = (int)trim($data);
+                $name = trim($new_name);
+            }
 
+            $sql = "UPDATE {$this->table_payment_status} 
+                    SET pymt_stat_name = :pymt_stat_name, 
+                        PYMT_STAT_UPDATED_AT = NOW() 
+                    WHERE pymt_stat_id = :pymt_stat_id";
             $stmt = $this->conn->prepare($sql);
             return $stmt->execute([
-                ':pymt_stat_id'    => trim($payment_Status['pymt_stat_id']),
-                ':pymt_stat_name'  => trim($payment_Status['pymt_stat_name'])
+                ':pymt_stat_id' => $id,
+                ':pymt_stat_name' => $name
             ]);
         } catch (PDOException $e) {
             error_log("Error updating payment status: " . $e->getMessage());
@@ -173,9 +181,8 @@ class Payment_Status {
     public function delete($pymt_stat_id) {
         try {
             $sql = "DELETE FROM {$this->table_payment_status} WHERE pymt_stat_id = :pymt_stat_id";
-
             $stmt = $this->conn->prepare($sql);
-            return $stmt->execute([':pymt_stat_id' => trim($pymt_stat_id)]);
+            return $stmt->execute([':pymt_stat_id' => (int)trim($pymt_stat_id)]);
         } catch (PDOException $e) {
             error_log("Error deleting payment status: " . $e->getMessage());
             return false;

@@ -1,6 +1,25 @@
 <?php
-require_once dirname(__DIR__, 3) . '/classes/Doctor.php';
-require_once dirname(__DIR__, 3) . '/classes/User.php';
+// ============================================
+// CRITICAL: Check if accessed properly
+// ============================================
+if (!isset($db)) {
+  die('
+    <div class="alert alert-danger">
+      <h4><i class="bi bi-exclamation-triangle"></i> Access Error</h4>
+      <p><strong>This module cannot be accessed directly.</strong></p>
+      <p>Please access it through the Super Admin Dashboard:</p>
+      <p class="mb-0">
+        <a href="../superadmin_dashboard.php?module=medical-record" class="btn btn-primary">
+          Go to Dashboard → Medical Records
+        </a>
+      </p>
+    </div>
+  ');
+}
+
+// NOW your require_once statements can safely use $db
+require_once __DIR__ . '/../../../classes/MedicalRecord.php';
+require_once __DIR__ . '/../../../classes/Appointment.php';
 
 $doctor = new Doctor($db);
 $user = new User($db);
@@ -179,8 +198,8 @@ function generateRandomPassword($length = 10) {
 
 <div class="card p-3 shadow-sm">
     <h5>All Doctor Records</h5>
-    <div class="table-responsive">
-        <table class="table table-bordered table-striped align-middle mt-3">
+    <div class="table-responsive" style="overflow-x: auto;">
+        <table class="table table-bordered table-striped align-middle mt-3" style="min-width: 1200px;">
             <thead class="table-light">
                 <tr>
                     <th>ID</th><th>First</th><th>Middle</th><th>Last</th>

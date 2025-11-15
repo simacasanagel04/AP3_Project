@@ -1,5 +1,23 @@
 <?php
-// modules/medical-record-module.php
+// ============================================
+// CRITICAL: Check if accessed properly
+// ============================================
+if (!isset($db)) {
+  die('
+    <div class="alert alert-danger">
+      <h4><i class="bi bi-exclamation-triangle"></i> Access Error</h4>
+      <p><strong>This module cannot be accessed directly.</strong></p>
+      <p>Please access it through the Super Admin Dashboard:</p>
+      <p class="mb-0">
+        <a href="../superadmin_dashboard.php?module=medical-record" class="btn btn-primary">
+          Go to Dashboard → Medical Records
+        </a>
+      </p>
+    </div>
+  ');
+}
+
+// NOW your require_once statements can safely use $db
 require_once dirname(__DIR__, 3) . '/classes/Medical_Record.php';
 
 $medicalRecord = new MedicalRecord($db);
@@ -168,8 +186,8 @@ $url_params = http_build_query($current_params);
                 <?php endif; ?>
             </div>
         <?php else: ?>
-        <div class="table-responsive">
-            <table class="table table-hover align-middle">
+        <div class="table-responsive" style="overflow-x: auto;">
+            <table class="table table-hover table-striped align-middle mt-3" style="min-width: 1200px;">
                 <thead class="table-light">
                     <tr>
                         <th>ID</th>
