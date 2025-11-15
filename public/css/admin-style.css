@@ -1,0 +1,207 @@
+body {
+    background-color: #f1f6fc;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    margin: 0;
+    padding: 0;
+    min-height: 100vh;
+    display: flex;
+    overflow-x: hidden;
+}
+
+/* Sidebar Styling */
+.sidebar {
+    width: 260px;
+    height: 100vh;
+    position: fixed;
+    left: 0;
+    top: 0;
+    background-color: #1f2a44;
+    color: white;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    z-index: 1030;
+    box-shadow: 2px 0 5px rgba(0, 0, 0, 0.2);
+    overflow-y: auto;
+    transition: transform 0.3s ease;
+}
+
+/* --- COMPRESSION CHANGES START --- */
+.brand {
+    padding: 10px 15px;
+    background-color: #14213d;
+    font-weight: bold;
+    color: white;
+    font-size: 1.1rem;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.user-img {
+    border-radius: 50%;
+    width: 60px;
+    height: 60px;
+    border: 3px solid #304571;
+    object-fit: cover;
+}
+
+.sidebar > div > .p-3 {
+    padding: 10px 15px !important;
+}
+
+.p-3 .text-center span.fw-bold {
+    font-size: 0.85rem;
+}
+
+.nav-link {
+    color: #dee2e6 !important;
+    font-weight: 500;
+    padding: 6px 15px;
+    font-size: 0.8rem;
+    border-radius: 4px;
+    margin-bottom: 2px;
+}
+
+.sidebar > .text-center.p-3 {
+    padding: 10px 15px !important;
+}
+/* --- COMPRESSION CHANGES END --- */
+
+.nav-link:hover {
+    background-color: #3e5282;
+    color: white !important;
+}
+
+.nav-link.active {
+    background-color: #0d6efd;
+    color: white !important;
+    font-weight: bold;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+}
+
+/* --- FIX WHITE SPACE --- */
+.main-content {
+    margin-left: 260px;
+    flex-grow: 1;
+    min-height: 100vh;
+    width: auto !important; /* Auto width instead of calc() */
+    padding: 0 20px; /* Tighter spacing */
+    overflow-x: hidden;
+    max-width: none !important;
+}
+
+.main-content > .container-fluid {
+    padding-top: 80px !important;
+    padding-bottom: 50px;
+    max-width: 100% !important;
+}
+
+.row {
+    margin-right: 0 !important;
+    margin-left: 0 !important;
+}
+
+.container-fluid {
+    max-width: 100% !important;
+    padding-right: 0 !important;
+}
+
+/* --- HEADER --- */
+.admin-app-header {
+    position: fixed;
+    top: 0;
+    left: 260px;
+    right: 0;
+    height: 60px;
+    background-color: #ffffff;
+    border-bottom: 1px solid #e0e6f1;
+    padding: 0 20px;
+    display: flex;
+    align-items: center;
+    justify-content: flex-start;
+    z-index: 1020;
+    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.05);
+    transition: left 0.3s ease;
+}
+
+.admin-app-header .menu-toggle {
+    display: none;
+}
+
+/* Sidebar Overlay */
+.sidebar-overlay {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.5);
+    z-index: 1025;
+}
+.sidebar-overlay.active {
+    display: block;
+}
+
+/* --- CARDS --- */
+.card-hover {
+    cursor: pointer;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+    border-radius: 0.5rem;
+    border: 1px solid #e0e6f1;
+}
+
+.card-hover:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 8px 16px rgba(0, 0, 0, 0.15);
+}
+
+/* --- FOOTER --- */
+.admin-app-footer {
+    position: fixed;
+    bottom: 0;
+    left: 260px;
+    right: 0;
+    margin-left: 0;
+    padding: 8px 30px;
+    border-top: 1px solid #e0e6f1;
+    background-color: #ffffff;
+    text-align: center;
+    z-index: 999;
+    transition: left 0.3s ease;
+}
+
+.admin-app-footer p {
+    margin-bottom: 0;
+    line-height: 1.5;
+}
+
+/* --- RESPONSIVE (≤ 768px) --- */
+@media (max-width: 768px) {
+    .sidebar {
+        transform: translateX(-100%);
+        width: 260px;
+    }
+    .sidebar.active {
+        transform: translateX(0);
+    }
+    .main-content {
+        margin-left: 0;
+        width: 100%;
+        padding-left: 15px;
+        padding-right: 15px;
+    }
+    .admin-app-header {
+        left: 0;
+        justify-content: space-between;
+    }
+    .admin-app-header .menu-toggle {
+        display: block;
+    }
+    .admin-app-footer {
+        left: 0;
+        margin-left: 0;
+    }
+    body.sidebar-open {
+        overflow: hidden;
+    }
+}
