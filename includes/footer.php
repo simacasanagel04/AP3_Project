@@ -5,7 +5,7 @@
             <!-- LEFT -->
             <div class="col-lg-5 text-center text-lg-start">
                 <div class="d-flex align-items-center justify-content-center justify-content-lg-start mb-3">
-                    <a href="index.php"><img src="assets/logo/logo.png" alt="AKSyon Medical Center" height="110" class="me-3 mb-4"></a>
+                    <a href="index.php"><img src="https://res.cloudinary.com/dibojpqg2/image/upload/v1763156755/logo_jbpnwf.png" alt="AKSyon Medical Center" height="110" class="me-3 mb-4"></a>
                 </div>
 
                 <h6 class="mb-4" style="font-family: 'telegraph';">
