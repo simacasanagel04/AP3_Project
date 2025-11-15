@@ -211,10 +211,22 @@ function generateRandomPassword($length = 10) {
                             </td>
                             <td><?= $r['formatted_created_at'] ?? '-' ?></td>
                             <td><?= $r['formatted_updated_at'] ?? '-' ?></td>
-                            <td>
-                                <input type="hidden" name="doc_id" value="<?= $r['doc_id'] ?>">
-                                <button name="update" class="btn btn-sm btn-success mb-1 w-100">Update</button>
-                                <button name="delete" value="<?= $r['doc_id'] ?>" class="btn btn-sm btn-danger w-100" onclick="return confirm('Delete this doctor?')">Delete</button>
+                            
+                               <td class="text-center">
+                                <input type="hidden" name="doc_id" value="<?= $r['doc_id'] ?>">                           
+                                <button name="update" class="btn btn-sm btn-success mb-1 w-100">Update</button>                                
+                                <button name="delete" value="<?= $r['doc_id'] ?>" 
+                                        class="btn btn-sm btn-danger mb-1 w-100" 
+                                        onclick="return confirm('Delete this doctor?')">
+                                    Delete
+                                </button>
+                                   <a href="?module=appointment&doc_id=<?= $r['doc_id'] ?>" 
+                                   class="btn btn-sm btn-info mb-1 w-100" 
+                                   title="View Appointments for Doctor ID: <?= $r['doc_id'] ?>">
+                                    View Appts
+                                </a>
+                            </td>
+
                             </td>
                         </form>
                     </tr>
