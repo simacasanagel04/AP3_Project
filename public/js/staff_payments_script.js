@@ -1,58 +1,67 @@
 // public/js/staff_payments_script.js
 
 document.addEventListener('DOMContentLoaded', function() {
-    // Initialize Select2 for appointment dropdown
-    $('#add_appt_id').select2({
-        theme: 'bootstrap-5',
-        placeholder: '-- Select or Search Appointment --',
-        allowClear: true,
-        ajax: {
-            url: 'ajax/staff_payment.php',
-            dataType: 'json',
-            delay: 250,
-            data: function(params) {
-                return {
-                    action: 'search_appointments',
-                    search: params.term
-                };
-            },
-            processResults: function(data) {
-                if (data.success) {
-                    return {
-                        results: data.appointments.map(function(appt) {
-                            return {
-                                id: appt.APPT_ID,
-                                text: appt.appt_display
-                            };
-                        })
-                    };
-                }
-                return { results: [] };
-            },
-            cache: true
-        },
-        minimumInputLength: 0
-    });
+    console.log('Staff Payments Script Loaded');
 
-    // Load initial appointments on dropdown open
-    $('#add_appt_id').on('select2:open', function() {
-        if ($('#add_appt_id option').length <= 1) {
-            $.ajax({
+    // Initialize Select2 for appointment dropdown
+    if ($('#add_appt_id').length) {
+        $('#add_appt_id').select2({
+            theme: 'bootstrap-5',
+            placeholder: '-- Select or Search Appointment --',
+            allowClear: true,
+            ajax: {
                 url: 'ajax/staff_payment.php',
-                method: 'GET',
-                data: { action: 'get_all_appointments' },
                 dataType: 'json',
-                success: function(response) {
-                    if (response.success && response.appointments.length > 0) {
-                        response.appointments.forEach(function(appt) {
-                            var option = new Option(appt.appt_display, appt.APPT_ID, false, false);
-                            $('#add_appt_id').append(option);
-                        });
+                delay: 250,
+                data: function(params) {
+                    return {
+                        action: 'search_appointments',
+                        search: params.term || ''
+                    };
+                },
+                processResults: function(data) {
+                    console.log('Search results:', data);
+                    if (data.success && data.appointments) {
+                        return {
+                            results: data.appointments.map(function(appt) {
+                                return {
+                                    id: appt.APPT_ID,
+                                    text: appt.appt_display
+                                };
+                            })
+                        };
                     }
-                }
-            });
-        }
-    });
+                    return { results: [] };
+                },
+                cache: true
+            },
+            minimumInputLength: 0
+        });
+
+        // Load initial appointments on first open
+        $('#add_appt_id').on('select2:open', function() {
+            if ($('#add_appt_id option').length <= 1) {
+                $.ajax({
+                    url: 'ajax/staff_payment.php',
+                    method: 'GET',
+                    data: { action: 'get_all_appointments' },
+                    dataType: 'json',
+                    success: function(response) {
+                        console.log('Initial appointments:', response);
+                        if (response.success && response.appointments && response.appointments.length > 0) {
+                            response.appointments.forEach(function(appt) {
+                                var option = new Option(appt.appt_display, appt.APPT_ID, false, false);
+                                $('#add_appt_id').append(option);
+                            });
+                        }
+                    },
+                    error: function(xhr, status, error) {
+                        console.error('Error loading appointments:', error);
+                    }
+                });
+            }
+        });
+    }
 
     // Toggle Add Payment Form
     const addPaymentCard = document.getElementById('addPaymentCard');
@@ -62,7 +71,7 @@ document.addEventListener('DOMContentLoaded', function() {
     if (addPaymentCard) {
         addPaymentCard.addEventListener('click', function() {
             addPaymentFormCard.classList.remove('d-none');
-            addPaymentCard.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            addPaymentFormCard.scrollIntoView({ behavior: 'smooth', block: 'start' });
         });
     }
 
@@ -77,15 +86,19 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     // Clear appointment selection
-    document.getElementById('clearApptBtn')?.addEventListener('click', function() {
-        $('#add_appt_id').val(null).trigger('change');
-        document.getElementById('appointmentDetails').classList.add('d-none');
-        document.getElementById('submitPaymentBtn').disabled = true;
-    });
+    const clearApptBtn = document.getElementById('clearApptBtn');
+    if (clearApptBtn) {
+        clearApptBtn.addEventListener('click', function() {
+            $('#add_appt_id').val(null).trigger('change');
+            document.getElementById('appointmentDetails').classList.add('d-none');
+            document.getElementById('submitPaymentBtn').disabled = true;
+        });
+    }
 
     // Load appointment details when selected
     $('#add_appt_id').on('change', function() {
         const apptId = $(this).val();
+        console.log('Selected Appointment ID:', apptId);
         
         if (apptId) {
             $.ajax({
@@ -97,6 +110,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 },
                 dataType: 'json',
                 success: function(response) {
+                    console.log('Appointment details response:', response);
                     if (response.success) {
                         // Populate appointment details
                         document.getElementById('add_patient_name').value = response.details.patient_name || 'N/A';
@@ -118,7 +132,8 @@ document.addEventListener('DOMContentLoaded', function() {
                         showAlert('error', response.message || 'Failed to load appointment details');
                     }
                 },
-                error: function() {
+                error: function(xhr, status, error) {
+                    console.error('Error loading appointment details:', error);
                     showAlert('error', 'Error loading appointment details');
                 }
             });
@@ -151,87 +166,102 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     // Payment status change handler - enable/disable date field
-    document.getElementById('add_payment_status')?.addEventListener('change', function() {
-        const dateField = document.getElementById('add_payment_date');
-        const statusText = this.options[this.selectedIndex].text;
-        
-        if (statusText === 'Paid') {
-            dateField.disabled = false;
-            dateField.required = true;
-            // Set current datetime if empty
-            if (!dateField.value) {
-                dateField.value = getCurrentDateTime();
-            }
-        } else {
-            dateField.disabled = true;
-            dateField.required = false;
-            dateField.value = '';
-        }
-    });
-
-    // Update modal - same logic for status
-    document.getElementById('update_payment_status')?.addEventListener('change', function() {
-        const dateField = document.getElementById('update_payment_date');
-        const statusText = this.options[this.selectedIndex].text;
-        
-        if (statusText === 'Paid') {
-            dateField.disabled = false;
-            dateField.required = true;
-            if (!dateField.value) {
-                dateField.value = getCurrentDateTime();
-            }
-        } else {
-            dateField.disabled = true;
-            dateField.required = false;
-            dateField.value = '';
-        }
-    });
-
-    // Add Payment Form Submission
-    document.getElementById('addPaymentForm')?.addEventListener('submit', function(e) {
-        e.preventDefault();
-        
-        const formData = new FormData();
-        formData.append('action', 'add_payment');
-        formData.append('appt_id', document.getElementById('add_appt_id').value);
-        formData.append('amount', document.getElementById('add_amount').value);
-        formData.append('payment_method', document.getElementById('add_payment_method').value);
-        formData.append('payment_status', document.getElementById('add_payment_status').value);
-        
-        const dateField = document.getElementById('add_payment_date');
-        if (!dateField.disabled && dateField.value) {
-            formData.append('payment_date', dateField.value);
-        } else {
-            formData.append('payment_date', getCurrentDateTime());
-        }
-
-        $.ajax({
-            url: 'ajax/staff_payment.php',
-            method: 'POST',
-            data: formData,
-            processData: false,
-            contentType: false,
-            dataType: 'json',
-            success: function(response) {
-                if (response.success) {
-                    showAlert('success', response.message);
-                    setTimeout(function() {
-                        window.location.reload();
-                    }, 1500);
-                } else {
-                    showAlert('error', response.message || 'Failed to add payment');
+    const addPaymentStatus = document.getElementById('add_payment_status');
+    if (addPaymentStatus) {
+        addPaymentStatus.addEventListener('change', function() {
+            const dateField = document.getElementById('add_payment_date');
+            const statusText = this.options[this.selectedIndex].text;
+            
+            if (statusText === 'Paid') {
+                dateField.disabled = false;
+                dateField.required = true;
+                // Set current datetime if empty
+                if (!dateField.value) {
+                    dateField.value = getCurrentDateTime();
                 }
-            },
-            error: function() {
-                showAlert('error', 'Error processing payment');
+            } else {
+                dateField.disabled = true;
+                dateField.required = false;
+                dateField.value = '';
             }
         });
-    });
+    }
+
+    // Update modal - same logic for status
+    const updatePaymentStatus = document.getElementById('update_payment_status');
+    if (updatePaymentStatus) {
+        updatePaymentStatus.addEventListener('change', function() {
+            const dateField = document.getElementById('update_payment_date');
+            const statusText = this.options[this.selectedIndex].text;
+            
+            if (statusText === 'Paid') {
+                dateField.disabled = false;
+                dateField.required = true;
+                if (!dateField.value) {
+                    dateField.value = getCurrentDateTime();
+                }
+            } else {
+                dateField.disabled = true;
+                dateField.required = false;
+                dateField.value = '';
+            }
+        });
+    }
+
+    // Add Payment Form Submission
+    const addPaymentForm = document.getElementById('addPaymentForm');
+    if (addPaymentForm) {
+        addPaymentForm.addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            const formData = new FormData();
+            formData.append('action', 'add_payment');
+            formData.append('appt_id', document.getElementById('add_appt_id').value);
+            formData.append('amount', document.getElementById('add_amount').value);
+            formData.append('payment_method', document.getElementById('add_payment_method').value);
+            formData.append('payment_status', document.getElementById('add_payment_status').value);
+            
+            const dateField = document.getElementById('add_payment_date');
+            if (!dateField.disabled && dateField.value) {
+                formData.append('payment_date', dateField.value);
+            } else {
+                formData.append('payment_date', getCurrentDateTime());
+            }
+
+            console.log('Submitting add payment:', Array.from(formData.entries()));
+
+            $.ajax({
+                url: 'ajax/staff_payment.php',
+                method: 'POST',
+                data: formData,
+                processData: false,
+                contentType: false,
+                dataType: 'json',
+                success: function(response) {
+                    console.log('Add payment response:', response);
+                    if (response.success) {
+                        showAlert('success', response.message);
+                        setTimeout(function() {
+                            window.location.reload();
+                        }, 1500);
+                    } else {
+                        showAlert('error', response.message || 'Failed to add payment');
+                    }
+                },
+                error: function(xhr, status, error) {
+                    console.error('Error adding payment:', error);
+                    console.error('Response:', xhr.responseText);
+                    showAlert('error', 'Error processing payment');
+                }
+            });
+        });
+    }
 
     // Update Payment Button Click
     document.querySelectorAll('.update-payment-btn').forEach(function(btn) {
         btn.addEventListener('click', function() {
             const paymtId = this.dataset.id;
+            console.log('Loading payment for update:', paymtId);
             
             $.ajax({
                 url: 'ajax/staff_payment.php',
@@ -242,6 +272,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 },
                 dataType: 'json',
                 success: function(response) {
+                    console.log('Payment details for update:', response);
                     if (response.success) {
                         const payment = response.payment;
                         
@@ -266,7 +297,8 @@ document.addEventListener('DOMContentLoaded', function() {
                         showAlert('error', response.message || 'Failed to load payment details');
                     }
                 },
-                error: function() {
+                error: function(xhr, status, error) {
+                    console.error('Error loading payment details:', error);
                     showAlert('error', 'Error loading payment details');
                 }
             });
@@ -274,77 +306,104 @@ document.addEventListener('DOMContentLoaded', function() {
     });
 
     // Update Payment Form Submission
-    document.getElementById('updatePaymentForm')?.addEventListener('submit', function(e) {
-        e.preventDefault();
-        
-        const formData = new FormData();
-        formData.append('action', 'update_payment');
-        formData.append('paymt_id', document.getElementById('update_paymt_id').value);
-        formData.append('amount', document.getElementById('update_amount').value);
-        formData.append('payment_method', document.getElementById('update_payment_method').value);
-        formData.append('payment_status', document.getElementById('update_payment_status').value);
-        
-        const dateField = document.getElementById('update_payment_date');
-        if (!dateField.disabled && dateField.value) {
-            formData.append('payment_date', dateField.value);
-        } else {
-            formData.append('payment_date', getCurrentDateTime());
-        }
-
-        $.ajax({
-            url: 'ajax/staff_payment.php',
-            method: 'POST',
-            data: formData,
-            processData: false,
-            contentType: false,
-            dataType: 'json',
-            success: function(response) {
-                if (response.success) {
-                    showAlert('success', response.message);
-                    setTimeout(function() {
-                        window.location.reload();
-                    }, 1500);
-                } else {
-                    showAlert('error', response.message || 'Failed to update payment');
-                }
-            },
-            error: function() {
-                showAlert('error', 'Error updating payment');
+    const updatePaymentForm = document.getElementById('updatePaymentForm');
+    if (updatePaymentForm) {
+        updatePaymentForm.addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            const formData = new FormData();
+            formData.append('action', 'update_payment');
+            formData.append('paymt_id', document.getElementById('update_paymt_id').value);
+            formData.append('amount', document.getElementById('update_amount').value);
+            formData.append('payment_method', document.getElementById('update_payment_method').value);
+            formData.append('payment_status', document.getElementById('update_payment_status').value);
+            
+            const dateField = document.getElementById('update_payment_date');
+            if (!dateField.disabled && dateField.value) {
+                formData.append('payment_date', dateField.value);
+            } else {
+                formData.append('payment_date', getCurrentDateTime());
             }
+
+            console.log('Submitting update payment:', Array.from(formData.entries()));
+
+            $.ajax({
+                url: 'ajax/staff_payment.php',
+                method: 'POST',
+                data: formData,
+                processData: false,
+                contentType: false,
+                dataType: 'json',
+                success: function(response) {
+                    console.log('Update payment response:', response);
+                    if (response.success) {
+                        showAlert('success', response.message);
+                        setTimeout(function() {
+                            window.location.reload();
+                        }, 1500);
+                    } else {
+                        showAlert('error', response.message || 'Failed to update payment');
+                    }
+                },
+                error: function(xhr, status, error) {
+                    console.error('Error updating payment:', error);
+                    console.error('Response:', xhr.responseText);
+                    showAlert('error', 'Error updating payment');
+                }
+            });
         });
-    });
+    }
 
     // ========== PAYMENT METHOD PAGE FUNCTIONALITY ==========
     
     // Open Add Modal
-    document.getElementById('openAddModalBtn')?.addEventListener('click', function() {
-        // Set current date/time in the Created At field
-        const now = new Date();
-        const formatted = now.toLocaleString('en-US', { 
-            month: 'long', 
-            day: 'numeric', 
-            year: 'numeric', 
-            hour: 'numeric', 
-            minute: '2-digit', 
-            hour12: true 
+    const openAddModalBtn = document.getElementById('openAddModalBtn');
+    if (openAddModalBtn) {
+        openAddModalBtn.addEventListener('click', function() {
+            // Set current date/time in the Created At field
+            const now = new Date();
+            const formatted = now.toLocaleString('en-US', { 
+                month: 'long', 
+                day: 'numeric', 
+                year: 'numeric', 
+                hour: 'numeric', 
+                minute: '2-digit', 
+                hour12: true 
+            });
+            
+            const createdAtField = document.getElementById('add_created_at');
+            if (createdAtField) {
+                createdAtField.value = formatted;
+            }
+            
+            const modal = new bootstrap.Modal(document.getElementById('addModal'));
+            modal.show();
         });
-        document.getElementById('add_created_at').value = formatted;
-        
-        const modal = new bootstrap.Modal(document.getElementById('addModal'));
-        modal.show();
-    });
+    }
     
-    // Edit button
+    // Edit button for payment methods/statuses
     document.querySelectorAll('.edit-btn').forEach(btn => {
         btn.addEventListener('click', function() {
             const id = this.dataset.id;
             const name = this.dataset.name;
             
-            document.getElementById('edit_method_id').value = id;
-            document.getElementById('edit_method_name').value = name;
+            // Check which modal to open based on which page we're on
+            const editMethodId = document.getElementById('edit_method_id');
+            const editStatusId = document.getElementById('edit_status_id');
             
-            const modal = new bootstrap.Modal(document.getElementById('editModal'));
-            modal.show();
+            if (editMethodId) {
+                // Payment Method page
+                editMethodId.value = id;
+                document.getElementById('edit_method_name').value = name;
+                const modal = new bootstrap.Modal(document.getElementById('editModal'));
+                modal.show();
+            } else if (editStatusId) {
+                // Payment Status page
+                editStatusId.value = id;
+                document.getElementById('edit_status_name').value = name;
+                const modal = new bootstrap.Modal(document.getElementById('editModal'));
+                modal.show();
+            }
         });
     });
     
@@ -352,7 +411,7 @@ document.addEventListener('DOMContentLoaded', function() {
     const alerts = document.querySelectorAll('.alert');
     alerts.forEach(alert => {
         setTimeout(() => {
-            const bsAlert = new bootstrap.Alert(alert);
+            const bsAlert = bootstrap.Alert.getOrCreateInstance(alert);
             bsAlert.close();
         }, 5000);
     });
@@ -360,6 +419,8 @@ document.addEventListener('DOMContentLoaded', function() {
     // Utility Functions
     function showAlert(type, message) {
         const alertContainer = document.getElementById('alertContainer');
+        if (!alertContainer) return;
+        
         const alertClass = type === 'success' ? 'alert-success' : 'alert-danger';
         const icon = type === 'success' ? 'check-circle' : 'exclamation-triangle';
         

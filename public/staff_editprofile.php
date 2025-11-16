@@ -128,5 +128,3 @@ require_once '../includes/staff_header.php';
         </div>
     </div>
 </div>
-
-<?php require_once '../includes/footer.php'; ?>

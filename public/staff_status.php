@@ -187,8 +187,8 @@ require_once '../includes/staff_header.php';
                                 <tr>
                                     <td><?= htmlspecialchars($row['stat_id']) ?></td>
                                     <td><?= htmlspecialchars($row['status_name']) ?></td>
-                                    <td><?= htmlspecialchars($row['STATUS_CREATED_AT']) ?></td>
-                                    <td><?= htmlspecialchars($row['STATUS_UPDATED_AT'] ?? '—') ?></td>
+                                    <td><?= htmlspecialchars($row['STAT_CREATED_AT']) ?></td>
+                                    <td><?= htmlspecialchars($row['STAT_UPDATED_AT'] ?? '—') ?></td>
                                     <td>
                                         <a href="?edit=<?= htmlspecialchars($row['stat_id']) ?>" 
                                            class="btn btn-sm btn-warning">
@@ -229,4 +229,3 @@ require_once '../includes/staff_header.php';
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 </body>
 </html>
-
