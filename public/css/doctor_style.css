@@ -40,6 +40,7 @@ body {
 .logo-area {text-align: center;}
 .logo-img {max-height: 75px;}
 
+/* ===== FIXED: USER INFO WITH OVERFLOW HANDLING ===== */
 .user-info {
   display: flex;
   align-items: center;
@@ -48,6 +49,7 @@ body {
   border-radius: 12px;
   margin: 1rem;
   padding: 1rem;
+  min-width: 0; /* Allow flex items to shrink */
 }
 
 .user-avatar {
@@ -61,6 +63,29 @@ body {
   justify-content: center;
   font-size: 1.5rem;
   flex-shrink: 0;
+}
+
+/* ===== FIXED: TEXT OVERFLOW FOR DOCTOR NAME & EMAIL ===== */
+.user-info .flex-grow-1 {
+  flex: 1;
+  min-width: 0; /* Critical for text-overflow to work */
+  overflow: hidden;
+}
+
+.user-info .flex-grow-1 strong {
+  display: block;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 100%;
+}
+
+.user-info .flex-grow-1 small {
+  display: block;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 100%;
 }
 
 /* ======================================================================================== 
@@ -398,8 +423,9 @@ body {
   }
   
   .action-btn i {display: none;}
+}
 
-  /* PROFILE CARDS – CLICKABLE */
+/* PROFILE CARDS – CLICKABLE */
 .cursor-pointer {
     cursor: pointer;
     transition: all 0.3s ease;
@@ -419,8 +445,6 @@ body {
 .modal-header.bg-primary { background-color: var(--main-blue) !important; }
 .modal-header.bg-warning { background-color: #e79e17 !important; color: #000; }
 .modal-header.bg-danger { background-color: #c05780 !important; }
-
-}
 
 /* ===== DASHBOARD FILTER SECTION ===== */
 #filterSection {

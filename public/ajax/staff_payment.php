@@ -7,6 +7,12 @@ require_once __DIR__ . '/../../classes/Payment.php';
 
 header('Content-Type: application/json');
 
+// Check if user is logged in
+if (!isset($_SESSION['staff_id'])) {
+    echo json_encode(['success' => false, 'message' => 'Unauthorized access']);
+    exit;
+}
+
 $db = (new Database())->connect();
 $payment = new Payment($db);
 
@@ -79,7 +85,7 @@ try {
                 ];
             }
             
-            // Format appointment details for frontend
+            // Format appointment details for frontend (matching Payment class column names)
             $response = [
                 'success' => true,
                 'details' => [
@@ -104,6 +110,7 @@ try {
                 exit;
             }
             
+            // Get payment details using findById
             $paymentDetails = $payment->findById($paymtId);
             
             if (!$paymentDetails || $paymentDetails === 0) {
@@ -111,24 +118,35 @@ try {
                 exit;
             }
             
-            // Get additional IDs needed for the form
-            $sqlIds = "SELECT PYMT_METH_ID, PYMT_STAT_ID, APPT_ID 
-                      FROM payment 
-                      WHERE PAYMT_ID = :paymt_id";
-            $stmtIds = $db->prepare($sqlIds);
-            $stmtIds->execute([':paymt_id' => $paymtId]);
-            $ids = $stmtIds->fetch(PDO::FETCH_ASSOC);
+            // Get full payment record with IDs
+            $sqlPayment = "SELECT 
+                            p.PAYMT_ID,
+                            p.APPT_ID,
+                            p.PAYMT_AMOUNT_PAID,
+                            p.PAYMT_DATE,
+                            p.PYMT_METH_ID,
+                            p.PYMT_STAT_ID
+                          FROM payment p
+                          WHERE p.PAYMT_ID = :paymt_id";
+            $stmtPayment = $db->prepare($sqlPayment);
+            $stmtPayment->execute([':paymt_id' => $paymtId]);
+            $fullPayment = $stmtPayment->fetch(PDO::FETCH_ASSOC);
+            
+            if (!$fullPayment) {
+                echo json_encode(['success' => false, 'message' => 'Payment not found']);
+                exit;
+            }
             
             // Format response
             $response = [
                 'success' => true,
                 'payment' => [
-                    'PAYMT_ID' => $paymentDetails['paymt_id'],
-                    'APPT_ID' => $ids['APPT_ID'] ?? '',
-                    'PAYMT_AMOUNT_PAID' => $paymentDetails['paymt_amount_paid'],
-                    'PAYMT_DATE' => $paymentDetails['paymt_date'],
-                    'PYMT_METH_ID' => $ids['PYMT_METH_ID'] ?? '',
-                    'PYMT_STAT_ID' => $ids['PYMT_STAT_ID'] ?? ''
+                    'PAYMT_ID' => $fullPayment['PAYMT_ID'],
+                    'APPT_ID' => $fullPayment['APPT_ID'],
+                    'PAYMT_AMOUNT_PAID' => $fullPayment['PAYMT_AMOUNT_PAID'],
+                    'PAYMT_DATE' => $fullPayment['PAYMT_DATE'],
+                    'PYMT_METH_ID' => $fullPayment['PYMT_METH_ID'],
+                    'PYMT_STAT_ID' => $fullPayment['PYMT_STAT_ID']
                 ]
             ];
             
@@ -149,12 +167,18 @@ try {
                 exit;
             }
             
+            // Validate amount is positive
+            if ($amount <= 0) {
+                echo json_encode(['success' => false, 'message' => 'Payment amount must be greater than zero']);
+                exit;
+            }
+            
             // Convert datetime-local format to MySQL datetime format
             if (strpos($paymentDate, 'T') !== false) {
                 $paymentDate = str_replace('T', ' ', $paymentDate) . ':00';
             }
             
-            // Prepare data for insertion
+            // Prepare data for insertion (matching Payment class parameters)
             $paymentData = [
                 'appt_id' => $apptId,
                 'paymt_amount_paid' => $amount,
@@ -191,22 +215,32 @@ try {
                 exit;
             }
             
+            // Validate amount is positive
+            if ($amount <= 0) {
+                echo json_encode(['success' => false, 'message' => 'Payment amount must be greater than zero']);
+                exit;
+            }
+            
             // Convert datetime-local format to MySQL datetime format
             if (strpos($paymentDate, 'T') !== false) {
                 $paymentDate = str_replace('T', ' ', $paymentDate) . ':00';
             }
             
-            // Get current appointment ID (we need this for update)
-            $currentPayment = $payment->findById($paymtId);
-            if (!$currentPayment || $currentPayment === 0) {
+            // Get current payment to retrieve appointment ID
+            $sqlCurrent = "SELECT APPT_ID FROM payment WHERE PAYMT_ID = :paymt_id";
+            $stmtCurrent = $db->prepare($sqlCurrent);
+            $stmtCurrent->execute([':paymt_id' => $paymtId]);
+            $currentPayment = $stmtCurrent->fetch(PDO::FETCH_ASSOC);
+            
+            if (!$currentPayment) {
                 echo json_encode(['success' => false, 'message' => 'Payment not found']);
                 exit;
             }
             
-            // Prepare data for update
+            // Prepare data for update (matching Payment class parameters)
             $paymentData = [
                 'paymt_id' => $paymtId,
-                'appt_id' => $currentPayment['app_id'],
+                'appt_id' => $currentPayment['APPT_ID'],
                 'paymt_amount_paid' => $amount,
                 'paymt_date' => $paymentDate,
                 'pymt_meth_id' => $methodId,
@@ -230,12 +264,19 @@ try {
             echo json_encode(['success' => false, 'message' => 'Invalid action specified']);
             break;
     }
+} catch (PDOException $e) {
+    error_log("Payment AJAX Database Error: " . $e->getMessage());
+    echo json_encode([
+        'success' => false, 
+        'message' => 'Database error occurred. Please try again.',
+        'debug' => $e->getMessage() // Remove this line in production
+    ]);
 } catch (Exception $e) {
     error_log("Payment AJAX Error: " . $e->getMessage());
     echo json_encode([
         'success' => false, 
         'message' => 'Server error occurred. Please contact administrator.',
-        'debug' => $e->getMessage() // Remove this in production
+        'debug' => $e->getMessage() // Remove this line in production
     ]);
 }
 ?>
