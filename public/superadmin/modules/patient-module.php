@@ -90,7 +90,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $userMessage = "⚠️ Patient added successfully, but no email for user creation. Manual account setup needed.";
             }
         } else {
-            $message = "❌ Failed to add patient.";
+            $message = "❌ Failed to add patient, email or contact number may already exist.";
         }
     }
     elseif (isset($_POST['update'])) {
@@ -129,7 +129,7 @@ if (!empty($search)) {
 <div class="d-flex justify-content-between align-items-center mb-3">
     <form class="d-flex" method="GET">
         <input type="hidden" name="module" value="patient">
-        <input class="form-control me-2" type="search" name="search_patient" placeholder="Search by name..." value="<?= htmlspecialchars($search) ?>">
+        <input class="form-control me-2 rounded-pill border-primary" type="search" name="search_patient" placeholder="Search by name..." value="<?= htmlspecialchars($search) ?>">
         <button class="btn btn-outline-primary" type="submit">Search</button>
         <?php if ($search): ?><a href="?module=patient" class="btn btn-outline-secondary ms-2">Reset</a><?php endif; ?>
     </form>
@@ -167,7 +167,7 @@ if (!empty($search)) {
         <table class="table table-bordered table-striped align-middle mt-3" style="min-width: 1200px;">
             <thead class="table-light">
                 <tr>
-                    <th>ID</th><th>First</th><th>Middle</th><th>Last</th><th>DOB</th><th>Gender</th>
+                    <th>ID</th><th>Name</th><th>DOB</th><th>Gender</th>
                     <th>Contact</th><th>Email</th><th>Address</th><th>Created</th><th>Updated</th><th>Action</th>
                 </tr>
             </thead>
@@ -178,9 +178,10 @@ if (!empty($search)) {
                     <tr>
                         <form method="POST" onsubmit="return validatePatientForm(this)">
                             <td><?= $r['pat_id'] ?? '-' ?></td>
-                            <td><input name="pat_first_name" value="<?= htmlspecialchars($r['pat_first_name'] ?? '') ?>" class="form-control form-control-sm" required></td>
-                            <td><input name="pat_middle_init" value="<?= htmlspecialchars($r['pat_middle_init'] ?? '') ?>" class="form-control form-control-sm"></td>
-                            <td><input name="pat_last_name" value="<?= htmlspecialchars($r['pat_last_name'] ?? '') ?>" class="form-control form-control-sm" required></td>
+                            <td>
+                            <input name="pat_first_name" value="<?= htmlspecialchars($r['pat_first_name'] ?? '') ?>" class="form-control form-control-sm" required>
+                            <input name="pat_middle_init" value="<?= htmlspecialchars($r['pat_middle_init'] ?? '') ?>" class="form-control form-control-sm">
+                            <input name="pat_last_name" value="<?= htmlspecialchars($r['pat_last_name'] ?? '') ?>" class="form-control form-control-sm" required></td>
                             <td><input type="date" name="pat_dob" value="<?= htmlspecialchars($r['pat_dob'] ?? '') ?>" class="form-control form-control-sm" required></td>
                             <td><input name="pat_gender" value="<?= htmlspecialchars($r['pat_gender'] ?? '') ?>" class="form-control form-control-sm" required></td>
                             <td><input name="pat_contact_num" value="<?= htmlspecialchars($r['pat_contact_num'] ?? '') ?>" class="form-control form-control-sm" pattern="^09\d{9}$" required></td>

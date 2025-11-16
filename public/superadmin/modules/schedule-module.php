@@ -1,204 +1,257 @@
 <?php
-// /public/superadmin/modules/schedule-module.php
+/**
+ * SCHEDULE MANAGEMENT MODULE (schedule-module.php)
+ * This file handles all CRUD operations for the Schedule entity
+ * and includes a view for doctors with today's schedule.
+ * Designed to be included within the superadmin_dashboard.php content area.
+ * NOTE: Requires 'database.php' and 'Schedule.php' class file to be available.
+ */
 
+// Ensure dependencies are loaded
 require_once dirname(__DIR__, 3) . '/classes/Schedule.php';
+// NOTE: $db is assumed to be available from superadmin_dashboard.php scope.
 
 $schedule = new Schedule($db);
+
 $message = '';
+$action = $_GET['action'] ?? 'view_all';
+$current_datetime = date('Y-m-d H:i:s');
+$user_type = $_SESSION['user_type'] ?? '';
 
-// --- ACCESS CONTROL ---
-$user_role = $_SESSION['user_type'] ?? 'unknown';
-$logged_doc_id = $_SESSION['doc_id'] ?? null;
+// Helper function
+function formatDate($timestamp) {
+    if (!$timestamp) {
+        return '—';
+    }
+    return date('F j, Y h:i A', strtotime($timestamp));
+}
 
-// FIXED: Check for 'superadmin' and 'doctor' instead of 'super_admin' and 'doctor'
-if (!in_array($user_role, ['superadmin', 'doctor'])) {
-    echo '<div class="alert alert-danger">Access denied. Only Super Admin and Doctors can access this module.</div>';
+// Access Control
+if ($user_type !== 'superadmin') {
+    echo '<div class="alert alert-danger">Access denied. Only Super Admin can access this module.</div>';
     return;
 }
 
-// Get doctors for dropdown
-$doctors = $user_role === 'superadmin' ? $schedule->getAllDoctors() : [];
-$days_of_week = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
+// Fetch all doctors for dropdown
+$doctors = [];
+try {
+    $doctors = $schedule->getAllDoctors();
+} catch (Exception $e) {
+    $message = "❌ Error fetching doctors: " . $e->getMessage();
+}
 
-// --- HANDLE POST ---
+// Fetch doctors with today's schedule
+$todaysDoctors = [];
+try {
+    $todaysDoctors = $schedule->getDoctorsWithTodaySchedule();
+} catch (Exception $e) {
+    $message = "❌ Error fetching today's doctors: " . $e->getMessage();
+}
+
+// CRUD Handlers
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    $doc_id = $user_role === 'doctor' ? $logged_doc_id : ($_POST['DOC_ID'] ?? null);
+    // Handle ADD Schedule
+    if (isset($_POST['add'])) {
+        $doc_id = filter_var($_POST['doc_id'], FILTER_VALIDATE_INT);
+        $sched_days = trim($_POST['sched_days']);
+        $start_time = trim($_POST['start_time']);
+        $end_time = trim($_POST['end_time']);
 
-    // CREATE
-    if (isset($_POST['create'])) {
-        $data = [
-            'DOC_ID'           => $doc_id,
-            'SCHED_DAYS'       => trim($_POST['SCHED_DAYS'] ?? ''),
-            'SCHED_START_TIME' => trim($_POST['SCHED_START_TIME'] ?? ''),
-            'SCHED_END_TIME'   => trim($_POST['SCHED_END_TIME'] ?? '')
-        ];
-
-        if (empty($doc_id) || empty($data['SCHED_DAYS']) || empty($data['SCHED_START_TIME']) || empty($data['SCHED_END_TIME'])) {
-            $message = "❌ Missing Doctor, Schedule Day, or Time fields.";
+        if ($doc_id && $sched_days && $start_time && $end_time) {
+            try {
+                $data = [
+                    'DOC_ID' => $doc_id,
+                    'SCHED_DAYS' => $sched_days,
+                    'SCHED_START_TIME' => $start_time,
+                    'SCHED_END_TIME' => $end_time
+                ];
+                if ($schedule->create($data)) {
+                    $message = "✅ Schedule added successfully!";
+                } else {
+                    $message = "❌ Failed to add schedule.";
+                }
+            } catch (Exception $e) {
+                $message = "❌ Error: " . $e->getMessage();
+            }
         } else {
-            $result = $schedule->create($data);
-            $message = is_string($result) 
-                ? $result 
-                : ($result === true ? "✅ Schedule added successfully." : "❌ Failed to add schedule.");
+            $message = "❌ Invalid input. Please check all fields.";
         }
     }
 
-    // UPDATE
+    // Handle UPDATE Schedule
     elseif (isset($_POST['update'])) {
-        $data = [
-            'SCHED_ID'         => trim($_POST['SCHED_ID'] ?? ''),
-            'DOC_ID'           => $doc_id,
-            'SCHED_DAYS'       => trim($_POST['SCHED_DAYS'] ?? ''),
-            'SCHED_START_TIME' => trim($_POST['SCHED_START_TIME'] ?? ''),
-            'SCHED_END_TIME'   => trim($_POST['SCHED_END_TIME'] ?? '')
-        ];
-        
-        $result = $schedule->update($data);
-        $message = $result === true 
-            ? "✅ Schedule ID {$_POST['SCHED_ID']} updated successfully." 
-            : "❌ Failed to update Schedule ID {$_POST['SCHED_ID']}.";
+        $sched_id = filter_var($_POST['sched_id'], FILTER_VALIDATE_INT);
+        $doc_id = filter_var($_POST['doc_id'], FILTER_VALIDATE_INT);
+        $sched_days = trim($_POST['sched_days']);
+        $start_time = trim($_POST['start_time']);
+        $end_time = trim($_POST['end_time']);
+
+        if ($sched_id && $doc_id && $sched_days && $start_time && $end_time) {
+            try {
+                $data = [
+                    'SCHED_ID' => $sched_id,
+                    'DOC_ID' => $doc_id,
+                    'SCHED_DAYS' => $sched_days,
+                    'SCHED_START_TIME' => $start_time,
+                    'SCHED_END_TIME' => $end_time
+                ];
+                if ($schedule->update($data)) {
+                    $message = "✅ Schedule ID {$sched_id} updated successfully!";
+                } else {
+                    $message = "✅ Schedule ID {$sched_id} updated (or no changes detected).";
+                }
+            } catch (Exception $e) {
+                $message = "❌ Error: " . $e->getMessage();
+            }
+        } else {
+            $message = "❌ Invalid input for update.";
+        }
     }
 
-    // DELETE
+    // Handle DELETE Schedule
     elseif (isset($_POST['delete'])) {
-        $sched_id = $_POST['delete'];
-        $result = $schedule->delete($sched_id);
-        $message = $result === true 
-            ? "🗑️ Schedule ID {$sched_id} deleted successfully." 
-            : "❌ Failed to delete Schedule ID {$sched_id}.";
+        $sched_id = filter_var($_POST['delete'], FILTER_VALIDATE_INT);
+
+        if ($sched_id) {
+            try {
+                if ($schedule->delete($sched_id)) {
+                    $message = "✅ Schedule ID {$sched_id} deleted successfully.";
+                } else {
+                    $message = "❌ Failed to delete schedule ID {$sched_id}.";
+                }
+            } catch (Exception $e) {
+                $message = "❌ Error: " . $e->getMessage();
+            }
+        } else {
+            $message = "❌ Invalid Schedule ID for deletion.";
+        }
     }
 }
 
-// --- DETERMINE VIEW ---
-$action = $_GET['action'] ?? ($user_role === 'doctor' ? 'view_my' : 'view_all');
-$data_list = [];
-$current_title = "Schedule Management";
+// Fetch schedules (no search, just all)
+$schedules = $schedule->all();
 
-// Force Philippine time for display
-date_default_timezone_set('Asia/Manila');
-$today_display = date('l, M d, Y'); 
-
-if ($action === 'view_all' && $user_role === 'superadmin') {
-    $data_list = $schedule->all();
-    $current_title = "All Doctor Schedules";
-
-} elseif ($action === 'view_today') {
-    $data_list = $schedule->todaySchedule();
-    $current_title = "Today's Schedules ($today_display)";
-
-} elseif ($action === 'view_my' && $user_role === 'doctor') {
-    if ($logged_doc_id) {
-        $data_list = $schedule->getByDoctorId($logged_doc_id);
-        $current_title = "My Schedules";
-    } else {
-        $message = "⚠️ Doctor ID not found in session.";
-    }
+if (!is_array($schedules)) {
+    $schedules = [];
 }
 ?>
 
 <h1 class="fw-bold mb-4">Schedule Management</h1>
 
 <?php if ($message): ?>
-<div class="alert <?= strpos($message, '✅') !== false ? 'alert-success' : (strpos($message, '❌') !== false || strpos($message, '⚠️') !== false || strpos($message, 'Missing') !== false ? 'alert-danger' : 'alert-info') ?> alert-dismissible fade show">
-    <?= $message ?>
-    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-</div>
+<div class="alert <?= strpos($message, '❌') !== false ? 'alert-danger' : 'alert-info' ?>"><?= $message ?></div>
 <?php endif; ?>
 
-<div class="d-flex gap-2 mb-4">
-    <?php if ($user_role === 'superadmin'): ?>
-    <a href="?module=schedule&action=view_all" class="btn btn-sm <?= $action === 'view_all' ? 'btn-primary' : 'btn-outline-primary' ?>">
-        View All
-    </a>
-    <?php else: ?>
-    <a href="?module=schedule&action=view_my" class="btn btn-sm <?= $action === 'view_my' ? 'btn-primary' : 'btn-outline-primary' ?>">
-        My Schedules
-    </a>
-    <?php endif; ?>
-    <a href="?module=schedule&action=view_today" class="btn btn-sm <?= $action === 'view_today' ? 'btn-primary' : 'btn-outline-primary' ?>">
-        Today's Schedules
-    </a>
+<!-- Today's Doctors Section -->
+<div class="mb-4">
+    <button class="btn btn-info" data-bs-toggle="collapse" data-bs-target="#todaysDoctorsSection">View Doctors with Today's Schedule</button>
+    <div id="todaysDoctorsSection" class="collapse mt-3">
+        <div class="card card-body shadow-sm">
+            <h5>Doctors Scheduled Today (<?= date('F j, Y') ?>)</h5>
+            <?php if (empty($todaysDoctors)): ?>
+                <p class="text-muted">No doctors have schedules for today.</p>
+            <?php else: ?>
+                <ul class="list-group">
+                    <?php foreach ($todaysDoctors as $doctor): ?>
+                        <li class="list-group-item">
+                            <strong><?= htmlspecialchars($doctor['doctor_name']) ?></strong> (ID: <?= htmlspecialchars($doctor['DOC_ID']) ?>)
+                        </li>
+                    <?php endforeach; ?>
+                </ul>
+            <?php endif; ?>
+        </div>
+    </div>
+</div>
+
+<div class="d-flex justify-content-end align-items-center mb-3">
+    <button class="btn btn-success" data-bs-toggle="collapse" data-bs-target="#addFormSchedule">Add New Schedule</button>
+</div>
+
+<div id="addFormSchedule" class="collapse mb-4">
+    <div class="card card-body shadow-sm">
+        <form method="POST" class="row g-3">
+            <div class="col-md-3">
+                <label class="form-label small">Doctor *</label>
+                <select name="doc_id" required class="form-select">
+                    <option value="">-- Select Doctor --</option>
+                    <?php foreach ($doctors as $doc): ?>
+                        <option value="<?= $doc['DOC_ID'] ?>"><?= htmlspecialchars($doc['doctor_name']) ?></option>
+                    <?php endforeach; ?>
+                </select>
+            </div>
+            <div class="col-md-3">
+                <label class="form-label small">Date *</label>
+                <input type="date" name="sched_days" required class="form-control">
+            </div>
+            <div class="col-md-3">
+                <label class="form-label small">Start Time *</label>
+                <input type="time" name="start_time" required class="form-control">
+            </div>
+            <div class="col-md-3">
+                <label class="form-label small">End Time *</label>
+                <input type="time" name="end_time" required class="form-control">
+            </div>
+            <div class="col-md-12 text-end">
+                <button type="submit" name="add" class="btn btn-primary">Save Schedule</button>
+            </div>
+        </form>
+    </div>
 </div>
 
 <div class="card p-3 shadow-sm">
-    <h5 class="mb-3"><?= $current_title ?></h5>
-
-    <form method="POST" class="d-flex flex-wrap gap-2 mb-4 p-3 border rounded bg-light align-items-center">
-        <label class="form-label mb-0 fw-bold">Add Schedule:</label>
-
-        <?php if ($user_role === 'superadmin'): ?>
-        <select name="DOC_ID" class="form-select w-auto" required>
-            <option value="">-- Doctor --</option>
-            <?php foreach($doctors as $doc): ?>
-                <option value="<?= htmlspecialchars($doc['DOC_ID']) ?>"><?= htmlspecialchars($doc['doctor_name']) ?> (#<?= htmlspecialchars($doc['DOC_ID']) ?>)</option>
-            <?php endforeach; ?>
-        </select>
-        <?php endif; ?>
-
-        <select name="SCHED_DAYS" class="form-select w-auto" required>
-            <option value="">-- Day --</option>
-            <?php foreach($days_of_week as $day): ?>
-                <option value="<?= htmlspecialchars($day) ?>"><?= htmlspecialchars($day) ?></option>
-            <?php endforeach; ?>
-        </select>
-
-        <input type="time" name="SCHED_START_TIME" class="form-control w-auto" required>
-        <span>to</span>
-        <input type="time" name="SCHED_END_TIME" class="form-control w-auto" required>
-
-        <button type="submit" name="create" class="btn btn-success">Add</button>
-    </form>
-
-    <div class="table-responsive">
-        <table class="table table-bordered table-striped align-middle">
+    <h5>All Schedules</h5>
+    <div class="table-responsive" style="overflow-x: auto;">
+        <table class="table table-bordered table-striped align-middle mt-3" style="min-width: 1300px;">
             <thead class="table-light">
                 <tr>
                     <th>ID</th>
-                    <?php if ($user_role === 'superadmin' || $action === 'view_today'): ?>
                     <th>Doctor</th>
-                    <?php endif; ?>
-                    <th>Day</th>
-                    <th>Start</th>
-                    <th>End</th>
-                    <th>Created/Updated</th>
-                    <th>Action</th>
+                    <th>Date</th>
+                    <th>Start Time</th>
+                    <th>End Time</th>
+                    <th>Created At</th>
+                    <th>Updated At</th>
+                    <th style="width: 250px;">Actions</th>
                 </tr>
             </thead>
             <tbody>
-                <?php if (empty($data_list)): ?>
-                    <tr><td colspan="<?= ($user_role === 'superadmin' || $action === 'view_today') ? 7 : 6 ?>" class="text-center text-muted">No schedules found.</td></tr>
-                <?php else: foreach ($data_list as $r): ?>
+                <?php if (empty($schedules)): ?>
+                    <tr>
+                        <td colspan="8" class="text-center">
+                        No schedules found. Start by adding a new schedule.
+                    </td>
+                    </tr>
+                <?php else: foreach ($schedules as $s): ?>
                     <tr>
                         <form method="POST">
-                            <td class="small fw-bold"><?= htmlspecialchars($r['SCHED_ID']) ?></td>
-                            <?php if ($user_role === 'superadmin' || $action === 'view_today'): ?>
-                            <td class="small text-nowrap"><?= htmlspecialchars($r['doctor_name']) ?> (#<?= htmlspecialchars($r['DOC_ID']) ?>)</td>
-                            <?php endif; ?>
-
+                            <td><?= htmlspecialchars($s['SCHED_ID']) ?></td>
                             <td>
-                                <select name="SCHED_DAYS" class="form-select form-select-sm" required>
-                                    <?php foreach($days_of_week as $day): ?>
-                                        <option value="<?= htmlspecialchars($day) ?>" <?= $r['SCHED_DAYS'] === $day ? 'selected' : '' ?>><?= htmlspecialchars($day) ?></option>
+                                <select name="doc_id" required class="form-select form-select-sm">
+                                    <?php foreach ($doctors as $doc): ?>
+                                        <option value="<?= $doc['DOC_ID'] ?>" <?= $s['DOC_ID'] == $doc['DOC_ID'] ? 'selected' : '' ?>>
+                                            <?= htmlspecialchars($doc['doctor_name']) ?>
+                                        </option>
                                     <?php endforeach; ?>
                                 </select>
                             </td>
-
                             <td>
-                                <span class="d-block mb-1 small text-muted"><?= htmlspecialchars($r['formatted_start_time'] ?? date('h:i A', strtotime($r['SCHED_START_TIME']))) ?></span>
-                                <input type="time" name="SCHED_START_TIME" value="<?= htmlspecialchars($r['SCHED_START_TIME']) ?>" class="form-control form-control-sm" required>
+                                <input type="date" name="sched_days" value="<?= htmlspecialchars($s['SCHED_DAYS']) ?>" class="form-control form-control-sm" required>
                             </td>
                             <td>
-                                <span class="d-block mb-1 small text-muted"><?= htmlspecialchars($r['formatted_end_time'] ?? date('h:i A', strtotime($r['SCHED_END_TIME']))) ?></span>
-                                <input type="time" name="SCHED_END_TIME" value="<?= htmlspecialchars($r['SCHED_END_TIME']) ?>" class="form-control form-control-sm" required>
+                                <input type="time" name="start_time" value="<?= htmlspecialchars($s['SCHED_START_TIME']) ?>" class="form-control form-control-sm" required>
                             </td>
-
-                            <td class="small text-muted text-nowrap"><?= $r['formatted_created_at'] ?></td>
-
+                            <td>
+                                <input type="time" name="end_time" value="<?= htmlspecialchars($s['SCHED_END_TIME']) ?>" class="form-control form-control-sm" required>
+                            </td>
+                            <td><?= formatDate($s['SCHED_CREATED_AT']) ?></td>
+                            <td><?= formatDate($s['SCHED_UPDATED_AT']) ?></td>
                             <td class="text-nowrap">
-                                <input type="hidden" name="SCHED_ID" value="<?= htmlspecialchars($r['SCHED_ID']) ?>">
-                                <input type="hidden" name="DOC_ID" value="<?= htmlspecialchars($r['DOC_ID']) ?>">
-                                <button name="update" class="btn btn-sm btn-success">Update</button>
-                                <button name="delete" value="<?= htmlspecialchars($r['SCHED_ID']) ?>" class="btn btn-sm btn-danger" onclick="return confirm('Delete ID <?= htmlspecialchars($r['SCHED_ID']) ?>?')">Delete</button>
+                                <input type="hidden" name="sched_id" value="<?= $s['SCHED_ID'] ?>">
+                                <button name="update" class="btn btn-sm btn-success me-1">Update</button>
+                                <button name="delete" value="<?= $s['SCHED_ID'] ?>" class="btn btn-sm btn-danger" 
+                                    onclick="return confirm('Delete Schedule ID <?= $s['SCHED_ID'] ?>?')">
+                                    Delete
+                                </button>
                             </td>
                         </form>
                     </tr>
@@ -207,3 +260,19 @@ if ($action === 'view_all' && $user_role === 'superadmin') {
         </table>
     </div>
 </div>
+
+<script>
+    document.addEventListener('DOMContentLoaded', () => {
+        setTimeout(() => {
+            const alert = document.querySelector('.alert');
+            if (alert) {
+                if (typeof bootstrap !== 'undefined' && bootstrap.Alert) {
+                    const bsAlert = new bootstrap.Alert(alert);
+                    bsAlert.close();
+                } else {
+                    alert.style.display = 'none';
+                }
+            }
+        }, 5000);
+    });
+</script>

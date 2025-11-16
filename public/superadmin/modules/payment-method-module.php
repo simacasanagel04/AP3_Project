@@ -79,7 +79,7 @@ $records = !empty($search)
                 <input type="text" name="pymt_meth_name" class="form-control" placeholder="Method Name (e.g., Cash, Debit Card) *" required>
             </div>
             <div class="col-md-2 text-end">
-                <button type="submit" name="add" class="btn btn-primary w-100">💾 Save</button>
+                <button type="submit" name="add" class="btn btn-primary w-100">Save</button>
             </div>
         </form>
     </div>
@@ -112,8 +112,8 @@ $records = !empty($search)
                             <td class="text-center small"><?= $r['formatted_created_at'] ?? '-' ?></td>
                             <td class="text-center small"><?= $r['formatted_updated_at'] ?? '-' ?></td>
                             <td>
-                                <button name="update" class="btn btn-sm btn-success mb-1 w-100">✏️ Update</button>
-                                <button name="delete" value="<?= $r['pymt_meth_id'] ?>" class="btn btn-sm btn-danger w-100" onclick="return confirm('⚠️ Delete this payment method? This cannot be undone.')">🗑️ Delete</button>
+                                <button name="update" class="btn btn-sm btn-success mb-1 w-100">Update</button>
+                                <button name="delete" value="<?= $r['pymt_meth_id'] ?>" class="btn btn-sm btn-danger w-100" onclick="return confirm('⚠️ Delete this payment method? This cannot be undone.')">Delete</button>
                             </td>
                         </form>
                     </tr>

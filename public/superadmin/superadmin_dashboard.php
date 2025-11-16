@@ -35,16 +35,16 @@ $all_modules = [
 
 // === MODULES TO SHOW IN SUMMARY CARDS ONLY ===
 $summary_modules = [
-    'staff'          => 'Staff',
-    'doctor'         => 'Doctors',
-    'patient'        => 'Patients',
-    'appointment'    => 'Appointments',
-    'medical_record' => 'Medical Records',
-    'schedule'       => 'Schedules',
-    'service'        => 'Services',
-    'specialization' => 'Specializations',
-    'payment'       => 'Payment Details',
-    'users'           => 'Users'
+    ['module' => 'staff', 'table' => 'staff', 'name' => 'Staff'],
+    ['module' => 'doctor', 'table' => 'doctor', 'name' => 'Doctors'],
+    ['module' => 'patient', 'table' => 'patient', 'name' => 'Patients'],
+    ['module' => 'appointment', 'table' => 'appointment', 'name' => 'Appointments'],
+    ['module' => 'medical-record', 'table' => 'medical_record', 'name' => 'Medical Records'],
+    ['module' => 'schedule', 'table' => 'schedule', 'name' => 'Schedules'],
+    ['module' => 'service', 'table' => 'service', 'name' => 'Services'],
+    ['module' => 'specialization', 'table' => 'specialization', 'name' => 'Specializations'],
+    ['module' => 'payments', 'table' => 'payment', 'name' => 'Payment Details'],
+    ['module' => 'user', 'table' => 'users', 'name' => 'Users']
 ];
 
 $module = $_GET['module'] ?? null;
@@ -52,21 +52,24 @@ $action = $_GET['action'] ?? 'view_all';
 
 function getSummaryCounts($db, $modules) {
     $summary = [];
-    foreach ($modules as $table => $label) {
+    foreach ($modules as $item) {
         try {
+            $table = $item['table'];
             $stmt = $db->prepare("SELECT COUNT(*) AS count FROM `$table`");
             $stmt->execute();
             $row = $stmt->fetch(PDO::FETCH_ASSOC);
             $summary[] = [
-                'table' => $table,
-                'name'  => $label,
-                'count' => $row['count'] ?? 0
+                'module' => $item['module'],
+                'table'  => $table,
+                'name'   => $item['name'],
+                'count'  => $row['count'] ?? 0
             ];
         } catch (Exception $e) {
             $summary[] = [
-                'table' => $table,
-                'name'  => $label,
-                'count' => 'N/A'
+                'module' => $item['module'],
+                'table'  => $item['table'],
+                'name'   => $item['name'],
+                'count'  => 'N/A'
             ];
         }
     }
@@ -132,7 +135,7 @@ $summary = getSummaryCounts($db, $summary_modules);
         <?php foreach ($summary as $item): ?>
         <div class="col-xl-2 col-lg-3 col-md-4 col-sm-6">
             <div class="card text-center shadow-sm card-hover"
-                 onclick="window.location='?module=<?= $item['table'] ?>&action=view_all'">
+                 onclick="window.location='?module=<?= htmlspecialchars($item['module']) ?>&action=view_all'">
                 <div class="card-body">
                     <h5 class="card-title"><?= htmlspecialchars($item['name']) ?></h5>
                     <p class="display-6 <?= $item['count'] === 'N/A' ? 'text-danger' : 'text-primary' ?> mb-0">
@@ -144,21 +147,20 @@ $summary = getSummaryCounts($db, $summary_modules);
         <?php endforeach; ?>
     </div>
 <?php else: ?>
-            <?php
-        $file = __DIR__ . '/modules/' . $module . '-module.php';
-        if (file_exists($file)) {
-            // Explicitly pass $db to the included file
-            require $file;
-        } else {
-            $label = $all_modules[$module] ?? 'Settings';
-            echo "<h2 class='fw-bold mb-4'>" . htmlspecialchars($label) . " Management</h2>";
-            echo "<div class='alert alert-warning'>
-                    <h4>Module File Missing:</h4>
-                    <p>Please create <code>modules/{$module}-module.php</code></p>
-                    <p class='mb-0'>Checked path: <code>{$file}</code></p>
-                </div>";
-        }
-        ?>  
+    <?php
+    $file = __DIR__ . '/modules/' . $module . '-module.php';
+    if (file_exists($file)) {
+        require $file;
+    } else {
+        $label = $all_modules[$module] ?? 'Settings';
+        echo "<h2 class='fw-bold mb-4'>" . htmlspecialchars($label) . " Management</h2>";
+        echo "<div class='alert alert-warning'>
+                <h4>Module File Missing:</h4>
+                <p>Please create <code>modules/{$module}-module.php</code></p>
+                <p class='mb-0'>Checked path: <code>{$file}</code></p>
+            </div>";
+    }
+    ?>  
 <?php endif; ?>
 </div>
 </div>

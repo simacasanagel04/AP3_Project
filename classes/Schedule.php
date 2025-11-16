@@ -114,6 +114,30 @@ class Schedule {
         }
     }
 
+    public function getDoctorsWithTodaySchedule() {
+    date_default_timezone_set('Asia/Manila');
+    $today = date('Y-m-d');
+    $sql = "SELECT DISTINCT 
+                d.DOC_ID,
+                d.DOC_FIRST_NAME,
+                d.DOC_LAST_NAME,
+                d.DOC_MIDDLE_INIT,
+                CONCAT(d.DOC_LAST_NAME, ', ', d.DOC_FIRST_NAME, ' ', COALESCE(d.DOC_MIDDLE_INIT, '')) as doctor_name
+            FROM {$this->table_doctor} d
+            INNER JOIN {$this->table} s ON d.DOC_ID = s.DOC_ID
+            WHERE s.SCHED_DAYS = :today
+            ORDER BY d.DOC_LAST_NAME";
+    try {
+        $stmt = $this->conn->prepare($sql);
+        $stmt->bindValue(':today', $today, PDO::PARAM_STR);
+        $stmt->execute();
+        return $stmt->fetchAll(PDO::FETCH_ASSOC);
+    } catch (PDOException $e) {
+        error_log("Error in getDoctorsWithTodaySchedule(): " . $e->getMessage());
+        return [];
+    }
+}
+
     // CREATE: Add a new schedule for a doctor
     public function create($data) {
         $sql = "INSERT INTO {$this->table} 
