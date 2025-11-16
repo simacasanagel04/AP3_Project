@@ -5,11 +5,11 @@ session_start();
 require_once '../config/Database.php';
 include '../includes/staff_header.php';
 
-// Check if user is logged in as staff
-// if (!isset($_SESSION['user_id']) || !isset($_SESSION['staff_id'])) {
-//     header("Location: login.php");
-//     exit();
-// }
+// Redirect if not logged in (BEFORE including header)
+if (!isset($_SESSION['staff_id'])) {
+    header("Location: login.php");
+    exit();
+}
 
 $db = (new Database())->connect();
 $message = "";
@@ -272,7 +272,7 @@ try {
                     </div>
                     <div class="mb-3">
                         <label for="add_created_at" class="form-label">Created At</label>
-                        <input type="text" class="form-control" id="add_created_at" readonly disabled>
+                        <input type="text" class="form-control" id="add_created_at" readonly>
                         <div class="form-text">This will be automatically set when you submit</div>
                     </div>
                 </div>
@@ -316,6 +316,90 @@ try {
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
-<script src="js/staff_payments_script.js"></script>
+
+<!-- DEDICATED SCRIPT FOR THIS PAGE -->
+<script>
+console.log('Script loaded'); // Debug line
+
+document.addEventListener('DOMContentLoaded', function() {
+    console.log('DOM loaded'); // Debug line
+    
+    // Find the button
+    const openAddModalBtn = document.getElementById('openAddModalBtn');
+    console.log('Button found:', openAddModalBtn); // Debug line
+    
+    if (openAddModalBtn) {
+        // Add click event
+        openAddModalBtn.addEventListener('click', function(e) {
+            console.log('Button clicked!'); // Debug line
+            e.preventDefault();
+            
+            // Set current date/time
+            const now = new Date();
+            const formatted = now.toLocaleString('en-US', { 
+                month: 'long', 
+                day: 'numeric', 
+                year: 'numeric', 
+                hour: 'numeric', 
+                minute: '2-digit', 
+                hour12: true 
+            });
+            
+            const createdAtField = document.getElementById('add_created_at');
+            if (createdAtField) {
+                createdAtField.value = formatted;
+                console.log('Date set:', formatted); // Debug line
+            }
+            
+            // Open modal
+            const addModalEl = document.getElementById('addModal');
+            const addModal = new bootstrap.Modal(addModalEl);
+            addModal.show();
+            console.log('Modal opened'); // Debug line
+        });
+    } else {
+        console.error('Button NOT found!'); // Debug line
+    }
+    
+    // Edit buttons
+    document.querySelectorAll('.edit-btn').forEach(btn => {
+        btn.addEventListener('click', function() {
+            const id = this.dataset.id;
+            const name = this.dataset.name;
+            
+            document.getElementById('edit_method_id').value = id;
+            document.getElementById('edit_method_name').value = name;
+            
+            const editModal = new bootstrap.Modal(document.getElementById('editModal'));
+            editModal.show();
+        });
+    });
+    
+    // Auto-dismiss alerts
+    const alerts = document.querySelectorAll('.alert');
+    alerts.forEach(alert => {
+        setTimeout(() => {
+            const bsAlert = new bootstrap.Alert(alert);
+            bsAlert.close();
+        }, 5000);
+    });
+});
+</script>
+
+<footer>
+    <div class="container">
+        <div class="row align-items-center small">
+            <div class="col-md-8 text-center text-md-start">
+                <p class="mb-0 text-black">© 2025 AKSyon Medical Center. All rights reserved.</p>
+            </div>
+            <div class="col-md-4 text-center text-md-end">
+                <a href="https://www.facebook.com/" class="text-black mx-2"><i class="bi bi-facebook fs-5"></i></a>
+                <a href="https://www.instagram.com/" class="text-black mx-2"><i class="bi bi-instagram fs-5"></i></a>
+                <a href="https://www.linkedin.com/" class="text-black mx-2"><i class="bi bi-linkedin fs-5"></i></a>
+            </div>
+        </div>
+    </div>
+</footer>
+
 </body>
 </html>

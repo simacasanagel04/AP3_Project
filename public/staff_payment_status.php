@@ -5,11 +5,11 @@ session_start();
 require_once '../config/Database.php';
 include '../includes/staff_header.php';
 
-// Check if user is logged in as staff
-// if (!isset($_SESSION['user_id']) || !isset($_SESSION['staff_id'])) {
-//     header("Location: login.php");
-//     exit();
-// }
+// Redirect if not logged in (BEFORE including header)
+if (!isset($_SESSION['staff_id'])) {
+    header("Location: login.php");
+    exit();
+}
 
 $db = (new Database())->connect();
 $message = "";

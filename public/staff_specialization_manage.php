@@ -4,11 +4,18 @@
 require_once '../config/Database.php';
 require_once '../classes/Specialization.php'; 
 
+// Check if user is logged in
+if (!isset($_SESSION['user_id'])) {
+    header("Location: login.php");
+    exit();
+}
+
+
 $database = new Database();
 $db = $database->connect();
 $specialization = new Specialization($db);
 
-// ✅ Handle Create or Update BEFORE any output
+// Handle Create or Update BEFORE any output
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     if ($_POST['action'] === 'create') {
         $specialization->create($_POST);
@@ -24,7 +31,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 $search = $_GET['search'] ?? '';
 $specList = $specialization->readAll($search);
 
-// ✅ Handle Edit
+// Handle Edit
 $editData = null;
 if (isset($_GET['edit'])) {
     $editData = $specialization->readOne($_GET['edit']);
@@ -44,42 +51,34 @@ require_once '../includes/staff_header.php';
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet">
 
     <style>
-        body {
-            background-color: #f8f9fa;
-            min-height: 100vh;
-            display: flex;
-            flex-direction: column;
-        }
-        main {
-            flex: 1;
-        }
-        .card {
-            border-radius: 10px;
-        }
-        .table-responsive {
-            overflow-x: auto;
-        }
-        footer {
-            background: #e5e2e2;
-            color: #333;
-            text-align: center;
-            padding: 15px 0;
-            border-top: 1px solid #ddd;
-            margin-top: auto;
-        }
+        body { background-color: #f8f9fa; }
+        footer { background: #e5e2e2; border-top: 1px solid #ddd; }
     </style>
 </head>
 
 <body>
-    <main class="container mt-5 mb-5">
+    <main class="container my-5">
         <h2 class="text-center mb-4 text-primary fw-bold">Specialization Management</h2>
 
         <!-- 🔍 Search Form -->
-        <form method="GET" class="d-flex mb-3">
-            <input type="text" name="search" class="form-control me-2" 
-                placeholder="Search by ID or Name" 
-                value="<?= htmlspecialchars($search) ?>">
-            <button class="btn btn-outline-primary" type="submit">Search</button>
+        <form method="GET" class="row g-2 mb-3">
+            <div class="col-md-8 col-12">
+                <input 
+                    type="text" 
+                    name="search" 
+                    class="form-control"
+                    placeholder="Search by ID or Name" 
+                    value="<?= htmlspecialchars($search) ?>">
+            </div>
+
+            <div class="col-md-2 col-6 d-grid">
+                <button class="btn btn-outline-primary" type="submit">Search</button>
+            </div>
+
+            <!-- CLEAR BUTTON -->
+            <div class="col-md-2 col-6 d-grid">
+                <a href="staff_specialization_manage.php" class="btn btn-outline-secondary">Clear</a>
+            </div>
         </form>
 
         <!-- 📝 Add/Edit Form -->
@@ -97,7 +96,8 @@ require_once '../includes/staff_header.php';
 
                     <div class="mb-3">
                         <label class="form-label fw-semibold">Specialization Name</label>
-                        <input type="text" 
+                        <input 
+                            type="text" 
                             name="SPEC_NAME" 
                             class="form-control" 
                             required 
@@ -156,7 +156,7 @@ require_once '../includes/staff_header.php';
         </div>
     </main>
     
-    <footer>
+    <footer class="py-3">
         <div class="container">
             <div class="row align-items-center small">
                 <div class="col-md-8 text-center text-md-start">

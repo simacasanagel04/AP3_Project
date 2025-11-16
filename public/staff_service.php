@@ -21,7 +21,7 @@ $service = new Service($db);
 
 $message = '';
 
-// ✅ Handle Update
+// Handle Update
 if (isset($_POST['update'])) {
     $service->serv_id          = (int)$_POST['serv_id'];
     $service->serv_name        = trim($_POST['serv_name']);
@@ -37,7 +37,7 @@ if (isset($_POST['update'])) {
     }
 }
 
-// ✅ Load single service for editing
+// Load single service for editing
 $editMode = false;
 $editData = null;
 if (isset($_GET['edit'])) {
@@ -50,7 +50,7 @@ if (isset($_GET['edit'])) {
     }
 }
 
-// ✅ Fetch all services (returns ARRAY)
+// Fetch all services (returns ARRAY)
 $serviceList = $service->read();
 
 // NOW include header after all logic
@@ -65,34 +65,15 @@ require_once '../includes/staff_header.php';
     <title>Service Management | AKSyon Medical Center</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet">
-    <style>
-        body {
-            background-color: #f8f9fa;
-            min-height: 100vh;
-            display: flex;
-            flex-direction: column;
-        }
-        main {
-            flex: 1;
-        }
-        footer {
-            background: #e5e2e2;
-            color: #333;
-            text-align: center;
-            padding: 15px 0;
-            border-top: 1px solid #ddd;
-            margin-top: auto;
-        }
-    </style>
 </head>
 
-<body>
-<main class="container mt-5 mb-5">
+<body class="bg-light d-flex flex-column min-vh-100">
+<main class="container my-5 flex-grow-1">
     <h2 class="text-center text-primary fw-bold mb-4">Service Management</h2>
 
     <?= $message ?>
 
-    <!-- 🛠️ Update Form -->
+    <!-- Update Form -->
     <?php if ($editMode): ?>
         <div class="card mb-4 shadow-sm">
             <div class="card-header bg-primary text-white">
@@ -140,12 +121,50 @@ require_once '../includes/staff_header.php';
         </div>
     <?php endif; ?>
 
-    <!-- 📋 List of All Services -->
+    <!-- Filter Card -->
+    <div class="card mb-3 shadow-sm">
+        <div class="card-body">
+            <div class="row g-3">
+                <div class="col-md-3">
+                    <label class="form-label fw-semibold small">Service ID</label>
+                    <input type="number" id="filterID" class="form-control" placeholder="Enter Service ID...">
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label fw-semibold small">Service Name</label>
+                    <input type="text" id="searchInput" class="form-control" placeholder="Search by name...">
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label fw-semibold small">Specialization</label>
+                    <select id="filterSpec" class="form-select">
+                        <option value="">All Specializations</option>
+                        <?php 
+                        $specs = array_unique(array_column($serviceList ?: [], 'SPEC_NAME'));
+                        foreach ($specs as $spec): 
+                            if ($spec): ?>
+                                <option value="<?= htmlspecialchars($spec) ?>"><?= htmlspecialchars($spec) ?></option>
+                            <?php endif;
+                        endforeach; 
+                        ?>
+                    </select>
+                </div>
+                <div class="col-md-3 d-flex align-items-end gap-2">
+                    <button type="button" id="searchBtn" class="btn btn-primary flex-fill">
+                        <i class="bi bi-search"></i> Search
+                    </button>
+                    <button type="button" id="clearBtn" class="btn btn-secondary flex-fill">
+                        <i class="bi bi-x-circle"></i> Clear
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- List of All Services -->
     <div class="card shadow-sm">
         <div class="card-header bg-dark text-white">Service List</div>
         <div class="card-body">
             <div class="table-responsive">
-                <table class="table table-hover align-middle">
+                <table class="table table-hover align-middle" id="serviceTable">
                     <thead class="table-light text-uppercase">
                         <tr>
                             <th>ID</th>
@@ -184,21 +203,74 @@ require_once '../includes/staff_header.php';
     </div>
 </main>
 
-<footer>
+<footer class="bg-body-secondary text-center py-3 border-top mt-auto">
     <div class="container">
         <div class="row align-items-center small">
             <div class="col-md-8 text-center text-md-start">
-                <p class="mb-0 text-black">© 2025 AKSyon Medical Center. All rights reserved.</p>
+                <p class="mb-0">© 2025 AKSyon Medical Center. All rights reserved.</p>
             </div>
             <div class="col-md-4 text-center text-md-end">
-                <a href="https://www.facebook.com/" class="text-black mx-2"><i class="bi bi-facebook fs-5"></i></a>
-                <a href="https://www.instagram.com/" class="text-black mx-2"><i class="bi bi-instagram fs-5"></i></a>
-                <a href="https://www.linkedin.com/" class="text-black mx-2"><i class="bi bi-linkedin fs-5"></i></a>
+                <a href="https://www.facebook.com/" class="text-dark mx-2"><i class="bi bi-facebook fs-5"></i></a>
+                <a href="https://www.instagram.com/" class="text-dark mx-2"><i class="bi bi-instagram fs-5"></i></a>
+                <a href="https://www.linkedin.com/" class="text-dark mx-2"><i class="bi bi-linkedin fs-5"></i></a>
             </div>
         </div>
     </div>
 </footer>
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const filterID = document.getElementById('filterID');
+    const searchInput = document.getElementById('searchInput');
+    const filterSpec = document.getElementById('filterSpec');
+    const searchBtn = document.getElementById('searchBtn');
+    const clearBtn = document.getElementById('clearBtn');
+    const table = document.getElementById('serviceTable');
+    const rows = table.querySelectorAll('tbody tr');
+
+    function filterTable() {
+        const idFilter = filterID.value.trim();
+        const searchTerm = searchInput.value.toLowerCase();
+        const specFilter = filterSpec.value.toLowerCase();
+
+        rows.forEach(row => {
+            if (row.cells.length === 1) return; // Skip "no data" row
+            
+            const serviceID = row.cells[0].textContent.trim();
+            const serviceName = row.cells[1].textContent.toLowerCase();
+            const spec = row.cells[4].textContent.toLowerCase();
+
+            const matchesID = !idFilter || serviceID === idFilter;
+            const matchesSearch = serviceName.includes(searchTerm);
+            const matchesSpec = !specFilter || spec.includes(specFilter);
+
+            row.style.display = (matchesID && matchesSearch && matchesSpec) ? '' : 'none';
+        });
+    }
+
+    function clearFilters() {
+        filterID.value = '';
+        searchInput.value = '';
+        filterSpec.value = '';
+        filterTable();
+    }
+
+    // Event listeners
+    searchBtn.addEventListener('click', filterTable);
+    clearBtn.addEventListener('click', clearFilters);
+    
+    // Also filter on Enter key
+    filterID.addEventListener('keyup', function(e) {
+        if (e.key === 'Enter') filterTable();
+    });
+    
+    searchInput.addEventListener('keyup', function(e) {
+        if (e.key === 'Enter') filterTable();
+    });
+    
+    filterSpec.addEventListener('change', filterTable);
+});
+</script>
 </body>
 </html>

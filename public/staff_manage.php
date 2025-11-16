@@ -4,6 +4,13 @@
 require_once '../config/Database.php';
 require_once '../classes/Staff.php';
 
+// Redirect if not logged in (BEFORE including header)
+if (!isset($_SESSION['staff_id'])) {
+    header("Location: login.php");
+    exit();
+}
+
+
 $database = new Database();
 $db = $database->connect();
 $staff = new Staff($db);
@@ -42,7 +49,6 @@ $search = $_GET['search'] ?? '';
 $staffList = $staff->readAll($search);
 $editData = isset($_GET['edit']) ? $staff->readOne($_GET['edit']) : null;
 
-// NOW include the header after all processing is done
 require_once '../includes/staff_header.php';
 ?>
 
@@ -56,30 +62,12 @@ require_once '../includes/staff_header.php';
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet">
 
     <style>
-        body {
-            background-color: #f8f9fa;
-            min-height: 100vh;
-            display: flex;
-            flex-direction: column;
-        }
-        main {
-            flex: 1;
-        }
-        .card {
-            border-radius: 10px;
-        }
-        .table-responsive {
-            overflow-x: auto;
-        }
-        footer {
-            background: #e5e2e2;
-            color: #333;
-            text-align: center;
-            padding: 15px 0;
-            border-top: 1px solid #ddd;
-            margin-top: auto;
-        }
+        body { background-color: #f8f9fa; min-height: 100vh; display: flex; flex-direction: column; }
+        main { flex: 1; }
+        .card { border-radius: 10px; }
+        footer { background: #e5e2e2; color: #333; padding: 15px 0; border-top: 1px solid #ddd; }
     </style>
+    
 </head>
 
 <body>
@@ -87,11 +75,19 @@ require_once '../includes/staff_header.php';
         <h2 class="text-center text-primary fw-bold mb-4">Staff Management</h2>
 
         <!-- Search Form -->
-        <form class="mb-3 d-flex" method="GET">
-            <input type="text" name="search" class="form-control me-2" 
-                   placeholder="Search by ID, name, email, etc." 
+        <form class="mb-3 d-flex gap-2 flex-wrap" method="GET">
+            <input type="text" name="search" class="form-control"
+                   placeholder="Search by ID, name, email, etc."
                    value="<?= htmlspecialchars($search) ?>">
-            <button class="btn btn-outline-primary" type="submit">Search</button>
+
+            <button class="btn btn-outline-primary" type="submit">
+                <i class="bi bi-search"></i> Search
+            </button>
+
+            <!-- CLEAR BUTTON ADDED -->
+            <a href="staff_manage.php" class="btn btn-outline-secondary">
+                <i class="bi bi-x-circle"></i> Clear
+            </a>
         </form>
 
         <!-- Staff Form -->
