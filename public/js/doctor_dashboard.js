@@ -177,32 +177,30 @@ document.addEventListener('DOMContentLoaded', function () {
     // SECTION 3: SCHEDULE PAGE - WORKING HOURS VALIDATION
     // ========================================================================
 
-    // ===============================
+   // ===============================
     // WORKING HOURS VALIDATION FOR NEW SCHEDULE
     // ===============================
-    const newScheduleDate = document.getElementById('newScheduleDate');
+    const newScheduleWeekday = document.getElementById('newScheduleWeekday');
     const newScheduleStartTime = document.getElementById('newScheduleStartTime');
     const newScheduleEndTime = document.getElementById('newScheduleEndTime');
     const scheduleTimeRestriction = document.getElementById('scheduleTimeRestriction');
 
-    if (newScheduleDate) {
-        newScheduleDate.addEventListener('change', function() {
-            const selectedDate = new Date(this.value + 'T00:00:00');
-            const day = selectedDate.getDay();
+    if (newScheduleWeekday) {
+        newScheduleWeekday.addEventListener('change', function() {
+            const selectedWeekday = this.value;
 
-            if (day === 0) { // Sunday
-                alert('Sunday is closed. Please select another day.');
-                this.value = '';
+            if (!selectedWeekday) {
                 if (newScheduleStartTime) newScheduleStartTime.disabled = true;
                 if (newScheduleEndTime) newScheduleEndTime.disabled = true;
-                if (scheduleTimeRestriction) scheduleTimeRestriction.textContent = 'Sunday is closed';
+                if (scheduleTimeRestriction) scheduleTimeRestriction.textContent = 'Select weekday first';
                 return;
             }
 
+            // Enable time inputs
             if (newScheduleStartTime) newScheduleStartTime.disabled = false;
             if (newScheduleEndTime) newScheduleEndTime.disabled = false;
 
-            if (day === 6) { // Saturday
+            if (selectedWeekday === 'Saturday') {
                 if (newScheduleStartTime) {
                     newScheduleStartTime.min = '09:00';
                     newScheduleStartTime.max = '17:00';
@@ -229,29 +227,26 @@ document.addEventListener('DOMContentLoaded', function () {
     // ===============================
     // WORKING HOURS VALIDATION FOR EDIT SCHEDULE
     // ===============================
-    const editSchedDate = document.getElementById('edit_sched_date');
+    const editSchedWeekday = document.getElementById('edit_sched_weekday');
     const editSchedStartTime = document.getElementById('edit_sched_start_time');
     const editSchedEndTime = document.getElementById('edit_sched_end_time');
     const editScheduleTimeRestriction = document.getElementById('editScheduleTimeRestriction');
 
-    if (editSchedDate) {
-        editSchedDate.addEventListener('change', function() {
-            const selectedDate = new Date(this.value + 'T00:00:00');
-            const day = selectedDate.getDay();
+    if (editSchedWeekday) {
+        editSchedWeekday.addEventListener('change', function() {
+            const selectedWeekday = this.value;
 
-            if (day === 0) {
-                alert('Sunday is closed. Please select another day.');
-                this.value = '';
+            if (!selectedWeekday) {
                 if (editSchedStartTime) editSchedStartTime.disabled = true;
                 if (editSchedEndTime) editSchedEndTime.disabled = true;
-                if (editScheduleTimeRestriction) editScheduleTimeRestriction.textContent = 'Sunday is closed';
+                if (editScheduleTimeRestriction) editScheduleTimeRestriction.textContent = 'Select weekday first';
                 return;
             }
 
             if (editSchedStartTime) editSchedStartTime.disabled = false;
             if (editSchedEndTime) editSchedEndTime.disabled = false;
 
-            if (day === 6) {
+            if (selectedWeekday === 'Saturday') {
                 if (editSchedStartTime) {
                     editSchedStartTime.min = '09:00';
                     editSchedStartTime.max = '17:00';
@@ -287,11 +282,11 @@ document.addEventListener('DOMContentLoaded', function () {
         scheduleForm.addEventListener('submit', function(e) {
             e.preventDefault();
 
-            const date = newScheduleDate ? newScheduleDate.value : '';
+            const weekday = newScheduleWeekday ? newScheduleWeekday.value : '';
             const startTime = newScheduleStartTime ? newScheduleStartTime.value : '';
             const endTime = newScheduleEndTime ? newScheduleEndTime.value : '';
 
-            if (!date || !startTime || !endTime) {
+            if (!weekday || !startTime || !endTime) {
                 alert('Please fill in all fields');
                 return;
             }
@@ -302,7 +297,7 @@ document.addEventListener('DOMContentLoaded', function () {
             }
 
             const formData = new FormData();
-            formData.append('date', date);
+            formData.append('weekday', weekday);
             formData.append('start_time', startTime);
             formData.append('end_time', endTime);
 
@@ -351,15 +346,15 @@ document.addEventListener('DOMContentLoaded', function () {
     document.querySelectorAll('.btn-view-schedule').forEach(btn => {
         btn.addEventListener('click', function() {
             const schedId = this.getAttribute('data-sched-id');
-            const schedDate = this.getAttribute('data-sched-date');
+            const weekday = this.getAttribute('data-weekday');
             
             // Set modal title info
             const viewModalSchedId = document.getElementById('view_modal_sched_id');
-            const viewModalSchedDate = document.getElementById('view_modal_sched_date');
+            const viewModalWeekday = document.getElementById('view_modal_weekday');
             const appointmentsList = document.getElementById('scheduleAppointmentsList');
             
             if (viewModalSchedId) viewModalSchedId.textContent = schedId;
-            if (viewModalSchedDate) viewModalSchedDate.textContent = formatDate(schedDate);
+            if (viewModalWeekday) viewModalWeekday.textContent = weekday;
             
             // Show loading
             if (appointmentsList) {
@@ -369,20 +364,21 @@ document.addEventListener('DOMContentLoaded', function () {
             // Show modal
             new bootstrap.Modal(document.getElementById('viewScheduleModal')).show();
             
-            // Fetch appointments for this schedule
-            fetch(`ajax/get_schedule_appointments.php?sched_id=${schedId}&sched_date=${schedDate}`)
+            // Fetch appointments for this weekday
+            fetch(`ajax/get_schedule_appointments.php?sched_id=${schedId}&weekday=${encodeURIComponent(weekday)}`)
                 .then(r => r.json())
                 .then(data => {
                     if (data.success) {
                         if (data.appointments.length > 0) {
-                            let html = '<div class="table-responsive"><table class="table table-sm table-hover"><thead><tr><th>Appointment ID</th><th>Patient Name</th><th>Time</th><th>Status</th></tr></thead><tbody>';
+                            let html = '<div class="table-responsive"><table class="table table-sm table-hover"><thead><tr><th>Appointment ID</th><th>Patient Name</th><th>Date</th><th>Time</th><th>Status</th></tr></thead><tbody>';
                             
                             data.appointments.forEach(appt => {
                                 const statusBadge = appt.STATUS_NAME === 'Scheduled' ? 'warning' : 
-                                                   appt.STATUS_NAME === 'Completed' ? 'success' : 'danger';
+                                                appt.STATUS_NAME === 'Completed' ? 'success' : 'danger';
                                 html += `<tr>
                                     <td>${appt.APPT_ID}</td>
                                     <td>${appt.patient_name}</td>
+                                    <td>${appt.formatted_date}</td>
                                     <td>${appt.formatted_time}</td>
                                     <td><span class="badge bg-${statusBadge}">${appt.STATUS_NAME}</span></td>
                                 </tr>`;
@@ -391,10 +387,10 @@ document.addEventListener('DOMContentLoaded', function () {
                             html += '</tbody></table></div>';
                             appointmentsList.innerHTML = html;
                         } else {
-                            appointmentsList.innerHTML = '<div class="alert alert-info"><i class="bi bi-info-circle me-2"></i>No appointments scheduled for this date.</div>';
+                            appointmentsList.innerHTML = '<div class="alert alert-info"><i class="bi bi-info-circle me-2"></i>No appointments scheduled for ' + weekday + '.</div>';
                         }
                     } else {
-                        appointmentsList.innerHTML = '<div class="alert alert-danger">Failed to load appointments.</div>';
+                        appointmentsList.innerHTML = '<div class="alert alert-danger">Failed to load appointments: ' + data.message + '</div>';
                     }
                 })
                 .catch(error => {
@@ -412,9 +408,9 @@ document.addEventListener('DOMContentLoaded', function () {
     // EDIT SCHEDULE BUTTON
     // ===============================
     document.querySelectorAll('.btn-edit-schedule').forEach(btn => {
-    btn.addEventListener('click', function() {
+        btn.addEventListener('click', function() {
         const schedId = this.getAttribute('data-sched-id');
-        const days = this.getAttribute('data-days');
+        const weekday = this.getAttribute('data-weekday');
         const startTime = this.getAttribute('data-start');
         const endTime = this.getAttribute('data-end');
 
@@ -423,22 +419,12 @@ document.addEventListener('DOMContentLoaded', function () {
 
         if (editSchedId) editSchedId.value = schedId;
         if (editSchedIdDisplay) editSchedIdDisplay.value = schedId;
-        
-        // FIXED: Use the actual date from SCHED_DAYS instead of calculating
-        if (editSchedDate) {
-            // If days is '0000-00-00', use today's date as default
-            if (days === '0000-00-00') {
-                const today = new Date();
-                editSchedDate.value = today.toISOString().split('T')[0];
-            } else {
-                editSchedDate.value = days;
-            }
-        }
-        
+        if (editSchedWeekday) editSchedWeekday.value = weekday;
         if (editSchedStartTime) editSchedStartTime.value = startTime;
         if (editSchedEndTime) editSchedEndTime.value = endTime;
 
-        if (editSchedDate) editSchedDate.dispatchEvent(new Event('change'));
+        // Trigger change event to set time restrictions
+        if (editSchedWeekday) editSchedWeekday.dispatchEvent(new Event('change'));
 
         new bootstrap.Modal(document.getElementById('editScheduleModal')).show();
     });
@@ -453,7 +439,7 @@ document.addEventListener('DOMContentLoaded', function () {
             e.preventDefault();
 
             const formData = new FormData(this);
-            if (editSchedDate) formData.append('date', editSchedDate.value);
+            if (editSchedWeekday) formData.append('weekday', editSchedWeekday.value);
             if (editSchedStartTime) formData.append('start_time', editSchedStartTime.value);
             if (editSchedEndTime) formData.append('end_time', editSchedEndTime.value);
 
@@ -523,7 +509,7 @@ document.addEventListener('DOMContentLoaded', function () {
     // ===============================
     // SCHEDULE FILTER FUNCTIONALITY
     // ===============================
-    const schedFilterByDate = document.getElementById('filterByDate');
+    const schedFilterByWeekday = document.getElementById('filterByWeekday');
     const schedSearchScheduleId = document.getElementById('searchScheduleId');
     const applyScheduleFilterBtn = document.getElementById('applyScheduleFilterBtn');
     const clearScheduleFilterBtn = document.getElementById('clearScheduleFilterBtn');
@@ -532,7 +518,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
     if (applyScheduleFilterBtn) {
         applyScheduleFilterBtn.addEventListener('click', function() {
-            const dateValue = schedFilterByDate ? schedFilterByDate.value : '';
+            const weekdayValue = schedFilterByWeekday ? schedFilterByWeekday.value : '';
             const schedIdValue = schedSearchScheduleId ? schedSearchScheduleId.value.trim() : '';
 
             const activeSection = document.querySelector('.table-section:not([style*="display: none"])');
@@ -548,23 +534,20 @@ document.addEventListener('DOMContentLoaded', function () {
                 }
 
                 const rowSchedId = row.getAttribute('data-sched-id') || '';
-                const rowDays = row.getAttribute('data-date') || '';
+                const rowWeekday = row.getAttribute('data-weekday') || '';
 
-                let matchDate = true;
+                let matchWeekday = true;
                 let matchSchedId = true;
 
-                if (dateValue) {
-                    const selectedDay = new Date(dateValue).toLocaleDateString('en-US', { weekday: 'long' });
-                    if (!rowDays.includes(selectedDay)) {
-                        matchDate = false;
-                    }
+                if (weekdayValue && rowWeekday !== weekdayValue) {
+                    matchWeekday = false;
                 }
 
                 if (schedIdValue && !rowSchedId.includes(schedIdValue)) {
                     matchSchedId = false;
                 }
 
-                if (matchDate && matchSchedId) {
+                if (matchWeekday && matchSchedId) {
                     row.style.display = '';
                     visibleCount++;
                 } else {
@@ -572,7 +555,7 @@ document.addEventListener('DOMContentLoaded', function () {
                 }
             });
 
-            if (dateValue || schedIdValue) {
+            if (weekdayValue || schedIdValue) {
                 if (scheduleFilteredResultsWrapper) scheduleFilteredResultsWrapper.style.display = 'block';
                 if (scheduleFilteredCount) scheduleFilteredCount.textContent = visibleCount;
 
@@ -587,7 +570,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
     if (clearScheduleFilterBtn) {
         clearScheduleFilterBtn.addEventListener('click', function() {
-            if (schedFilterByDate) schedFilterByDate.value = '';
+            if (schedFilterByWeekday) schedFilterByWeekday.value = '';
             if (schedSearchScheduleId) schedSearchScheduleId.value = '';
 
             document.querySelectorAll('.table-section tbody tr').forEach(row => {

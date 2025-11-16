@@ -14,7 +14,7 @@ $db = (new Database())->connect();
 // Set timezone to Philippines
 date_default_timezone_set('Asia/Manila');
 
-// Fetch all schedules for this doctor
+// Fetch all schedules for this doctor (WEEKDAY-BASED)
 try {
     $sql = "SELECT 
                 s.SCHED_ID,
@@ -26,37 +26,47 @@ try {
                 DATE_FORMAT(s.SCHED_END_TIME, '%h:%i %p') as formatted_end
             FROM schedule s
             WHERE s.DOC_ID = :doc_id
-            ORDER BY s.SCHED_DAYS DESC, s.SCHED_START_TIME";
+            ORDER BY 
+                CASE s.SCHED_DAYS
+                    WHEN 'Monday' THEN 1
+                    WHEN 'Tuesday' THEN 2
+                    WHEN 'Wednesday' THEN 3
+                    WHEN 'Thursday' THEN 4
+                    WHEN 'Friday' THEN 5
+                    WHEN 'Saturday' THEN 6
+                    ELSE 7
+                END,
+                s.SCHED_START_TIME";
     
     $stmt = $db->prepare($sql);
     $stmt->execute([':doc_id' => $doc_id]);
     $schedules = $stmt->fetchAll(PDO::FETCH_ASSOC);
     
-    // For each schedule, get the actual appointment count for that specific date
+    // For each schedule, count appointments that fall on that weekday
     foreach ($schedules as &$schedule) {
         $countSql = "SELECT COUNT(*) as total 
                      FROM appointment 
                      WHERE DOC_ID = :doc_id 
-                     AND APPT_DATE = :sched_date";
+                     AND DAYNAME(APPT_DATE) = :weekday";
         $countStmt = $db->prepare($countSql);
         $countStmt->execute([
             ':doc_id' => $doc_id,
-            ':sched_date' => $schedule['SCHED_DAYS']
+            ':weekday' => $schedule['SCHED_DAYS']
         ]);
         $countResult = $countStmt->fetch(PDO::FETCH_ASSOC);
         $schedule['total_appointments'] = $countResult['total'];
     }
-    unset($schedule); // Break reference
+    unset($schedule);
     
 } catch (PDOException $e) {
     error_log("Error fetching schedules: " . $e->getMessage());
     $schedules = [];
 }
 
-// Filter today's schedules - compare actual dates
-$today = date('Y-m-d');
-$todaySchedules = array_filter($schedules, function($s) use ($today) {
-    return $s['SCHED_DAYS'] === $today;
+// Filter today's schedules - get current weekday name
+$todayWeekday = date('l'); // Returns 'Monday', 'Tuesday', etc.
+$todaySchedules = array_filter($schedules, function($s) use ($todayWeekday) {
+    return $s['SCHED_DAYS'] === $todayWeekday;
 });
 
 require_once '../includes/doctor_header.php';
@@ -73,7 +83,7 @@ require_once '../includes/doctor_header.php';
         <div class="col-12 col-lg-6">
             <div class="total-card" id="scheduleCountCard">
                 <h5 class="text-primary mb-2" id="scheduleCountLabel">
-                    <i class="bi bi-calendar-day"></i> Today's Total Schedules
+                    <i class="bi bi-calendar-day"></i> Today's Total Schedules (<?= $todayWeekday ?>)
                 </h5>
                 <h2 class="mb-0" id="scheduleCount"><?= count($todaySchedules) ?></h2>
             </div>
@@ -84,7 +94,7 @@ require_once '../includes/doctor_header.php';
     <div class="row mb-3">
         <div class="col-12">
             <div class="d-flex flex-wrap gap-2">
-                <button class="btn btn-primary tab-btn active" data-target="todaySection" data-count="<?= count($todaySchedules) ?>" data-label="Today's Total Schedules">
+                <button class="btn btn-primary tab-btn active" data-target="todaySection" data-count="<?= count($todaySchedules) ?>" data-label="Today's Total Schedules (<?= $todayWeekday ?>)">
                     <i class="bi bi-calendar-day"></i> View Today's Schedule
                 </button>
                 <button class="btn btn-primary tab-btn" data-target="allSection" data-count="<?= count($schedules) ?>" data-label="Total Schedules">
@@ -103,8 +113,16 @@ require_once '../includes/doctor_header.php';
             <div class="info-card">
                 <div class="row g-3 align-items-end">
                     <div class="col-md-3 col-sm-6">
-                        <label class="form-label"><strong><i class="bi bi-calendar3"></i> Filter by Date</strong></label>
-                        <input type="date" class="form-control" id="filterByDate">
+                        <label class="form-label"><strong><i class="bi bi-calendar-week"></i> Filter by Weekday</strong></label>
+                        <select class="form-select" id="filterByWeekday">
+                            <option value="">-- All Days --</option>
+                            <option value="Monday">Monday</option>
+                            <option value="Tuesday">Tuesday</option>
+                            <option value="Wednesday">Wednesday</option>
+                            <option value="Thursday">Thursday</option>
+                            <option value="Friday">Friday</option>
+                            <option value="Saturday">Saturday</option>
+                        </select>
                     </div>
                     <div class="col-md-3 col-sm-6">
                         <label class="form-label"><strong><i class="bi bi-hash"></i> Search Schedule ID</strong></label>
@@ -144,18 +162,26 @@ require_once '../includes/doctor_header.php';
                 <form id="scheduleForm">
                     <div class="row g-3 align-items-end">
                         <div class="col-md-3 col-sm-6">
-                            <label class="form-label"><strong>Pick Date</strong></label>
-                            <input type="date" class="form-control" id="newScheduleDate" required min="<?= date('Y-m-d') ?>">
+                            <label class="form-label"><strong>Select Weekday</strong></label>
+                            <select class="form-select" id="newScheduleWeekday" required>
+                                <option value="">-- Select Day --</option>
+                                <option value="Monday">Monday</option>
+                                <option value="Tuesday">Tuesday</option>
+                                <option value="Wednesday">Wednesday</option>
+                                <option value="Thursday">Thursday</option>
+                                <option value="Friday">Friday</option>
+                                <option value="Saturday">Saturday</option>
+                            </select>
                             <small class="text-muted">Sunday is closed</small>
                         </div>
                         <div class="col-md-3 col-sm-6">
                             <label class="form-label"><strong>Start Time</strong></label>
-                            <input type="time" class="form-control" id="newScheduleStartTime" required>
+                            <input type="time" class="form-control" id="newScheduleStartTime" required disabled>
                         </div>
                         <div class="col-md-3 col-sm-6">
                             <label class="form-label"><strong>End Time</strong></label>
-                            <input type="time" class="form-control" id="newScheduleEndTime" required>
-                            <small class="text-muted" id="scheduleTimeRestriction">Select date first</small>
+                            <input type="time" class="form-control" id="newScheduleEndTime" required disabled>
+                            <small class="text-muted" id="scheduleTimeRestriction">Select weekday first</small>
                         </div>
                         <div class="col-md-3 col-sm-6">
                             <button type="submit" class="btn btn-success w-100">
@@ -176,13 +202,13 @@ require_once '../includes/doctor_header.php';
         <div class="row">
             <div class="col-12">
                 <div class="info-card">
-                    <h4><i class="bi bi-calendar-check"></i> Today's Schedules (<?= date('F d, Y') ?>)</h4>
+                    <h4><i class="bi bi-calendar-check"></i> Today's Schedules (<?= $todayWeekday ?>, <?= date('F d, Y') ?>)</h4>
                     <div class="table-responsive">
                         <table class="table table-hover" id="todayScheduleTable">
                             <thead>
                                 <tr>
                                     <th>Schedule ID</th>
-                                    <th>Date</th>
+                                    <th>Weekday</th>
                                     <th>Start Time</th>
                                     <th>End Time</th>
                                     <th>Total Appointments</th>
@@ -193,21 +219,21 @@ require_once '../includes/doctor_header.php';
                                 <?php if (count($todaySchedules) > 0): ?>
                                     <?php foreach ($todaySchedules as $schedule): ?>
                                         <tr data-sched-id="<?= $schedule['SCHED_ID'] ?>" 
-                                            data-date="<?= $schedule['SCHED_DAYS'] ?>">
+                                            data-weekday="<?= $schedule['SCHED_DAYS'] ?>">
                                             <td><?= htmlspecialchars($schedule['SCHED_ID']) ?></td>
-                                            <td><?= date('M d, Y', strtotime($schedule['SCHED_DAYS'])) ?></td>
+                                            <td><span class="badge bg-primary"><?= htmlspecialchars($schedule['SCHED_DAYS']) ?></span></td>
                                             <td><?= htmlspecialchars($schedule['formatted_start']) ?></td>
                                             <td><?= htmlspecialchars($schedule['formatted_end']) ?></td>
                                             <td><?= htmlspecialchars($schedule['total_appointments']) ?></td>
                                             <td class="text-center">
                                                 <button class="btn btn-sm action-btn btn-view-schedule" 
                                                     data-sched-id="<?= $schedule['SCHED_ID'] ?>"
-                                                    data-sched-date="<?= $schedule['SCHED_DAYS'] ?>">
+                                                    data-weekday="<?= $schedule['SCHED_DAYS'] ?>">
                                                     <i class="bi bi-eye"></i> View
                                                 </button>
                                                 <button class="btn btn-sm action-btn btn-edit-schedule btn-warning" 
                                                     data-sched-id="<?= $schedule['SCHED_ID'] ?>"
-                                                    data-days="<?= htmlspecialchars($schedule['SCHED_DAYS']) ?>"
+                                                    data-weekday="<?= htmlspecialchars($schedule['SCHED_DAYS']) ?>"
                                                     data-start="<?= $schedule['SCHED_START_TIME'] ?>"
                                                     data-end="<?= $schedule['SCHED_END_TIME'] ?>">
                                                     <i class="bi bi-pencil"></i> Update
@@ -221,7 +247,7 @@ require_once '../includes/doctor_header.php';
                                     <?php endforeach; ?>
                                 <?php else: ?>
                                     <tr>
-                                        <td colspan="6" class="text-center text-muted">No schedules for today</td>
+                                        <td colspan="6" class="text-center text-muted">No schedules for today (<?= $todayWeekday ?>)</td>
                                     </tr>
                                 <?php endif; ?>
                             </tbody>
@@ -243,7 +269,7 @@ require_once '../includes/doctor_header.php';
                             <thead>
                                 <tr>
                                     <th>Schedule ID</th>
-                                    <th>Date</th>
+                                    <th>Weekday</th>
                                     <th>Start Time</th>
                                     <th>End Time</th>
                                     <th>Total Appointments</th>
@@ -253,22 +279,22 @@ require_once '../includes/doctor_header.php';
                             <tbody>
                                 <?php if (count($schedules) > 0): ?>
                                     <?php foreach ($schedules as $schedule): ?>
-                                        <tr data-sched-id="<?= $schedule['SCHED_ID'] ?>" 
-                                            data-date="<?= $schedule['SCHED_DAYS'] ?>">
+                                        <tr data-sched-id="<?= $schedule['SCHED_ID'] ?>"
+                                            data-weekday="<?= $schedule['SCHED_DAYS'] ?>">
                                             <td><?= htmlspecialchars($schedule['SCHED_ID']) ?></td>
-                                            <td><?= $schedule['SCHED_DAYS'] !== '0000-00-00' ? date('M d, Y', strtotime($schedule['SCHED_DAYS'])) : 'Invalid Date' ?></td>
+                                            <td><span class="badge bg-primary"><?= htmlspecialchars($schedule['SCHED_DAYS']) ?></span></td>
                                             <td><?= htmlspecialchars($schedule['formatted_start']) ?></td>
                                             <td><?= htmlspecialchars($schedule['formatted_end']) ?></td>
                                             <td><?= htmlspecialchars($schedule['total_appointments']) ?></td>
                                             <td class="text-center">
                                                 <button class="btn btn-sm action-btn btn-view-schedule" 
                                                     data-sched-id="<?= $schedule['SCHED_ID'] ?>"
-                                                    data-sched-date="<?= $schedule['SCHED_DAYS'] ?>">
+                                                    data-weekday="<?= $schedule['SCHED_DAYS'] ?>">
                                                     <i class="bi bi-eye"></i> View
                                                 </button>
                                                 <button class="btn btn-sm action-btn btn-edit-schedule btn-warning" 
                                                     data-sched-id="<?= $schedule['SCHED_ID'] ?>"
-                                                    data-days="<?= htmlspecialchars($schedule['SCHED_DAYS']) ?>"
+                                                    data-weekday="<?= htmlspecialchars($schedule['SCHED_DAYS']) ?>"
                                                     data-start="<?= $schedule['SCHED_START_TIME'] ?>"
                                                     data-end="<?= $schedule['SCHED_END_TIME'] ?>">
                                                     <i class="bi bi-pencil"></i> Update
@@ -305,7 +331,7 @@ require_once '../includes/doctor_header.php';
             <div class="modal-body">
                 <div class="mb-3">
                     <strong>Schedule ID:</strong> <span id="view_modal_sched_id"></span> | 
-                    <strong>Date:</strong> <span id="view_modal_sched_date"></span>
+                    <strong>Weekday:</strong> <span id="view_modal_weekday"></span>
                 </div>
                 <div id="scheduleAppointmentsList">
                     <div class="text-center">
@@ -339,8 +365,16 @@ require_once '../includes/doctor_header.php';
                         <input type="text" class="form-control" id="edit_sched_id_display" readonly>
                     </div>
                     <div class="mb-3">
-                        <label class="form-label"><strong>Date</strong></label>
-                        <input type="date" class="form-control" id="edit_sched_date" required min="<?= date('Y-m-d') ?>">
+                        <label class="form-label"><strong>Weekday</strong></label>
+                        <select class="form-select" id="edit_sched_weekday" required>
+                            <option value="">-- Select Day --</option>
+                            <option value="Monday">Monday</option>
+                            <option value="Tuesday">Tuesday</option>
+                            <option value="Wednesday">Wednesday</option>
+                            <option value="Thursday">Thursday</option>
+                            <option value="Friday">Friday</option>
+                            <option value="Saturday">Saturday</option>
+                        </select>
                         <small class="text-muted">Sunday is closed</small>
                     </div>
                     <div class="mb-3">
@@ -350,7 +384,7 @@ require_once '../includes/doctor_header.php';
                     <div class="mb-3">
                         <label class="form-label"><strong>End Time</strong></label>
                         <input type="time" class="form-control" id="edit_sched_end_time" required>
-                        <small class="text-muted" id="editScheduleTimeRestriction">Select date first</small>
+                        <small class="text-muted" id="editScheduleTimeRestriction">Saturday: 9:00 AM - 5:00 PM | Mon-Fri: 8:00 AM - 6:00 PM</small>
                     </div>
                 </div>
                 <div class="modal-footer">

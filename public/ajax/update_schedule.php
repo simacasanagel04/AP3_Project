@@ -12,32 +12,32 @@ if (!isset($_SESSION['doc_id']) || $_SESSION['user_type'] !== 'doctor') {
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $sched_id = $_POST['sched_id'] ?? null;
-    $date = $_POST['date'] ?? null;
+    $weekday = $_POST['weekday'] ?? null;
     $start_time = $_POST['start_time'] ?? null;
     $end_time = $_POST['end_time'] ?? null;
     $doc_id = $_SESSION['doc_id'];
 
-    if (!$sched_id || !$date || !$start_time || !$end_time) {
+    if (!$sched_id || !$weekday || !$start_time || !$end_time) {
         echo json_encode(['success' => false, 'message' => 'All fields are required']);
         exit;
     }
 
-    // Validate working hours
-    $dayOfWeek = date('w', strtotime($date));
-    $start = strtotime($start_time);
-    $end = strtotime($end_time);
-
-    if ($dayOfWeek == 0) {
-        echo json_encode(['success' => false, 'message' => 'Sunday is closed']);
+    // Validate weekday
+    $validWeekdays = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+    if (!in_array($weekday, $validWeekdays)) {
+        echo json_encode(['success' => false, 'message' => 'Invalid weekday']);
         exit;
     }
+
+    $start = strtotime($start_time);
+    $end = strtotime($end_time);
 
     if ($start >= $end) {
         echo json_encode(['success' => false, 'message' => 'End time must be after start time']);
         exit;
     }
 
-    if ($dayOfWeek == 6) {
+    if ($weekday === 'Saturday') {
         $min_start = strtotime('09:00');
         $max_end = strtotime('17:00');
         if ($start < $min_start || $end > $max_end) {
@@ -64,14 +64,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                      AND ((SCHED_START_TIME < ? AND SCHED_END_TIME > ?) 
                      OR (SCHED_START_TIME < ? AND SCHED_END_TIME > ?))";
         $checkStmt = $db->prepare($checkSql);
-        $checkStmt->execute([$doc_id, $date, $sched_id, $end_time, $start_time, $end_time, $start_time]);
+        $checkStmt->execute([$doc_id, $weekday, $sched_id, $end_time, $start_time, $end_time, $start_time]);
         
         if ($checkStmt->fetchColumn() > 0) {
-            echo json_encode(['success' => false, 'message' => 'Schedule overlaps with existing schedule']);
+            echo json_encode(['success' => false, 'message' => 'Schedule overlaps with existing schedule for ' . $weekday]);
             exit;
         }
         
-        // Update with actual DATE
+        // Update with WEEKDAY
         $sql = "UPDATE schedule 
                 SET SCHED_DAYS = ?, 
                     SCHED_START_TIME = ?, 
@@ -79,7 +79,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     SCHED_UPDATED_AT = NOW() 
                 WHERE SCHED_ID = ? AND DOC_ID = ?";
         $stmt = $db->prepare($sql);
-        $result = $stmt->execute([$date, $start_time, $end_time, $sched_id, $doc_id]);
+        $result = $stmt->execute([$weekday, $start_time, $end_time, $sched_id, $doc_id]);
 
         if ($result && $stmt->rowCount() > 0) {
             echo json_encode(['success' => true, 'message' => 'Schedule updated successfully']);
