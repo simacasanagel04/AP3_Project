@@ -737,27 +737,6 @@ if (dateInput) {
             });
         });
     }
-
-        // Update modal date change handler
-        const updateDateInput = document.getElementById('update_date');
-
-        if (updateDateInput) {
-            updateDateInput.addEventListener('change', function() {
-                const selectedDate = this.value;
-                const specId = this.dataset.specId;
-                const availableDates = JSON.parse(this.dataset.availableDates || '[]');
-                
-                // Validate date is available
-                if (!availableDates.includes(selectedDate)) {
-                    alert('Selected date is not available. Please choose from available dates.');
-                    this.value = this.dataset.currentDate;
-                    return;
-                }
-                
-                // Fetch new time slots
-                fetchAvailableTimesForUpdate(specId, selectedDate, '');
-            });
-        }
 });
 
 // ===============================
@@ -831,119 +810,182 @@ function viewAppointment(appt) {
 }
 
 // ===============================
-// UPDATE APPOINTMENT (GLOBAL FUNCTION)
+// UPDATE APPOINTMENT (GLOBAL FUNCTION) - FIXED VERSION
 // ===============================
 
 function updateAppointment(appId, appt) {
+    console.log('=== UPDATE APPOINTMENT DEBUG ===');
+    console.log('appId:', appId);
+    console.log('appt object:', appt);
+    console.log('spec_id:', appt.spec_id);
+    console.log('doc_id:', appt.doc_id);
+    console.log('app_date:', appt.app_date);
+    console.log('app_time:', appt.app_time);
+    console.log('app_status:', appt.app_status);
+    console.log('================================');
+    
     const modal = new bootstrap.Modal(document.getElementById('updateModal'));
     
     // Populate form fields
     document.getElementById('update_app_id').value = appId;
+    document.getElementById('update_spec_id').value = appt.spec_id;
+    document.getElementById('update_doc_id').value = appt.doc_id;
     document.getElementById('update_date').value = appt.app_date;
-    document.getElementById('update_time').value = appt.app_time;
     document.getElementById('update_status').value = appt.app_status;
     
-    // Store spec_id and current values for fetching available dates/times
-    document.getElementById('update_date').dataset.specId = appt.spec_id;
-    document.getElementById('update_date').dataset.currentDate = appt.app_date;
-    document.getElementById('update_time').dataset.docId = appt.doc_id;
+    // Store current values
+    const dateInput = document.getElementById('update_date');
+    const timeSelect = document.getElementById('update_time');
     
-    // Fetch available dates for this specialization
-    fetchAvailableDatesForUpdate(appt.spec_id, appt.app_date);
+    dateInput.dataset.specId = appt.spec_id;
+    dateInput.dataset.currentDate = appt.app_date;
+    dateInput.dataset.currentTime = appt.app_time;
+    dateInput.dataset.currentApptId = appId; // IMPORTANT: Store current appointment ID
     
-    // Fetch available times for current date
-    fetchAvailableTimesForUpdate(appt.spec_id, appt.app_date, appt.app_time);
+    // Set date constraints
+    const today = new Date().toISOString().split('T')[0];
+    const maxDate = new Date();
+    maxDate.setDate(maxDate.getDate() + 30);
+    dateInput.min = today;
+    dateInput.max = maxDate.toISOString().split('T')[0];
+    
+    // Fetch available dates
+    console.log('Fetching available dates for spec_id:', appt.spec_id);
+    
+    fetch(`ajax/patient_get_avail_dates.php?spec_id=${appt.spec_id}`)
+        .then(response => response.json())
+        .then(data => {
+            console.log('Available dates response:', data);
+            
+            if (data.success && data.dates) {
+                dateInput.dataset.availableDates = JSON.stringify(data.dates);
+                
+                const noteEl = document.getElementById('update_date_note');
+                if (noteEl) {
+                    noteEl.textContent = `${data.dates.length} dates available (Mon-Sat only)`;
+                    noteEl.style.color = '';
+                }
+                
+                // Fetch time slots for current date
+                return fetchAvailableTimesForUpdate(appt.spec_id, appt.app_date, appt.app_time, appId);
+            } else {
+                throw new Error('Failed to load available dates');
+            }
+        })
+        .catch(error => {
+            console.error('Error in updateAppointment:', error);
+            const noteEl = document.getElementById('update_date_note');
+            if (noteEl) {
+                noteEl.textContent = 'Error loading dates. Please try again.';
+                noteEl.style.color = '#dc3545';
+            }
+        });
+    
+    // Add date change listener
+    dateInput.removeEventListener('change', handleUpdateDateChange);
+    dateInput.addEventListener('change', handleUpdateDateChange);
     
     modal.show();
 }
 
-function fetchAvailableDatesForUpdate(specId, currentDate) {
-    fetch(`ajax/patient_get_avail_dates.php?spec_id=${specId}`)
-        .then(response => response.json())
-        .then(data => {
-            if (data.success) {
-                const dateInput = document.getElementById('update_date');
-                const availableDates = data.dates;
-                
-                // ========================================
-                // FIX 4: ADD SUNDAY BLOCKING TO UPDATE MODAL
-                // ========================================
-                // Add change listener for Sunday blocking
-                if (!dateInput.dataset.listenerAdded) {
-                    dateInput.addEventListener('change', function() {
-                        const selectedDay = new Date(this.value + 'T00:00:00');
-                        const dayOfWeek = selectedDay.getDay();
-                        
-                        if (dayOfWeek === 0) {
-                            alert('⚠️ CLOSED ON SUNDAYS\n\nOur clinic operates Monday-Saturday only.\nPlease select another date.');
-                            this.value = this.dataset.currentDate || '';
-                            
-                            const noteEl = document.getElementById('update_date_note');
-                            if (noteEl) {
-                                noteEl.textContent = '⚠️ Sundays are closed';
-                                noteEl.style.color = '#dc3545';
-                            }
-                            return;
-                        }
-                        
-                        // Reset note color
-                        const noteEl = document.getElementById('update_date_note');
-                        if (noteEl) {
-                            noteEl.style.color = '';
-                        }
-                    });
-                    dateInput.dataset.listenerAdded = 'true';
-                }
-                
-                // Set min and max date
-                const today = new Date().toISOString().split('T')[0];
-                const maxDate = new Date();
-                maxDate.setDate(maxDate.getDate() + 30);
-                dateInput.min = today;
-                dateInput.max = maxDate.toISOString().split('T')[0];
-                
-                // Store available dates
-                dateInput.dataset.availableDates = JSON.stringify(availableDates);
-                
-                // Add note
-                const noteEl = document.getElementById('update_date_note');
-                if (noteEl) {
-                    noteEl.textContent = `${availableDates.length} dates available (Mon-Sat only)`;
-                }
-            }
-        })
-        .catch(error => console.error('Error fetching dates:', error));
+// Handle date change in update modal
+function handleUpdateDateChange(e) {
+    const selectedDate = e.target.value;
+    const specId = e.target.dataset.specId;
+    const availableDates = JSON.parse(e.target.dataset.availableDates || '[]');
+    const currentTime = e.target.dataset.currentTime;
+    const currentApptId = e.target.dataset.currentApptId;
+    
+    console.log('Date changed to:', selectedDate);
+    console.log('Available dates:', availableDates);
+    
+    // Check if Sunday
+    const selectedDay = new Date(selectedDate + 'T00:00:00');
+    const dayOfWeek = selectedDay.getDay();
+    
+    if (dayOfWeek === 0) {
+        alert('⚠️ CLOSED ON SUNDAYS\n\nOur clinic operates Monday-Saturday only.\nPlease select another date.');
+        e.target.value = e.target.dataset.currentDate || '';
+        
+        const noteEl = document.getElementById('update_date_note');
+        if (noteEl) {
+            noteEl.textContent = '⚠️ Sundays are closed. Please select Monday-Saturday.';
+            noteEl.style.color = '#dc3545';
+        }
+        return;
+    }
+    
+    // Reset note color
+    const noteEl = document.getElementById('update_date_note');
+    if (noteEl) {
+        noteEl.style.color = '';
+    }
+    
+    // Fetch new time slots - pass null for currentTime since date changed
+    fetchAvailableTimesForUpdate(specId, selectedDate, null, currentApptId);
 }
-function fetchAvailableTimesForUpdate(specId, selectedDate, currentTime) {
+
+function fetchAvailableTimesForUpdate(specId, selectedDate, currentTime, currentApptId) {
     const timeSelect = document.getElementById('update_time');
     timeSelect.innerHTML = '<option value="">-- Loading... --</option>';
+    timeSelect.disabled = true;
     
-    fetch(`ajax/patient_get_avail_times.php?spec_id=${specId}&date=${selectedDate}`)
+    console.log('Fetching times for:', { specId, selectedDate, currentTime, currentApptId });
+    
+    // Build URL with current_appt_id to exclude it from "booked" check
+    let url = `ajax/patient_get_avail_times.php?spec_id=${specId}&date=${selectedDate}`;
+    if (currentApptId) {
+        url += `&current_appt_id=${currentApptId}`;
+    }
+    
+    return fetch(url)
         .then(response => response.json())
         .then(data => {
-            if (data.success && data.timeSlots.length > 0) {
+            console.log('Available times response:', data);
+            
+            if (data.success) {
                 timeSelect.innerHTML = '<option value="">-- Select Time --</option>';
-                data.timeSlots.forEach(slot => {
-                    const option = document.createElement('option');
-                    option.value = slot.time;
-                    option.textContent = slot.formatted + ' (Dr. ' + slot.doctor_name.split(',')[0] + ')';
-                    option.dataset.doctorId = slot.doctor_id;
-                    
-                    // Select current time if it matches
-                    if (slot.time === currentTime) {
-                        option.selected = true;
-                    }
-                    
-                    timeSelect.appendChild(option);
-                });
                 
-                // Add back the current time if not in available slots
-                if (!data.timeSlots.find(s => s.time === currentTime)) {
+                let hasCurrentTime = false;
+                
+                // Add available time slots
+                if (data.timeSlots && data.timeSlots.length > 0) {
+                    data.timeSlots.forEach(slot => {
+                        const option = document.createElement('option');
+                        option.value = slot.time;
+                        option.textContent = `${slot.formatted} (Dr. ${slot.doctor_name.split(',')[0]})`;
+                        option.dataset.doctorId = slot.doctor_id;
+                        
+                        // Check if this is the current time
+                        if (currentTime && slot.time === currentTime) {
+                            option.selected = true;
+                            hasCurrentTime = true;
+                        }
+                        
+                        timeSelect.appendChild(option);
+                    });
+                }
+                
+                // If current time is not in the list (different date), add it
+                if (currentTime && !hasCurrentTime && selectedDate === document.getElementById('update_date').dataset.currentDate) {
                     const currentOption = document.createElement('option');
                     currentOption.value = currentTime;
-                    currentOption.textContent = new Date('1970-01-01T' + currentTime).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true }) + ' (Current)';
+                    const timeObj = new Date('1970-01-01T' + currentTime);
+                    const formattedTime = timeObj.toLocaleTimeString('en-US', { 
+                        hour: 'numeric', 
+                        minute: '2-digit', 
+                        hour12: true 
+                    });
+                    currentOption.textContent = `${formattedTime} (Current Time)`;
                     currentOption.selected = true;
                     timeSelect.insertBefore(currentOption, timeSelect.firstChild.nextSibling);
+                }
+                
+                timeSelect.disabled = false;
+                
+                // Show message if no slots
+                if ((!data.timeSlots || data.timeSlots.length === 0) && !currentTime) {
+                    timeSelect.innerHTML = '<option value="">-- No Time Slots Available --</option>';
                 }
             } else {
                 timeSelect.innerHTML = '<option value="">-- No Time Slots Available --</option>';
@@ -1011,7 +1053,6 @@ function togglePassword(fieldId) {
 // PATIENT SETTINGS - EDIT FORM SUBMISSION
 // ===============================
 
-// Wait for DOM to be ready before attaching event listener
 if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', initSettingsForm);
 } else {
@@ -1031,7 +1072,6 @@ function initSettingsForm() {
             const newPassword = document.getElementById('new_password')?.value;
             const confirmPassword = document.getElementById('confirm_password')?.value;
 
-            // Validate password fields if any is filled
             if (currentPassword || newPassword || confirmPassword) {
                 if (!currentPassword) {
                     alert('Please enter your current password');
@@ -1059,7 +1099,6 @@ function initSettingsForm() {
             const submitBtn = this.querySelector('button[type="submit"]');
             const originalBtnText = submitBtn.innerHTML;
 
-            // Show loading state
             submitBtn.disabled = true;
             submitBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Updating...';
 
@@ -1088,7 +1127,6 @@ function initSettingsForm() {
     }
 }
 
-// Make togglePassword globally accessible
 window.togglePassword = togglePassword;
 
 // ===============================
@@ -1102,14 +1140,12 @@ document.addEventListener('DOMContentLoaded', function() {
     const patientsTable = document.getElementById('patientsTable');
     const filterTotal = document.getElementById('filterTotal');
 
-    // Apply search
     if (applySearchBtn) {
         applySearchBtn.addEventListener('click', function() {
             filterPatients();
         });
     }
 
-    // Clear search
     if (clearSearchBtn) {
         clearSearchBtn.addEventListener('click', function() {
             if (searchName) {
@@ -1119,7 +1155,6 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
 
-    // Search on Enter key
     if (searchName) {
         searchName.addEventListener('keyup', function(e) {
             if (e.key === 'Enter') {
@@ -1151,7 +1186,6 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     }
 
-    // Initialize counts on page load
     function updateInitialCounts() {
         if (patientsTable && filterTotal) {
             const totalRows = patientsTable.querySelectorAll('tbody tr').length;

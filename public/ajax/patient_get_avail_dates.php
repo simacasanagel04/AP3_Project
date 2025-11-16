@@ -1,6 +1,6 @@
 <?php
 // public/ajax/patient_get_avail_dates.php
-// for user patient
+// FIXED VERSION - Returns dates based on weekday schedules
 
 session_start();
 require_once __DIR__ . '/../../config/Database.php';
@@ -18,48 +18,81 @@ $db = $database->connect();
 $specId = intval($_GET['spec_id']);
 
 try {
-    // Get all doctors in this specialization with schedules
+    // Get all unique weekdays that doctors in this specialization work
     $sql = "SELECT DISTINCT s.SCHED_DAYS
             FROM schedule s
             INNER JOIN doctor d ON s.DOC_ID = d.DOC_ID
             WHERE d.SPEC_ID = :spec_id
-            AND (s.SCHED_DAYS >= CURDATE() OR s.SCHED_DAYS = '0000-00-00')
-            ORDER BY s.SCHED_DAYS";
+            AND s.SCHED_DAYS IN ('Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday')
+            ORDER BY 
+                CASE s.SCHED_DAYS
+                    WHEN 'Monday' THEN 1
+                    WHEN 'Tuesday' THEN 2
+                    WHEN 'Wednesday' THEN 3
+                    WHEN 'Thursday' THEN 4
+                    WHEN 'Friday' THEN 5
+                    WHEN 'Saturday' THEN 6
+                    ELSE 7
+                END";
 
     $stmt = $db->prepare($sql);
     $stmt->execute([':spec_id' => $specId]);
-    $schedules = $stmt->fetchAll(PDO::FETCH_ASSOC);
+    $weekdays = $stmt->fetchAll(PDO::FETCH_COLUMN);
 
-    $dates = [];
-    $today = new DateTime();
-    $endDate = (new DateTime())->modify('+30 days');
+    // Convert weekday names to numbers (1=Monday, 7=Sunday)
+    $weekdayMap = [
+        'Monday' => 1,
+        'Tuesday' => 2,
+        'Wednesday' => 3,
+        'Thursday' => 4,
+        'Friday' => 5,
+        'Saturday' => 6,
+        'Sunday' => 0
+    ];
 
-    foreach ($schedules as $sched) {
-        if ($sched['SCHED_DAYS'] == '0000-00-00') {
-            // Recurring schedule - add next 30 days
-            $currentDate = clone $today;
-            while ($currentDate <= $endDate) {
-                $dates[] = $currentDate->format('Y-m-d');
-                $currentDate->modify('+1 day');
-            }
-        } else {
-            // Specific date
-            $schedDate = new DateTime($sched['SCHED_DAYS']);
-            if ($schedDate >= $today && $schedDate <= $endDate) {
-                $dates[] = $sched['SCHED_DAYS'];
-            }
+    $availableWeekdayNumbers = [];
+    foreach ($weekdays as $day) {
+        if (isset($weekdayMap[$day])) {
+            $availableWeekdayNumbers[] = $weekdayMap[$day];
         }
     }
 
-    $dates = array_unique($dates);
-    sort($dates);
+    // Generate dates for the next 30 days that match available weekdays
+    $dates = [];
+    $today = new DateTime();
+    $endDate = (new DateTime())->modify('+30 days');
+    $currentDate = clone $today;
+
+    while ($currentDate <= $endDate) {
+        $dayOfWeek = (int)$currentDate->format('N'); // 1=Monday, 7=Sunday
+        
+        // Convert to PHP's 0=Sunday format for comparison
+        $phpDayOfWeek = ($dayOfWeek == 7) ? 0 : $dayOfWeek;
+        
+        // Check if this weekday is available
+        if (in_array($phpDayOfWeek, $availableWeekdayNumbers)) {
+            $dates[] = $currentDate->format('Y-m-d');
+        }
+        
+        $currentDate->modify('+1 day');
+    }
 
     echo json_encode([
         'success' => true,
-        'dates' => array_values($dates)
+        'dates' => $dates,
+        'available_weekdays' => $weekdays,
+        'debug' => [
+            'spec_id' => $specId,
+            'weekdays_found' => count($weekdays),
+            'dates_generated' => count($dates)
+        ]
     ]);
+
 } catch (PDOException $e) {
     error_log("Error fetching dates: " . $e->getMessage());
-    echo json_encode(['success' => false, 'message' => 'Database error']);
+    echo json_encode([
+        'success' => false, 
+        'message' => 'Database error: ' . $e->getMessage()
+    ]);
 }
 ?>

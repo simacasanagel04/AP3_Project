@@ -1,6 +1,6 @@
 <?php
 // public/ajax/patient_update_account.php 
-// for public/patient_settings.php 
+// FIXED VERSION with better validation and debugging
 
 session_start();
 require_once __DIR__ . '/../../config/Database.php';
@@ -18,6 +18,10 @@ $db = $database->connect();
 $pat_id = $_SESSION['pat_id'];
 
 try {
+    // Log received data for debugging
+    error_log("Update account request for PAT_ID: " . $pat_id);
+    error_log("POST data: " . print_r($_POST, true));
+
     // Validate required fields
     $required = ['first_name', 'last_name', 'dob', 'gender', 'contact', 'address'];
     foreach ($required as $field) {
@@ -56,38 +60,98 @@ try {
         ':pat_id' => $pat_id
     ]);
 
-    // Handle password change if provided
-    if (!empty($_POST['current_password']) && !empty($_POST['new_password'])) {
-        // Verify current password
-        $sqlCheckPwd = "SELECT PASSWORD FROM users WHERE PAT_ID = :pat_id";
-        $stmtCheck = $db->prepare($sqlCheckPwd);
-        $stmtCheck->execute([':pat_id' => $pat_id]);
-        $user = $stmtCheck->fetch(PDO::FETCH_ASSOC);
+    // ========================================
+    // FIX: Better password change validation
+    // ========================================
+    $passwordChanged = false;
+    
+    // Check if ANY password field is filled
+    $currentPwd = isset($_POST['current_password']) ? trim($_POST['current_password']) : '';
+    $newPwd = isset($_POST['new_password']) ? trim($_POST['new_password']) : '';
+    $confirmPwd = isset($_POST['confirm_password']) ? trim($_POST['confirm_password']) : '';
 
-        if (!$user || !password_verify($_POST['current_password'], $user['PASSWORD'])) {
+    // If any password field is filled, all must be filled
+    if (!empty($currentPwd) || !empty($newPwd) || !empty($confirmPwd)) {
+        
+        // Validate all password fields are filled
+        if (empty($currentPwd)) {
             $db->rollBack();
-            echo json_encode(['success' => false, 'message' => 'Current password is incorrect']);
+            echo json_encode(['success' => false, 'message' => 'Please enter your current password']);
+            exit;
+        }
+        
+        if (empty($newPwd)) {
+            $db->rollBack();
+            echo json_encode(['success' => false, 'message' => 'Please enter a new password']);
+            exit;
+        }
+        
+        if (empty($confirmPwd)) {
+            $db->rollBack();
+            echo json_encode(['success' => false, 'message' => 'Please confirm your new password']);
             exit;
         }
 
         // Verify new password confirmation
-        if ($_POST['new_password'] !== $_POST['confirm_password']) {
+        if ($newPwd !== $confirmPwd) {
             $db->rollBack();
             echo json_encode(['success' => false, 'message' => 'New passwords do not match']);
             exit;
         }
 
         // Validate password length
-        if (strlen($_POST['new_password']) < 6) {
+        if (strlen($newPwd) < 6) {
             $db->rollBack();
             echo json_encode(['success' => false, 'message' => 'New password must be at least 6 characters']);
             exit;
         }
 
+        // ========================================
+        // FIX: Get current password hash
+        // ========================================
+        $sqlCheckPwd = "SELECT PASSWORD FROM users WHERE PAT_ID = :pat_id";
+        $stmtCheck = $db->prepare($sqlCheckPwd);
+        $stmtCheck->execute([':pat_id' => $pat_id]);
+        $user = $stmtCheck->fetch(PDO::FETCH_ASSOC);
+
+        if (!$user) {
+            $db->rollBack();
+            error_log("User not found for PAT_ID: " . $pat_id);
+            echo json_encode(['success' => false, 'message' => 'User account not found']);
+            exit;
+        }
+
+        // ========================================
+        // FIX: Debug password verification
+        // ========================================
+        error_log("Verifying password for PAT_ID: " . $pat_id);
+        error_log("Stored hash: " . $user['PASSWORD']);
+        error_log("Current password length: " . strlen($currentPwd));
+        
+        $passwordMatches = password_verify($currentPwd, $user['PASSWORD']);
+        error_log("Password verification result: " . ($passwordMatches ? 'TRUE' : 'FALSE'));
+
+        if (!$passwordMatches) {
+            $db->rollBack();
+            echo json_encode([
+                'success' => false, 
+                'message' => 'Current password is incorrect',
+                'debug' => [
+                    'hash_exists' => !empty($user['PASSWORD']),
+                    'password_length' => strlen($currentPwd),
+                    'verification' => false
+                ]
+            ]);
+            exit;
+        }
+
         // Update password
-        $hashedPassword = password_hash($_POST['new_password'], PASSWORD_DEFAULT);
-        $sqlUpdatePwd = "UPDATE users SET PASSWORD = :password, USER_UPDATED_AT = NOW() 
+        $hashedPassword = password_hash($newPwd, PASSWORD_DEFAULT);
+        $sqlUpdatePwd = "UPDATE users 
+                        SET PASSWORD = :password, 
+                            USER_UPDATED_AT = NOW() 
                         WHERE PAT_ID = :pat_id";
+        
         $stmtPwd = $db->prepare($sqlUpdatePwd);
         $stmtPwd->execute([
             ':password' => $hashedPassword,
@@ -95,8 +159,7 @@ try {
         ]);
 
         $passwordChanged = true;
-    } else {
-        $passwordChanged = false;
+        error_log("Password updated successfully for PAT_ID: " . $pat_id);
     }
 
     // Commit transaction
@@ -107,13 +170,19 @@ try {
         $message .= ' Password has been changed.';
     }
 
-    echo json_encode(['success' => true, 'message' => $message]);
+    echo json_encode([
+        'success' => true, 
+        'message' => $message,
+        'password_changed' => $passwordChanged
+    ]);
 
 } catch (PDOException $e) {
     if ($db->inTransaction()) {
         $db->rollBack();
     }
+    
     error_log("Error updating account: " . $e->getMessage());
+    error_log("Stack trace: " . $e->getTraceAsString());
     
     // Check for duplicate contact or email
     if (strpos($e->getMessage(), 'AK_PAT_CONTACT_NUM') !== false) {
@@ -121,7 +190,14 @@ try {
     } elseif (strpos($e->getMessage(), 'AK_PAT_EMAIL') !== false) {
         echo json_encode(['success' => false, 'message' => 'Email already in use']);
     } else {
-        echo json_encode(['success' => false, 'message' => 'Database error occurred']);
+        echo json_encode(['success' => false, 'message' => 'Database error: ' . $e->getMessage()]);
     }
+} catch (Exception $e) {
+    if (isset($db) && $db->inTransaction()) {
+        $db->rollBack();
+    }
+    
+    error_log("General error updating account: " . $e->getMessage());
+    echo json_encode(['success' => false, 'message' => 'An error occurred: ' . $e->getMessage()]);
 }
 ?>
