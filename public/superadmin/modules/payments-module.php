@@ -155,7 +155,7 @@ $url_params = http_build_query($current_params);
             <input type="hidden" name="<?= htmlspecialchars($k) ?>" value="<?= htmlspecialchars($v) ?>">
         <?php endforeach; ?>
         <input class="form-control me-2 rounded-pill border-primary" type="search" name="search_payment" placeholder="Search by ID, Method, Status, or Amount..." value="<?= htmlspecialchars($search) ?>">
-        <button class="btn btn-primary rounded-pill" type="submit">Search</button>
+        <button class="btn btn-outline-primary" type="submit">Search</button>
         <?php if ($search): ?>
             <a href="?<?= $url_params ?>" class="btn btn-outline-secondary ms-2 rounded-pill">Reset</a>
         <?php endif; ?>

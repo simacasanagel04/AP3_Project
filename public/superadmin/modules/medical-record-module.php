@@ -18,7 +18,7 @@ if (!isset($db)) {
 }
 
 // FIX: Correct the class filename and path (matching appointment-module.php pattern)
-require_once __DIR__ . '/../../../../classes/MedicalRecord.php';
+require_once __DIR__ . '/../../../classes/Medical_Record.php';
 
 $medicalRecord = new MedicalRecord($db);
 $message = '';
@@ -158,7 +158,7 @@ $url_params = http_build_query($current_params);
         <input type="text" name="q" class="form-control me-2 rounded-pill border-primary" 
                placeholder="Search by Patient, Doctor, Diagnosis..." 
                value="<?= htmlspecialchars($search_query) ?>">
-        <button class="btn btn-primary rounded-pill" type="submit">Search</button>
+        <button class="btn btn-outline-primary" type="submit">Search</button>
         <?php if ($search_query): ?>
             <a href="?module=medical-record&action=view_all" class="btn btn-outline-secondary ms-2 rounded-pill">Reset</a>
         <?php endif; ?>

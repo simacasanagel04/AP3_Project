@@ -29,10 +29,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     if (isset($_POST['add_status']) && !empty(trim($_POST['pymt_stat_name']))) {
         $name = trim($_POST['pymt_stat_name']);
         
-        // Ensure the input is one of the valid ENUM values
-        if (!in_array($name, ['Paid', 'Pending', 'Refunded'])) {
-             $message = "❌ Invalid status name. Must be Paid, Pending, or Refunded.";
-        } elseif ($paymentStatus->create($name)) {
+        // Removed ENUM validation since it's VARCHAR - allow any non-empty string
+        if ($paymentStatus->create($name)) {
             $message = "✅ Payment Status '{$name}' added successfully.";
         } else {
             $message = "❌ Failed to add Payment Status. It might already exist or a database error occurred.";
@@ -44,9 +42,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $id = $_POST['pymt_stat_id'];
         $name = trim($_POST['pymt_stat_name']);
         
-        if (!in_array($name, ['Paid', 'Pending', 'Refunded'])) {
-             $message = "❌ Invalid status name. Must be Paid, Pending, or Refunded.";
-        } elseif ($paymentStatus->update($id, $name)) {
+        // Removed ENUM validation since it's VARCHAR - allow any non-empty string
+        if ($paymentStatus->update($id, $name)) {
             $message = "✅ Payment Status ID {$id} updated successfully to '{$name}'.";
         } else {
             $message = "❌ Failed to update Payment Status ID {$id}. Check for duplicates or constraints.";
@@ -84,12 +81,7 @@ $records = $paymentStatus->all();
                 <form method="POST">
                     <div class="mb-3">
                         <label for="pymt_stat_name" class="form-label">Status Name</label>
-                        <select class="form-select" name="pymt_stat_name" id="pymt_stat_name" required>
-                            <option value="">-- Select Status --</option>
-                            <option value="Paid">Paid</option>
-                            <option value="Pending">Pending</option>
-                            <option value="Refunded">Refunded</option>
-                        </select>
+                        <input type="text" class="form-control" name="pymt_stat_name" id="pymt_stat_name" placeholder="e.g., Paid" required>
                     </div>
                     <button type="submit" name="add_status" class="btn btn-primary w-100">Add Status</button>
                 </form>
@@ -123,9 +115,11 @@ $records = $paymentStatus->all();
                                         <td>
                                             <input type="hidden" name="pymt_stat_id" value="<?= $r['pymt_stat_id'] ?>">
                                             <select class="form-select form-select-sm" name="pymt_stat_name" required>
-                                                <option value="Paid" <?= $r['pymt_stat_name'] == 'Paid' ? 'selected' : '' ?>>Paid</option>
-                                                <option value="Pending" <?= $r['pymt_stat_name'] == 'Pending' ? 'selected' : '' ?>>Pending</option>
-                                                <option value="Refunded" <?= $r['pymt_stat_name'] == 'Refunded' ? 'selected' : '' ?>>Refunded</option>
+                                                <?php foreach ($records as $status): ?>
+                                                    <option value="<?= htmlspecialchars($status['pymt_stat_name']) ?>" <?= $r['pymt_stat_name'] == $status['pymt_stat_name'] ? 'selected' : '' ?>>
+                                                        <?= htmlspecialchars($status['pymt_stat_name']) ?>
+                                                    </option>
+                                                <?php endforeach; ?>
                                             </select>
                                         </td>
                                         <td><?= $r['formatted_created_at'] ?? 'N/A' ?></td>

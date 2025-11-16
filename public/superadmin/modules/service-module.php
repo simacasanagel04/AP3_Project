@@ -151,7 +151,7 @@ if (!is_array($services)) {
 <div class="d-flex justify-content-between align-items-center mb-3">
     <form class="d-flex" method="GET">
         <input type="hidden" name="module" value="service">
-        <input class="form-control me-2" type="search" name="search_service" placeholder="Search by name, description, or price..." value="<?= htmlspecialchars($search) ?>">
+        <input class="form-control me-2 rounded-pill border-primary" type="search" name="search_service" placeholder="Search by name, description, or price..." value="<?= htmlspecialchars($search) ?>">
         <button class="btn btn-outline-primary" type="submit">Search</button>
         <?php if ($search): ?>
             <a href="?module=service" class="btn btn-outline-secondary ms-2">Reset</a>

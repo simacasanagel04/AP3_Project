@@ -21,10 +21,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     if (isset($_POST['add_status']) && !empty(trim($_POST['status_name']))) {
         $name = trim($_POST['status_name']);
         
-        // Ensure the input is one of the valid ENUM values
-        if (!in_array($name, ['Scheduled', 'Completed', 'Cancelled'])) {
-             $message = "❌ Invalid status name. Must be Scheduled, Completed, or Cancelled.";
-        } elseif ($appointmentStatus->create($name)) {
+        // Removed ENUM validation since it's VARCHAR - allow any non-empty string
+        if ($appointmentStatus->create($name)) {
             $message = "✅ Appointment Status '{$name}' added successfully.";
         } else {
             $message = "❌ Failed to add Appointment Status. It might already exist or a database error occurred.";
@@ -36,9 +34,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $id = $_POST['stat_id'];
         $name = trim($_POST['status_name']);
 
-        if (!in_array($name, ['Scheduled', 'Completed', 'Cancelled'])) {
-             $message = "❌ Invalid status name. Must be Scheduled, Completed, or Cancelled.";
-        } elseif ($appointmentStatus->update($id, $name)) {
+        // Removed ENUM validation since it's VARCHAR - allow any non-empty string
+        if ($appointmentStatus->update($id, $name)) {
             $message = "✅ Appointment Status ID {$id} updated successfully to '{$name}'.";
         } else {
             $message = "❌ Failed to update Appointment Status ID {$id}. Check for duplicates or constraints.";
@@ -76,12 +73,7 @@ $records = $appointmentStatus->all();
                 <form method="POST">
                     <div class="mb-3">
                         <label for="status_name" class="form-label">Status Name</label>
-                        <select class="form-select" name="status_name" id="status_name" required>
-                            <option value="">-- Select Status --</option>
-                            <option value="Scheduled">Scheduled</option>
-                            <option value="Completed">Completed</option>
-                            <option value="Cancelled">Cancelled</option>
-                        </select>
+                        <input type="text" class="form-control" name="status_name" id="status_name" placeholder="e.g., Scheduled" required>
                     </div>
                     <button type="submit" name="add_status" class="btn btn-primary w-100">Add Status</button>
                 </form>
@@ -115,9 +107,11 @@ $records = $appointmentStatus->all();
                                         <td>
                                             <input type="hidden" name="stat_id" value="<?= $r['stat_id'] ?>">
                                             <select class="form-select form-select-sm" name="status_name" required>
-                                                <option value="Scheduled" <?= $r['status_name'] == 'Scheduled' ? 'selected' : '' ?>>Scheduled</option>
-                                                <option value="Completed" <?= $r['status_name'] == 'Completed' ? 'selected' : '' ?>>Completed</option>
-                                                <option value="Cancelled" <?= $r['status_name'] == 'Cancelled' ? 'selected' : '' ?>>Cancelled</option>
+                                                <?php foreach ($records as $status): ?>
+                                                    <option value="<?= htmlspecialchars($status['status_name']) ?>" <?= $r['status_name'] == $status['status_name'] ? 'selected' : '' ?>>
+                                                        <?= htmlspecialchars($status['status_name']) ?>
+                                                    </option>
+                                                <?php endforeach; ?>
                                             </select>
                                         </td>
                                         <td><?= date('M d, Y H:i A', strtotime($r['STAT_CREATED_AT'])) ?></td>
