@@ -1,9 +1,5 @@
 <?php
 // public/ajax/get_schedule_appointments.php
-// for doctor_schedule.php
-
-
-// Fetches appointments for a specific schedule date
 session_start();
 require_once '../../config/Database.php';
 

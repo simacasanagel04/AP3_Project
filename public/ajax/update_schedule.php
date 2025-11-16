@@ -1,7 +1,5 @@
 <?php
 // public/ajax/update_schedule.php
-// for doctor_schedule.php
-
 session_start();
 require_once '../../config/Database.php';
 
@@ -24,7 +22,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         exit;
     }
 
-    // Validate working hours (same as add_schedule.php)
+    // Validate working hours
     $dayOfWeek = date('w', strtotime($date));
     $start = strtotime($start_time);
     $end = strtotime($end_time);
@@ -58,6 +56,22 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     try {
         $db = (new Database())->connect();
         
+        // Check for overlapping schedules (excluding current schedule)
+        $checkSql = "SELECT COUNT(*) FROM schedule 
+                     WHERE DOC_ID = ? 
+                     AND SCHED_DAYS = ?
+                     AND SCHED_ID != ?
+                     AND ((SCHED_START_TIME < ? AND SCHED_END_TIME > ?) 
+                     OR (SCHED_START_TIME < ? AND SCHED_END_TIME > ?))";
+        $checkStmt = $db->prepare($checkSql);
+        $checkStmt->execute([$doc_id, $date, $sched_id, $end_time, $start_time, $end_time, $start_time]);
+        
+        if ($checkStmt->fetchColumn() > 0) {
+            echo json_encode(['success' => false, 'message' => 'Schedule overlaps with existing schedule']);
+            exit;
+        }
+        
+        // Update with actual DATE
         $sql = "UPDATE schedule 
                 SET SCHED_DAYS = ?, 
                     SCHED_START_TIME = ?, 
