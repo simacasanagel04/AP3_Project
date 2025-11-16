@@ -40,7 +40,7 @@ $fullName = trim("{$doctorData['DOC_FIRST_NAME']} {$doctorData['DOC_MIDDLE_INIT'
 $specialization = $doctorData['SPEC_NAME'] ?? 'General';
 $spec_id = $doctorData['SPEC_ID'] ?? null;
 
-// Fetch appointments
+// Fetch appointments - FIXED QUERY (changed STATUS_NAME to STAT_NAME)
 try {
     $sql = "SELECT
                 a.APPT_ID,
@@ -49,12 +49,12 @@ try {
                 a.PAT_ID,
                 a.STAT_ID,
                 a.SERV_ID,
-                CONCAT(p.PAT_FIRST_NAME, ' ', p.PAT_MIDDLE_INIT, '. ', p.PAT_LAST_NAME) as patient_name,
+                CONCAT(p.PAT_FIRST_NAME, ' ', COALESCE(p.PAT_MIDDLE_INIT, ''), '. ', p.PAT_LAST_NAME) as patient_name,
                 s.SERV_NAME as service_name,
-                st.STATUS_NAME,
+                st.STAT_NAME,
                 DATE_FORMAT(a.APPT_DATE, '%M %d, %Y') as formatted_date,
                 DATE_FORMAT(a.APPT_TIME, '%h:%i %p') as formatted_time_start,
-                DATE_FORMAT(DATE_ADD(a.APPT_TIME, INTERVAL 1 HOUR), '%h:%i %p') as formatted_time_end
+                DATE_FORMAT(DATE_ADD(a.APPT_TIME, INTERVAL 30 MINUTE), '%h:%i %p') as formatted_time_end
             FROM appointment a
             INNER JOIN patient p ON a.PAT_ID = p.PAT_ID
             INNER JOIN service s ON a.SERV_ID = s.SERV_ID
@@ -72,7 +72,7 @@ try {
 
 // Fetch statuses
 try {
-    $sqlStatus = "SELECT STAT_ID, STATUS_NAME FROM status ORDER BY STAT_ID";
+    $sqlStatus = "SELECT STAT_ID, STAT_NAME FROM status ORDER BY STAT_ID";
     $stmtStatus = $db->query($sqlStatus);
     $statuses = $stmtStatus->fetchAll(PDO::FETCH_ASSOC);
 } catch (PDOException $e) {
@@ -92,7 +92,10 @@ try {
     $services = [];
 }
 
+// Set timezone to Philippines
+date_default_timezone_set('Asia/Manila');
 $today = date('Y-m-d');
+
 $todayAppts = array_filter($appointments, fn($a) => $a['APPT_DATE'] === $today);
 $upcomingAppts = array_filter($appointments, fn($a) => $a['APPT_DATE'] > $today);
 $historyAppts = array_filter($appointments, fn($a) => $a['APPT_DATE'] < $today);
@@ -188,25 +191,25 @@ require_once '../includes/doctor_header.php';
                     </thead>
                     <tbody id="todayTableBody">
                         <?php foreach ($todayAppts as $a): ?>
-                            <tr data-appt-id="<?= $a['APPT_ID'] ?>" 
-                                data-date="<?= $a['APPT_DATE'] ?>"
-                                data-patient-name="<?= strtolower($a['patient_name']) ?>">
-                                <td><?= htmlspecialchars($a['APPT_ID']) ?></td>
-                                <td><?= htmlspecialchars($a['patient_name']) ?></td>
-                                <td><?= htmlspecialchars($a['service_name']) ?></td>
-                                <td><?= htmlspecialchars($a['formatted_time_start']) ?> - <?= htmlspecialchars($a['formatted_time_end']) ?></td>
-                                <td>
-                                    <span class="badge bg-<?= 
-                                        $a['STATUS_NAME'] === 'Completed' ? 'success' : 
-                                        ($a['STATUS_NAME'] === 'Scheduled' ? 'warning' : 'danger')
-                                    ?>"><?= htmlspecialchars($a['STATUS_NAME']) ?></span>
-                                </td>
-                                <td class="text-center">
-                                    <button class="btn btn-sm action-btn btn-view" data-pat-id="<?= $a['PAT_ID'] ?>" data-appt-id="<?= $a['APPT_ID'] ?>">
-                                        View
-                                    </button>
-                                </td>
-                            </tr>
+                        <tr data-appt-id="<?= $a['APPT_ID'] ?>" 
+                            data-date="<?= $a['APPT_DATE'] ?>"
+                            data-patient-name="<?= strtolower($a['patient_name']) ?>">
+                            <td><?= htmlspecialchars($a['APPT_ID']) ?></td>
+                            <td><?= htmlspecialchars($a['patient_name']) ?></td>
+                            <td><?= htmlspecialchars($a['service_name']) ?></td>
+                            <td><?= htmlspecialchars($a['formatted_time_start']) ?> - <?= htmlspecialchars($a['formatted_time_end']) ?></td>
+                            <td>
+                                <span class="badge bg-<?= 
+                                    $a['STAT_NAME'] === 'Completed' ? 'success' : 
+                                    ($a['STAT_NAME'] === 'Scheduled' ? 'warning' : 'danger')
+                                ?>"><?= htmlspecialchars($a['STAT_NAME']) ?></span>
+                            </td>
+                            <td class="text-center">
+                                <button class="btn btn-sm action-btn btn-view" data-pat-id="<?= $a['PAT_ID'] ?>" data-appt-id="<?= $a['APPT_ID'] ?>">
+                                    View
+                                </button>
+                            </td>
+                        </tr>
                         <?php endforeach; ?>
                     </tbody>
                 </table>
@@ -237,27 +240,27 @@ require_once '../includes/doctor_header.php';
                     </thead>
                     <tbody id="upcomingTableBody">
                         <?php foreach ($upcomingAppts as $a): ?>
-                            <tr data-appt-id="<?= $a['APPT_ID'] ?>"
-                                data-date="<?= $a['APPT_DATE'] ?>"
-                                data-patient-name="<?= strtolower($a['patient_name']) ?>">
-                                <td><?= htmlspecialchars($a['APPT_ID']) ?></td>
-                                <td><?= htmlspecialchars($a['patient_name']) ?></td>
-                                <td><?= htmlspecialchars($a['service_name']) ?></td>
-                                <td><?= htmlspecialchars($a['formatted_date']) ?></td>
-                                <td><?= htmlspecialchars($a['formatted_time_start']) ?> - <?= htmlspecialchars($a['formatted_time_end']) ?></td>
-                                <td>
-                                    <span class="badge bg-<?= 
-                                        $a['STATUS_NAME'] === 'Completed' ? 'success' : 
-                                        ($a['STATUS_NAME'] === 'Scheduled' ? 'warning' : 'danger')
-                                        ?>"><?= htmlspecialchars($a['STATUS_NAME']) ?>
-                                    </span>
-                                </td>
-                                <td class="text-center">
-                                    <button class="btn btn-sm action-btn btn-view" data-pat-id="<?= $a['PAT_ID'] ?>" data-appt-id="<?= $a['APPT_ID'] ?>">
-                                        View
-                                    </button>
-                                </td>
-                            </tr>
+                        <tr data-appt-id="<?= $a['APPT_ID'] ?>"
+                            data-date="<?= $a['APPT_DATE'] ?>"
+                            data-patient-name="<?= strtolower($a['patient_name']) ?>">
+                            <td><?= htmlspecialchars($a['APPT_ID']) ?></td>
+                            <td><?= htmlspecialchars($a['patient_name']) ?></td>
+                            <td><?= htmlspecialchars($a['service_name']) ?></td>
+                            <td><?= htmlspecialchars($a['formatted_date']) ?></td>
+                            <td><?= htmlspecialchars($a['formatted_time_start']) ?> - <?= htmlspecialchars($a['formatted_time_end']) ?></td>
+                            <td>
+                                <span class="badge bg-<?= 
+                                    $a['STAT_NAME'] === 'Completed' ? 'success' : 
+                                    ($a['STAT_NAME'] === 'Scheduled' ? 'warning' : 'danger')
+                                    ?>"><?= htmlspecialchars($a['STAT_NAME']) ?>
+                                </span>
+                            </td>
+                            <td class="text-center">
+                                <button class="btn btn-sm action-btn btn-view" data-pat-id="<?= $a['PAT_ID'] ?>" data-appt-id="<?= $a['APPT_ID'] ?>">
+                                    View
+                                </button>
+                            </td>
+                        </tr>
                         <?php endforeach; ?>
                     </tbody>
                 </table>
@@ -288,26 +291,26 @@ require_once '../includes/doctor_header.php';
                     </thead>
                     <tbody id="historyTableBody">
                         <?php foreach ($historyAppts as $a): ?>
-                            <tr data-appt-id="<?= $a['APPT_ID'] ?>"
-                                data-date="<?= $a['APPT_DATE'] ?>"
-                                data-patient-name="<?= strtolower($a['patient_name']) ?>">
-                                <td><?= htmlspecialchars($a['APPT_ID']) ?></td>
-                                <td><?= htmlspecialchars($a['patient_name']) ?></td>
-                                <td><?= htmlspecialchars($a['service_name']) ?></td>
-                                <td><?= htmlspecialchars($a['formatted_date']) ?></td>
-                                <td><?= htmlspecialchars($a['formatted_time_start']) ?> - <?= htmlspecialchars($a['formatted_time_end']) ?></td>
-                                <td>
-                                    <span class="badge bg-<?= 
-                                        $a['STATUS_NAME'] === 'Completed' ? 'success' : 
-                                        ($a['STATUS_NAME'] === 'Scheduled' ? 'warning' : 'danger')
-                                    ?>"><?= htmlspecialchars($a['STATUS_NAME']) ?></span>
-                                </td>
-                                <td class="text-center">
-                                    <button class="btn btn-sm action-btn btn-view" data-pat-id="<?= $a['PAT_ID'] ?>" data-appt-id="<?= $a['APPT_ID'] ?>">
-                                        View
-                                    </button>
-                                </td>
-                            </tr>
+                        <tr data-appt-id="<?= $a['APPT_ID'] ?>"
+                            data-date="<?= $a['APPT_DATE'] ?>"
+                            data-patient-name="<?= strtolower($a['patient_name']) ?>">
+                            <td><?= htmlspecialchars($a['APPT_ID']) ?></td>
+                            <td><?= htmlspecialchars($a['patient_name']) ?></td>
+                            <td><?= htmlspecialchars($a['service_name']) ?></td>
+                            <td><?= htmlspecialchars($a['formatted_date']) ?></td>
+                            <td><?= htmlspecialchars($a['formatted_time_start']) ?> - <?= htmlspecialchars($a['formatted_time_end']) ?></td>
+                            <td>
+                                <span class="badge bg-<?= 
+                                    $a['STAT_NAME'] === 'Completed' ? 'success' : 
+                                    ($a['STAT_NAME'] === 'Scheduled' ? 'warning' : 'danger')
+                                ?>"><?= htmlspecialchars($a['STAT_NAME']) ?></span>
+                            </td>
+                            <td class="text-center">
+                                <button class="btn btn-sm action-btn btn-view" data-pat-id="<?= $a['PAT_ID'] ?>" data-appt-id="<?= $a['APPT_ID'] ?>">
+                                    View
+                                </button>
+                            </td>
+                        </tr>
                         <?php endforeach; ?>
                     </tbody>
                 </table>
