@@ -8,8 +8,9 @@ $specialization = new Specialization($db);
 $message = '';
 
 // Check accessibility: Super Admin (*) and Staff (*) can access
+// FIXED: Check for 'superadmin' and 'staff' (lowercase, no underscore)
 $user_role = $_SESSION['user_type'] ?? 'unknown';
-if (!in_array($user_role, ['super_admin', 'staff'])) {
+if (!in_array($user_role, ['superadmin', 'staff'])) {
     echo '<div class="alert alert-danger">Access denied. Only Super Admin and Staff can access this module.</div>';
     return;
 }
@@ -18,8 +19,8 @@ if (!in_array($user_role, ['super_admin', 'staff'])) {
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $spec_name = trim($_POST['SPEC_NAME'] ?? '');
     
-    // CREATE
-    if (isset($_POST['create']) && $user_role === 'super_admin') {
+    // CREATE - FIXED: Check for 'superadmin' instead of 'super_admin'
+    if (isset($_POST['create']) && $user_role === 'superadmin') {
         if (empty($spec_name)) {
             $message = "❌ Specialization name cannot be empty.";
         } else {
@@ -32,8 +33,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         }
     }
 
-    // UPDATE
-    elseif (isset($_POST['update']) && $user_role === 'super_admin') {
+    // UPDATE - FIXED: Check for 'superadmin' instead of 'super_admin'
+    elseif (isset($_POST['update']) && $user_role === 'superadmin') {
         $data = [
             'SPEC_ID'   => $_POST['SPEC_ID'],
             'SPEC_NAME' => $spec_name
@@ -47,8 +48,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         }
     }
     
-    // DELETE
-    elseif (isset($_POST['delete']) && $user_role === 'super_admin') {
+    // DELETE - FIXED: Check for 'superadmin' instead of 'super_admin'
+    elseif (isset($_POST['delete']) && $user_role === 'superadmin') {
         $spec_id = $_POST['delete'];
         $result = $specialization->delete($spec_id);
         
@@ -96,7 +97,7 @@ if ($action === 'view_all') {
 <div class="card p-3 shadow-sm">
     <h5 class="mb-3"><?= $current_title ?></h5>
 
-    <?php if ($user_role === 'super_admin' && $action === 'view_all'): ?>
+    <?php if ($user_role === 'superadmin' && $action === 'view_all'): ?>
     <form method="POST" class="d-flex gap-2 mb-4 p-3 border rounded bg-light align-items-center">
         <label for="new_spec" class="form-label mb-0 fw-bold">Add New:</label>
         <input type="text" name="SPEC_NAME" id="new_spec" placeholder="e.g., Family Medicine" class="form-control" required>
@@ -128,7 +129,7 @@ if ($action === 'view_all') {
                         <form method="POST">
                             <td><?= $r['SPEC_ID'] ?></td>
                             <td>
-                                <?php if ($action === 'view_all' && $user_role === 'super_admin'): ?>
+                                <?php if ($action === 'view_all' && $user_role === 'superadmin'): ?>
                                     <input type="text" name="SPEC_NAME" value="<?= htmlspecialchars($r['SPEC_NAME']) ?>" class="form-control form-control-sm" required>
                                 <?php else: ?>
                                     <?= htmlspecialchars($r['SPEC_NAME']) ?>
@@ -147,7 +148,7 @@ if ($action === 'view_all') {
                                 <td><?= $r['formatted_created_at'] ?></td>
                                 <td><?= $r['formatted_updated_at'] ?></td>
                                 <td class="text-nowrap">
-                                    <?php if ($user_role === 'super_admin'): ?>
+                                    <?php if ($user_role === 'superadmin'): ?>
                                         <input type="hidden" name="SPEC_ID" value="<?= $r['SPEC_ID'] ?>">
                                         <button name="update" class="btn btn-sm btn-success">Update</button>
                                         <button name="delete" value="<?= $r['SPEC_ID'] ?>" class="btn btn-sm btn-danger" onclick="return confirm('WARNING: Delete Specialization ID <?= $r['SPEC_ID'] ?>? This may fail if doctors are linked.')">Delete</button>

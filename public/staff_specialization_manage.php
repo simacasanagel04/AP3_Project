@@ -1,15 +1,15 @@
 <?php
 // public/staff_specialization_manage.php
 
+session_start();  
 require_once '../config/Database.php';
 require_once '../classes/Specialization.php'; 
 
 // Check if user is logged in
-if (!isset($_SESSION['user_id'])) {
+if (!isset($_SESSION['staff_id'])) { 
     header("Location: login.php");
     exit();
 }
-
 
 $database = new Database();
 $db = $database->connect();

@@ -34,84 +34,135 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
     }
     
     // If password change requested, verify old password
-    $updatePassword = false;
-    if (!empty($newPassword)) {
-        if (empty($oldPassword)) {
-            echo json_encode(['success' => false, 'message' => 'Please enter your current password']);
-            exit;
-        }
-        
-        // Verify old password
+$updatePassword = false;
+if (!empty($newPassword)) {
+    if (empty($oldPassword)) {
+        echo json_encode(['success' => false, 'message' => 'Please enter your current password']);
+        exit;
+    }
+    
+    // ========================================
+    // FIX: Verify old password (handles both hashed & plain text)
+    // ========================================
         try {
             $sqlUser = "SELECT u.PASSWORD FROM users u 
-                       INNER JOIN doctor d ON u.DOC_ID = d.DOC_ID 
-                       WHERE d.DOC_ID = :doc_id";
+                    INNER JOIN doctor d ON u.DOC_ID = d.DOC_ID 
+                    WHERE d.DOC_ID = :doc_id";
             $stmtUser = $db->prepare($sqlUser);
             $stmtUser->execute([':doc_id' => $doc_id]);
             $user = $stmtUser->fetch(PDO::FETCH_ASSOC);
             
-            if (!$user || !password_verify($oldPassword, $user['PASSWORD'])) {
+            if (!$user) {
+                echo json_encode(['success' => false, 'message' => 'User account not found']);
+                exit;
+            }
+            
+            // Check if password is hashed or plain text
+            $passwordCorrect = false;
+            
+            if (substr($user['PASSWORD'], 0, 4) === '$2y$') {
+                // Hashed password - use password_verify
+                $passwordCorrect = password_verify($oldPassword, $user['PASSWORD']);
+            } else {
+                // Plain text password - direct comparison (legacy support)
+                $passwordCorrect = ($oldPassword === $user['PASSWORD']);
+            }
+            
+            if (!$passwordCorrect) {
                 echo json_encode(['success' => false, 'message' => 'Current password is incorrect']);
                 exit;
             }
             
             $updatePassword = true;
+            
         } catch (PDOException $e) {
             error_log("Error verifying password: " . $e->getMessage());
-            echo json_encode(['success' => false, 'message' => 'Error verifying password']);
+            echo json_encode(['success' => false, 'message' => 'Database error occurred']);
             exit;
-        }
+        }   
     }
     
-    try {
-        $db->beginTransaction();
-        
-        // Update doctor table
-        $sqlUpdate = "UPDATE doctor SET 
-                     DOC_FIRST_NAME = :first_name,
-                     DOC_MIDDLE_INIT = :middle_init,
-                     DOC_LAST_NAME = :last_name,
-                     DOC_EMAIL = :email,
-                     DOC_CONTACT_NUM = :contact,
-                     SPEC_ID = :spec_id,
-                     DOC_UPDATED_AT = NOW()
-                     WHERE DOC_ID = :doc_id";
-        
-        $stmtUpdate = $db->prepare($sqlUpdate);
-        $stmtUpdate->execute([
-            ':first_name' => $firstName,
-            ':middle_init' => strtoupper(substr($middleInit, 0, 1)),
-            ':last_name' => $lastName,
-            ':email' => $email,
-            ':contact' => $contact,
-            ':spec_id' => $specId,
-            ':doc_id' => $doc_id
-        ]);
-        
-        // Update users table email
-        $sqlUpdateUser = "UPDATE users SET USER_NAME = :email";
-        if ($updatePassword) {
-            $hashedPassword = password_hash($newPassword, PASSWORD_DEFAULT);
-            $sqlUpdateUser .= ", PASSWORD = :password";
-        }
-        $sqlUpdateUser .= ", USER_UPDATED_AT = NOW() WHERE DOC_ID = :doc_id";
-        
-        $stmtUpdateUser = $db->prepare($sqlUpdateUser);
-        $params = [':email' => $email, ':doc_id' => $doc_id];
-        if ($updatePassword) {
-            $params[':password'] = $hashedPassword;
-        }
-        $stmtUpdateUser->execute($params);
-        
-        $db->commit();
-        echo json_encode(['success' => true, 'message' => 'Profile updated successfully!']);
-        exit;
-    } catch (PDOException $e) {
-        $db->rollBack();
-        error_log("Error updating profile: " . $e->getMessage());
-        echo json_encode(['success' => false, 'message' => 'Error updating profile: ' . $e->getMessage()]);
-        exit;
+try {
+    $db->beginTransaction();
+    
+    // ========================================
+    // FIX: Update doctor table with better validation
+    // ========================================
+    $sqlUpdate = "UPDATE doctor SET 
+                 DOC_FIRST_NAME = :first_name,
+                 DOC_MIDDLE_INIT = :middle_init,
+                 DOC_LAST_NAME = :last_name,
+                 DOC_EMAIL = :email,
+                 DOC_CONTACT_NUM = :contact,
+                 SPEC_ID = :spec_id,
+                 DOC_UPDATED_AT = NOW()
+                 WHERE DOC_ID = :doc_id";
+    
+    $stmtUpdate = $db->prepare($sqlUpdate);
+    $updateResult = $stmtUpdate->execute([
+        ':first_name' => $firstName,
+        ':middle_init' => strtoupper(substr($middleInit, 0, 1)),
+        ':last_name' => $lastName,
+        ':email' => $email,
+        ':contact' => $contact,
+        ':spec_id' => $specId,
+        ':doc_id' => $doc_id
+    ]);
+    
+    if (!$updateResult || $stmtUpdate->rowCount() === 0) {
+        throw new Exception('Failed to update doctor information');
     }
+    
+    // ========================================
+    // FIX: Update users table (email + password)
+    // ========================================
+    $sqlUpdateUser = "UPDATE users SET 
+                     USER_NAME = :email,
+                     USER_UPDATED_AT = NOW()";
+    $params = [':email' => $email, ':doc_id' => $doc_id];
+    
+    if ($updatePassword) {
+        // Hash the new password
+        $hashedPassword = password_hash($newPassword, PASSWORD_DEFAULT);
+        $sqlUpdateUser .= ", PASSWORD = :password";
+        $params[':password'] = $hashedPassword;
+    }
+    
+    $sqlUpdateUser .= " WHERE DOC_ID = :doc_id";
+    
+    $stmtUpdateUser = $db->prepare($sqlUpdateUser);
+    $userUpdateResult = $stmtUpdateUser->execute($params);
+    
+    if (!$userUpdateResult) {
+        throw new Exception('Failed to update user account');
+    }
+    
+    $db->commit();
+    
+    echo json_encode([
+        'success' => true, 
+        'message' => $updatePassword ? 'Profile and password updated successfully!' : 'Profile updated successfully!'
+    ]);
+    exit;
+    
+} catch (PDOException $e) {
+    $db->rollBack();
+    error_log("Profile update error: " . $e->getMessage());
+    
+    // Check for duplicate email error
+    if ($e->getCode() == 23000) {
+        echo json_encode(['success' => false, 'message' => 'Email already exists']);
+    } else {
+        echo json_encode(['success' => false, 'message' => 'Database error: ' . $e->getMessage()]);
+    }
+    exit;
+    
+} catch (Exception $e) {
+    $db->rollBack();
+    error_log("Profile update exception: " . $e->getMessage());
+    echo json_encode(['success' => false, 'message' => $e->getMessage()]);
+    exit;
+}
 }
 
 // Fetch doctor data with specialization
@@ -199,7 +250,7 @@ require_once '../includes/doctor_header.php';
                     </div>
                     
                     <div class="col-md-6">
-                        <label class="form-label text-muted"><i class="bi bi-envelope-fill"></i> Email (Login)</label>
+                        <label class="form-label text-muted"><i class="bi bi-envelope-fill"></i> Email</label>
                         <p class="form-control-plaintext"><?= htmlspecialchars($doctor['DOC_EMAIL']) ?></p>
                     </div>
                     
@@ -259,7 +310,7 @@ require_once '../includes/doctor_header.php';
                         </div>
                         
                         <div class="col-md-6">
-                            <label class="form-label"><i class="bi bi-envelope"></i> Email (Login) <span class="text-danger">*</span></label>
+                            <label class="form-label"><i class="bi bi-envelope"></i> Email <span class="text-danger">*</span></label>
                             <input type="email" class="form-control" name="email" value="<?= htmlspecialchars($doctor['DOC_EMAIL']) ?>" required>
                         </div>
                         
@@ -314,12 +365,33 @@ require_once '../includes/doctor_header.php';
 
 <script>
 // DOCTOR PROFILE - EDIT FORM AJAX SUBMISSION
+// ========================================
+// FIX: EDIT FORM WITH ENHANCED VALIDATION
+// ========================================
 document.getElementById('editProfileForm').addEventListener('submit', function(e) {
     e.preventDefault();
     
     const formData = new FormData(this);
     const submitBtn = this.querySelector('button[type="submit"]');
     const originalBtnText = submitBtn.innerHTML;
+    
+    // Client-side validation
+    const newPassword = document.getElementById('new_password').value;
+    const oldPassword = document.getElementById('old_password').value;
+    
+    // If new password is entered, old password is required
+    if (newPassword && !oldPassword) {
+        alert('⚠️ Please enter your current password to change your password');
+        document.getElementById('old_password').focus();
+        return;
+    }
+    
+    // Password length validation
+    if (newPassword && newPassword.length < 6) {
+        alert('⚠️ New password must be at least 6 characters long');
+        document.getElementById('new_password').focus();
+        return;
+    }
     
     // Disable button and show loading
     submitBtn.disabled = true;
@@ -329,26 +401,33 @@ document.getElementById('editProfileForm').addEventListener('submit', function(e
         method: 'POST',
         body: formData
     })
-    .then(response => response.json())
+    .then(response => {
+        if (!response.ok) {
+            throw new Error('Network response was not ok');
+        }
+        return response.json();
+    })
     .then(data => {
         if (data.success) {
-            alert('Profile updated successfully!');
+            alert('✓ ' + data.message);
             
             // Close the edit modal
             const editModal = bootstrap.Modal.getInstance(document.getElementById('editModal'));
-            editModal.hide();
+            if (editModal) editModal.hide();
             
             // Refresh the page to show updated data
-            location.reload();
+            setTimeout(() => {
+                location.reload();
+            }, 500);
         } else {
-            alert('Error: ' + data.message);
+            alert('✗ Error: ' + data.message);
             submitBtn.disabled = false;
             submitBtn.innerHTML = originalBtnText;
         }
     })
     .catch(error => {
         console.error('Error:', error);
-        alert('An error occurred while updating profile');
+        alert('✗ An error occurred while updating profile. Please try again.');
         submitBtn.disabled = false;
         submitBtn.innerHTML = originalBtnText;
     });
@@ -395,7 +474,7 @@ document.getElementById('viewModal').addEventListener('show.bs.modal', function(
                         </div>
                         
                         <div class="col-md-6">
-                            <label class="form-label text-muted"><i class="bi bi-envelope-fill"></i> Email (Login)</label>
+                            <label class="form-label text-muted"><i class="bi bi-envelope-fill"></i> Email</label>
                             <p class="form-control-plaintext">${doctor.DOC_EMAIL}</p>
                         </div>
                         

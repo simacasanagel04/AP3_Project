@@ -10,10 +10,10 @@ $message = '';
 $search = $_GET['search_user'] ?? '';
 // Filter parameter: 'filter' will be 'all', 'doctor', 'patient', 'staff', or 'superadmin'
 $filter = $_GET['filter'] ?? 'all'; 
-$user_type = $_SESSION['user_type'] ?? 'super_admin';
+$user_type = $_SESSION['user_type'] ?? '';
 
-// Restrict access
-if ($user_type !== 'super_admin') {
+// Restrict access - FIXED: Check for 'superadmin' instead of 'super_admin'
+if ($user_type !== 'superadmin') {
     echo '<div class="alert alert-danger">Access denied. Only Super Admin can access this module.</div>';
     return;
 }

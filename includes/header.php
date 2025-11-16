@@ -23,6 +23,22 @@ $isLoggedIn = false;
 
 if ($user_type) {
     switch ($user_type) {
+        case 'super_admin':
+            $staff_id = $_SESSION['staff_id'] ?? null;
+            if ($staff_id) {
+                $staffData = $staff->getStaffById($staff_id);
+                if ($staffData) {
+                    $userName = trim($staffData['STAFF_FIRST_NAME'] . ' ' . $staffData['STAFF_LAST_NAME']) . ' (Admin)';
+                } else {
+                    $userName = 'Super Administrator';
+                }
+            } else {
+                $userName = 'Super Administrator';
+            }
+            $dashboardLink = 'public/superadmin/superadmin_dashboard.php';
+            $isLoggedIn = true;
+            break;
+            
         case 'patient':
             $pat_id = $_SESSION['pat_id'] ?? null;
             if ($pat_id) {
@@ -34,6 +50,7 @@ if ($user_type) {
                 }
             }
             break;
+            
         case 'doctor':
             $doc_id = $_SESSION['doc_id'] ?? null;
             if ($doc_id) {
@@ -45,6 +62,7 @@ if ($user_type) {
                 }
             }
             break;
+            
         case 'staff':
             $staff_id = $_SESSION['staff_id'] ?? null;
             if ($staff_id) {
@@ -197,18 +215,22 @@ if ($user_type) {
 
     <!-- Store user data in localStorage for JavaScript access -->
     <?php if ($isLoggedIn && $userName): ?>
-    <script>
+        <script>
         // Store user data in localStorage when logged in
         const userData = {
             user_name: <?= json_encode($userName) ?>,
             is_logged_in: 'true',
             user_type: <?= json_encode($user_type) ?>,
-            dashboard_link: <?= json_encode($dashboardLink) ?>
+            dashboard_link: <?= json_encode($dashboardLink) ?>,
+            is_superadmin: <?= $user_type === 'super_admin' ? 'true' : 'false' ?>
         };
         localStorage.setItem('aksyon_user_data', JSON.stringify(userData));
         localStorage.setItem('user_name', userData.user_name);
         localStorage.setItem('is_logged_in', 'true');
         localStorage.setItem('user_type', userData.user_type);
+        <?php if ($user_type === 'super_admin'): ?>
+        localStorage.setItem('is_superadmin', 'true');
+        <?php endif; ?>
         console.log('User session active:', userData);
     </script>
     <?php else: ?>
@@ -218,6 +240,7 @@ if ($user_type) {
         localStorage.removeItem('user_name');
         localStorage.removeItem('is_logged_in');
         localStorage.removeItem('user_type');
+        localStorage.removeItem('is_superadmin');
         console.log('No active user session');
     </script>
     <?php endif; ?>

@@ -11,8 +11,8 @@ if (!$db) {
 }
 
 // Access Control
-if (!isset($_SESSION['user_type']) || $_SESSION['user_type'] !== 'super_admin') {
-    header("Location: ../../public/login.php");
+if (!isset($_SESSION['user_type']) || $_SESSION['user_type'] !== 'superadmin') {
+    header("Location: ../login.php");
     exit();
 }
 

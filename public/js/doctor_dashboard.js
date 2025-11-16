@@ -8,6 +8,36 @@ document.addEventListener('DOMContentLoaded', function () {
     const toggleBtn = document.querySelector('.sidebar-toggle');
 
     // ========================================================================
+    // SECTION 0: AUTO-UPDATE LAST LOGIN TIMESTAMP
+    // ========================================================================
+
+    // Update last login every 5 minutes
+    setInterval(function() {
+        fetch('ajax/update_last_login.php', {
+            method: 'POST'
+        })
+        .then(r => r.json())
+        .then(data => {
+            if (data.success) {
+                console.log('Last login updated:', data.timestamp);
+            }
+        })
+        .catch(err => console.error('Failed to update last login:', err));
+    }, 300000); // 5 minutes = 300000ms
+
+    // Initial update on page load
+    fetch('ajax/update_last_login.php', {
+        method: 'POST'
+    })
+    .then(r => r.json())
+    .then(data => {
+        if (data.success) {
+            console.log('Initial login timestamp updated:', data.timestamp);
+        }
+    })
+    .catch(err => console.error('Failed to update login timestamp:', err));
+
+    // ========================================================================
     // SECTION 1: GENERAL NAVIGATION & UI
     // ========================================================================
 
@@ -1155,7 +1185,7 @@ function fetchAppointmentDetails() {
     const existingWarning = document.getElementById('existingRecordWarning');
     if (existingWarning) existingWarning.remove();
 
-    fetch(`ajax/get_appointment_details.php?appt_id=${apptId}`)
+    fetch(`ajax/get_appointment_details.php?appt_id=${encodeURIComponent(apptId)}`)
         .then(response => response.json())
         .then(data => {
             if (data.success) {
@@ -1165,29 +1195,45 @@ function fetchAppointmentDetails() {
                 document.getElementById('new_patient_gender').value = appt.PAT_GENDER;
                 document.getElementById('new_service_name').value = appt.SERV_NAME;
                 
-                // Show warning if record already exists
+                // ========================================
+                // FIX: Show warning ONLY, don't block
+                // ========================================
                 if (data.recordExists) {
                     const warningDiv = document.createElement('div');
                     warningDiv.id = 'existingRecordWarning';
                     warningDiv.className = 'alert alert-warning mt-3';
-                    warningDiv.innerHTML = '<i class="bi bi-exclamation-triangle-fill me-2"></i><strong>Note:</strong> A medical record already exists for this appointment. You can still add another record.';
+                    warningDiv.innerHTML = `
+                        <i class="bi bi-exclamation-triangle-fill me-2"></i>
+                        <strong>Note:</strong> ${data.recordCount} medical record(s) already exist for this appointment. 
+                        You can still add another record for follow-up visits.
+                    `;
                     
                     // Insert warning after the service name field
                     const serviceCol = document.getElementById('new_service_name').closest('.col-md-4');
                     serviceCol.parentNode.insertBefore(warningDiv, serviceCol.nextSibling);
                 }
             } else {
-                alert('Error: ' + data.message);
+                // ========================================
+                // FIX: Show error ONCE, not in loop
+                // ========================================
+                alert('⚠️ ' + data.message);
                 document.getElementById('new_patient_name').value = '';
                 document.getElementById('new_patient_age').value = '';
                 document.getElementById('new_patient_gender').value = '';
                 document.getElementById('new_service_name').value = '';
+                
+                // Clear the appointment ID field to prevent retry
+                newApptIdInput.value = '';
+                newApptIdInput.focus();
             }
         })
         .catch(error => {
             console.error('Error:', error);
-            alert('An error occurred while fetching appointment details');
+            alert('⚠️ Network error occurred while fetching appointment details. Please check your connection and try again.');
             document.getElementById('new_patient_name').value = '';
+            document.getElementById('new_patient_age').value = '';
+            document.getElementById('new_patient_gender').value = '';
+            document.getElementById('new_service_name').value = '';
         });
 }
 

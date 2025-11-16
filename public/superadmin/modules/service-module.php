@@ -17,7 +17,7 @@ $message = '';
 $search = trim($_GET['search_service'] ?? ''); // Trim the search term
 $action = $_GET['action'] ?? 'view_all'; // Default action is view_all
 $current_datetime = date('Y-m-d H:i:s'); 
-$user_type = $_SESSION['user_type'] ?? 'super_admin'; // Assuming Superadmin access is guaranteed by dashboard header.
+$user_type = $_SESSION['user_type'] ?? ''; // FIXED: Remove default value to properly detect missing session
 
 // Helper function (already present, kept for reference/consistency)
 function formatDate($timestamp) {
@@ -29,9 +29,19 @@ function formatDate($timestamp) {
 
 
 // --- ACCESS CONTROL ---
-if ($user_type !== 'super_admin') {
+// FIXED: Check for 'superadmin' instead of 'super_admin'
+if ($user_type !== 'superadmin') {
     echo '<div class="alert alert-danger">Access denied. Only Super Admin can access this module.</div>';
     return;
+}
+
+// Fetch all specializations for dropdown
+$specializations = [];
+try {
+    $stmt = $db->query("SELECT SPEC_ID, SPEC_NAME FROM specialization ORDER BY SPEC_NAME");
+    $specializations = $stmt->fetchAll(PDO::FETCH_ASSOC);
+} catch (Exception $e) {
+    $message = "❌ Error fetching specializations: " . $e->getMessage();
 }
 
 // --- CRUD Handlers (Moved to POST block for consistency) ---
@@ -39,12 +49,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     
     // 1. Handle ADD (Create) Service
     if (isset($_POST['add'])) {
+        $spec_id = filter_var($_POST['spec_id'], FILTER_VALIDATE_INT);
         $serv_name = trim(htmlspecialchars($_POST['serv_name']));
         $serv_description = trim(htmlspecialchars($_POST['serv_description'] ?? ''));
         $serv_price = filter_var($_POST['serv_price'], FILTER_VALIDATE_FLOAT);
 
-        if ($serv_name && $serv_price !== false && $serv_price >= 0) {
+        if ($spec_id && $serv_name && $serv_price !== false && $serv_price >= 0) {
             try {
+                $service->setSpecId($spec_id); // ADDED: Set the specialization ID
                 $service->setServName($serv_name);
                 $service->setServDescription($serv_description);
                 $service->setServPrice($serv_price);
@@ -59,20 +71,22 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $message = "❌ Error: " . $e->getMessage();
             }
         } else {
-            $message = "❌ Invalid input. Please check the Service Name and Price.";
+            $message = "❌ Invalid input. Please check all required fields.";
         }
     }
 
     // 2. Handle UPDATE Service
     elseif (isset($_POST['update'])) {
         $serv_id = filter_var($_POST['serv_id'], FILTER_VALIDATE_INT);
+        $spec_id = filter_var($_POST['spec_id'], FILTER_VALIDATE_INT);
         $serv_name = trim(htmlspecialchars($_POST['serv_name']));
         $serv_description = trim(htmlspecialchars($_POST['serv_description'] ?? ''));
         $serv_price = filter_var($_POST['serv_price'], FILTER_VALIDATE_FLOAT);
 
-        if ($serv_id && $serv_name && $serv_price !== false && $serv_price >= 0) {
+        if ($serv_id && $spec_id && $serv_name && $serv_price !== false && $serv_price >= 0) {
             try {
                 $service->setServId($serv_id);
+                $service->setSpecId($spec_id); // ADDED: Set the specialization ID
                 $service->setServName($serv_name);
                 $service->setServDescription($serv_description);
                 $service->setServPrice($serv_price);
@@ -151,16 +165,28 @@ if (!is_array($services)) {
     <div class="card card-body shadow-sm">
         <form method="POST" class="row g-3">
             <div class="col-md-3">
-                <input type="text" name="serv_name" placeholder="Service Name (e.g., Consultation)" required class="form-control">
+                <label class="form-label small">Specialization *</label>
+                <select name="spec_id" required class="form-select">
+                    <option value="">-- Select Specialization --</option>
+                    <?php foreach ($specializations as $spec): ?>
+                        <option value="<?= $spec['SPEC_ID'] ?>"><?= htmlspecialchars($spec['SPEC_NAME']) ?></option>
+                    <?php endforeach; ?>
+                </select>
             </div>
-            <div class="col-md-5">
+            <div class="col-md-3">
+                <label class="form-label small">Service Name *</label>
+                <input type="text" name="serv_name" placeholder="e.g., Consultation" required class="form-control">
+            </div>
+            <div class="col-md-3">
+                <label class="form-label small">Description</label>
                 <input type="text" name="serv_description" placeholder="Short description..." class="form-control">
             </div>
             <div class="col-md-2">
-                <input type="number" name="serv_price" placeholder="Price (₱)" step="0.01" min="0" required class="form-control">
+                <label class="form-label small">Price (₱) *</label>
+                <input type="number" name="serv_price" placeholder="0.00" step="0.01" min="0" required class="form-control">
             </div>
-            <div class="col-md-2 text-end">
-                <button type="submit" name="add" class="btn btn-primary w-100">Save Service</button>
+            <div class="col-md-1 d-flex align-items-end">
+                <button type="submit" name="add" class="btn btn-primary w-100">Save</button>
             </div>
         </form>
     </div>
@@ -168,10 +194,11 @@ if (!is_array($services)) {
 <div class="card p-3 shadow-sm">
     <h5>All Services <?= $search ? '(Filtered Results)' : '' ?></h5>
     <div class="table-responsive" style="overflow-x: auto;">
-        <table class="table table-bordered table-striped align-middle mt-3" style="min-width: 1200px;">
+        <table class="table table-bordered table-striped align-middle mt-3" style="min-width: 1300px;">
             <thead class="table-light">
                 <tr>
                     <th>ID</th>
+                    <th>Specialization</th>
                     <th>Service Name</th>
                     <th>Description</th>
                     <th>Price (₱)</th>
@@ -184,7 +211,7 @@ if (!is_array($services)) {
             <tbody>
                 <?php if (empty($services)): ?>
                     <tr>
-                        <td colspan="7" class="text-center">
+                        <td colspan="8" class="text-center">
                             <?php if ($search): ?>
                                 No services found matching "<?= htmlspecialchars($search) ?>". 
                             <?php else: ?>
@@ -195,16 +222,26 @@ if (!is_array($services)) {
                 <?php else: foreach ($services as $s): ?>
                     <tr>
                         <form method="POST">
-                            <td><?= htmlspecialchars($s['SERV_ID'] ?? '') ?></td> 
+                            <td><?= htmlspecialchars($s['SERV_ID'] ?? '') ?></td>
                             <td>
-                                <input type="text" name="serv_name" value="<?= htmlspecialchars($s['SERV_NAME'] ?? '') ?>"    
+                                <select name="spec_id" required class="form-select form-select-sm">
+                                    <?php foreach ($specializations as $spec): ?>
+                                        <option value="<?= $spec['SPEC_ID'] ?>" <?= ($s['SPEC_ID'] ?? '') == $spec['SPEC_ID'] ? 'selected' : '' ?>>
+                                            <?= htmlspecialchars($spec['SPEC_NAME']) ?>
+                                        </option>
+                                    <?php endforeach; ?>
+                                </select>
+                            </td>
+                            <td>
+                                <input type="text" name="serv_name" value="<?= htmlspecialchars($s['SERV_NAME'] ?? '') ?>"    
                                 class="form-control form-control-sm" required>
                             </td>
                             <td>
                                 <input type="text" name="serv_description" class="form-control form-control-sm" value="<?= htmlspecialchars($s['SERV_DESCRIPTION'] ?? 'N/A') ?>" >
                             </td>
                             <td>
-                                <input type="number" name="serv_price" value="<?= htmlspecialchars($s['SERV_PRICE'] ?? 0.00) ?>" step="0.01" min="0" required class="form-control form-control-sm"> </td>
+                                <input type="number" name="serv_price" value="<?= htmlspecialchars($s['SERV_PRICE'] ?? 0.00) ?>" step="0.01" min="0" required class="form-control form-control-sm">
+                            </td>
                             <td><?= formatDate($s['SERV_CREATED_AT'] ?? '') ?></td>
                             <td><?= formatDate($s['SERV_UPDATED_AT'] ?? '') ?></td>
                             <td class="text-nowrap">
@@ -224,7 +261,6 @@ if (!is_array($services)) {
                     </tr>
                 <?php endforeach; endif; ?>
             </tbody>
-...
         </table>
     </div>
 </div>

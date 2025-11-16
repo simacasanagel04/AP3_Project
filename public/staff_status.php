@@ -1,14 +1,15 @@
 <?php
-// -----------------------------------------------------
 // public/staff_status.php
-// -----------------------------------------------------
-session_start();
 
-// Redirect if not logged in (BEFORE including header)
-// if (!isset($_SESSION['staff_id'])) {
-//     header("Location: login.php");
-//     exit();
-// }
+session_start();  
+require_once '../config/Database.php';
+require_once '../classes/Status.php'; 
+
+// Check if user is logged in
+if (!isset($_SESSION['staff_id'])) {  
+    header("Location: login.php");
+    exit();
+}
 
 require_once '../config/Database.php';
 require_once '../classes/Status.php';
@@ -228,3 +229,4 @@ require_once '../includes/staff_header.php';
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 </body>
 </html>
+
