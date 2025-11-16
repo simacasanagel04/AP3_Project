@@ -1,49 +1,70 @@
 <?php
 // public/api/gdoc-by-service.php
 
-require_once dirname(__DIR__, 2) . '/config/database.php'; 
+require_once dirname(__DIR__, 2) . '/config/Database.php'; 
 require_once dirname(__DIR__, 2) . '/classes/Service.php';
 require_once dirname(__DIR__, 2) . '/classes/Doctor.php';
 
 header('Content-Type: application/json');
+error_reporting(E_ALL);
 
 $response = ['success' => false, 'doctors' => [], 'message' => ''];
 
-if (isset($_GET['serv_id']) && is_numeric($_GET['serv_id'])) {
-    $serv_id = $_GET['serv_id'];
-
-    try {
-        // Initialize DB connection and classes (assuming Database class is defined)
-        $database = new Database(); 
-        $db = $database->connect();
-        $service = new Service($db);
-        $doctor = new Doctor($db); 
-
-        // 1. Set the service ID first, then call readOne()
-        $service->setServId($serv_id);
-        $service_data = $service->readOne();
-        
-        if ($service_data && !empty($service_data['SPEC_ID'])) {
-            $spec_id = $service_data['SPEC_ID'];
-            
-            // 2. Get doctors belonging to that specialization
-            $doctors_list = $doctor->getDoctorsBySpecialization($spec_id);
-
-            $response['success'] = true;
-            $response['doctors'] = $doctors_list;
-        } else {
-            $response['message'] = 'Service not found or is not linked to a specialization.';
-        }
-    } catch (Exception $e) {
-        // Log the error for internal debugging
-        error_log("Doctor filtering error: " . $e->getMessage()); 
-        $response['message'] = 'A server error occurred while fetching doctors.';
-    }
-} else {
+if (!isset($_GET['serv_id']) || !is_numeric($_GET['serv_id'])) {
     $response['message'] = 'Invalid Service ID provided.';
+    echo json_encode($response);
+    exit();
+}
+
+$serv_id = intval($_GET['serv_id']);
+
+try {
+    // Database connection
+    $database = new Database(); 
+    $db = $database->connect();
+    
+    if (!$db) {
+        throw new Exception('Database connection failed');
+    }
+    
+    // Get service data
+    $service = new Service($db);
+    $service->setServId($serv_id);
+    $service_data = $service->readOne();
+    
+    if (!$service_data) {
+        $response['message'] = 'Service not found (ID: ' . $serv_id . ')';
+        echo json_encode($response);
+        exit();
+    }
+    
+    if (empty($service_data['SPEC_ID'])) {
+        $response['message'] = 'Service "' . $service_data['SERV_NAME'] . '" is not linked to any specialization.';
+        echo json_encode($response);
+        exit();
+    }
+    
+    $spec_id = intval($service_data['SPEC_ID']);
+    
+    // Get doctors by specialization
+    $doctor = new Doctor($db);
+    $doctors_list = $doctor->getDoctorsBySpecialization($spec_id);
+    
+    if (empty($doctors_list)) {
+        $response['message'] = 'No doctors available for this specialization.';
+    } else {
+        $response['success'] = true;
+        $response['doctors'] = $doctors_list;
+    }
+    
+} catch (PDOException $e) {
+    error_log("Database error in gdoc-by-service.php: " . $e->getMessage());
+    $response['message'] = 'Database error occurred. Please try again.';
+} catch (Exception $e) {
+    error_log("Error in gdoc-by-service.php: " . $e->getMessage()); 
+    $response['message'] = 'Server error: ' . $e->getMessage();
 }
 
 echo json_encode($response);
 exit();
-
 ?>

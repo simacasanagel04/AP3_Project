@@ -1,5 +1,6 @@
 <?php
 // /public/superadmin/modules/schedule-module.php
+
 require_once dirname(__DIR__, 3) . '/classes/Schedule.php';
 
 $schedule = new Schedule($db);
@@ -9,13 +10,14 @@ $message = '';
 $user_role = $_SESSION['user_type'] ?? 'unknown';
 $logged_doc_id = $_SESSION['doc_id'] ?? null;
 
-if (!in_array($user_role, ['super_admin', 'doctor'])) {
+// FIXED: Check for 'superadmin' and 'doctor' instead of 'super_admin' and 'doctor'
+if (!in_array($user_role, ['superadmin', 'doctor'])) {
     echo '<div class="alert alert-danger">Access denied. Only Super Admin and Doctors can access this module.</div>';
     return;
 }
 
 // Get doctors for dropdown
-$doctors = $user_role === 'super_admin' ? $schedule->getAllDoctors() : [];
+$doctors = $user_role === 'superadmin' ? $schedule->getAllDoctors() : [];
 $days_of_week = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
 
 // --- HANDLE POST ---
@@ -76,7 +78,7 @@ $current_title = "Schedule Management";
 date_default_timezone_set('Asia/Manila');
 $today_display = date('l, M d, Y'); 
 
-if ($action === 'view_all' && $user_role === 'super_admin') {
+if ($action === 'view_all' && $user_role === 'superadmin') {
     $data_list = $schedule->all();
     $current_title = "All Doctor Schedules";
 
@@ -104,7 +106,7 @@ if ($action === 'view_all' && $user_role === 'super_admin') {
 <?php endif; ?>
 
 <div class="d-flex gap-2 mb-4">
-    <?php if ($user_role === 'super_admin'): ?>
+    <?php if ($user_role === 'superadmin'): ?>
     <a href="?module=schedule&action=view_all" class="btn btn-sm <?= $action === 'view_all' ? 'btn-primary' : 'btn-outline-primary' ?>">
         View All
     </a>
@@ -124,7 +126,7 @@ if ($action === 'view_all' && $user_role === 'super_admin') {
     <form method="POST" class="d-flex flex-wrap gap-2 mb-4 p-3 border rounded bg-light align-items-center">
         <label class="form-label mb-0 fw-bold">Add Schedule:</label>
 
-        <?php if ($user_role === 'super_admin'): ?>
+        <?php if ($user_role === 'superadmin'): ?>
         <select name="DOC_ID" class="form-select w-auto" required>
             <option value="">-- Doctor --</option>
             <?php foreach($doctors as $doc): ?>
@@ -152,7 +154,7 @@ if ($action === 'view_all' && $user_role === 'super_admin') {
             <thead class="table-light">
                 <tr>
                     <th>ID</th>
-                    <?php if ($user_role === 'super_admin' || $action === 'view_today'): ?>
+                    <?php if ($user_role === 'superadmin' || $action === 'view_today'): ?>
                     <th>Doctor</th>
                     <?php endif; ?>
                     <th>Day</th>
@@ -164,12 +166,12 @@ if ($action === 'view_all' && $user_role === 'super_admin') {
             </thead>
             <tbody>
                 <?php if (empty($data_list)): ?>
-                    <tr><td colspan="<?= ($user_role === 'super_admin' || $action === 'view_today') ? 7 : 6 ?>" class="text-center text-muted">No schedules found.</td></tr>
+                    <tr><td colspan="<?= ($user_role === 'superadmin' || $action === 'view_today') ? 7 : 6 ?>" class="text-center text-muted">No schedules found.</td></tr>
                 <?php else: foreach ($data_list as $r): ?>
                     <tr>
                         <form method="POST">
                             <td class="small fw-bold"><?= htmlspecialchars($r['SCHED_ID']) ?></td>
-                            <?php if ($user_role === 'super_admin' || $action === 'view_today'): ?>
+                            <?php if ($user_role === 'superadmin' || $action === 'view_today'): ?>
                             <td class="small text-nowrap"><?= htmlspecialchars($r['doctor_name']) ?> (#<?= htmlspecialchars($r['DOC_ID']) ?>)</td>
                             <?php endif; ?>
 

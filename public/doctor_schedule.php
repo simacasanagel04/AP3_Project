@@ -23,11 +23,10 @@ try {
                 s.SCHED_END_TIME,
                 s.SCHED_CREATED_AT,
                 DATE_FORMAT(s.SCHED_START_TIME, '%h:%i %p') as formatted_start,
-                DATE_FORMAT(s.SCHED_END_TIME, '%h:%i %p') as formatted_end,
-                DATE_FORMAT(s.SCHED_CREATED_AT, '%Y-%m-%d') as schedule_date
+                DATE_FORMAT(s.SCHED_END_TIME, '%h:%i %p') as formatted_end
             FROM schedule s
             WHERE s.DOC_ID = :doc_id
-            ORDER BY s.SCHED_CREATED_AT DESC, s.SCHED_START_TIME";
+            ORDER BY s.SCHED_DAYS DESC, s.SCHED_START_TIME";
     
     $stmt = $db->prepare($sql);
     $stmt->execute([':doc_id' => $doc_id]);
@@ -42,7 +41,7 @@ try {
         $countStmt = $db->prepare($countSql);
         $countStmt->execute([
             ':doc_id' => $doc_id,
-            ':sched_date' => $schedule['schedule_date']
+            ':sched_date' => $schedule['SCHED_DAYS']
         ]);
         $countResult = $countStmt->fetch(PDO::FETCH_ASSOC);
         $schedule['total_appointments'] = $countResult['total'];
@@ -54,10 +53,10 @@ try {
     $schedules = [];
 }
 
-// Filter today's schedules - compare actual dates instead of day names
-$today = date('Y-m-d'); // Get today's date in Y-m-d format (e.g., "2025-11-11")
+// Filter today's schedules - compare actual dates
+$today = date('Y-m-d');
 $todaySchedules = array_filter($schedules, function($s) use ($today) {
-    return $s['schedule_date'] === $today;
+    return $s['SCHED_DAYS'] === $today;
 });
 
 require_once '../includes/doctor_header.php';
@@ -88,17 +87,17 @@ require_once '../includes/doctor_header.php';
                 <button class="btn btn-primary tab-btn active" data-target="todaySection" data-count="<?= count($todaySchedules) ?>" data-label="Today's Total Schedules">
                     <i class="bi bi-calendar-day"></i> View Today's Schedule
                 </button>
-                <button class="btn btn-primary tab-btn active" data-target="allSection" data-count="<?= count($schedules) ?>" data-label="Total Schedules">
+                <button class="btn btn-primary tab-btn" data-target="allSection" data-count="<?= count($schedules) ?>" data-label="Total Schedules">
                     <i class="bi bi-calendar3"></i> View All Schedules
                 </button>
-                <button class="btn btn-success tab-btn active" id="addNewScheduleBtn">
+                <button class="btn btn-success" id="addNewScheduleBtn">
                     <i class="bi bi-plus-circle"></i> Add New Schedule
                 </button>
             </div>
         </div>
     </div>
 
-    <!-- Filter Section (Appears in all views) -->
+    <!-- Filter Section -->
     <div class="row mb-3" id="filterSection">
         <div class="col-12">
             <div class="info-card">
@@ -109,7 +108,7 @@ require_once '../includes/doctor_header.php';
                     </div>
                     <div class="col-md-3 col-sm-6">
                         <label class="form-label"><strong><i class="bi bi-hash"></i> Search Schedule ID</strong></label>
-                        <input type="text" class="form-control" id="searchScheduleId" placeholder="Enter schedule ID">
+                        <input type="number" class="form-control" id="searchScheduleId" placeholder="Enter schedule ID">
                     </div>
                     <div class="col-md-3 col-sm-6">
                         <button class="btn btn-primary w-100" id="applyScheduleFilterBtn">
@@ -137,7 +136,7 @@ require_once '../includes/doctor_header.php';
         </div>
     </div>
 
-    <!-- Add New Schedule Form (Hidden by default, shows when "Add New Schedule" is clicked) -->
+    <!-- Add New Schedule Form -->
     <div class="row mb-3" id="addScheduleForm" style="display: none;">
         <div class="col-12">
             <div class="info-card border-success">
@@ -146,7 +145,7 @@ require_once '../includes/doctor_header.php';
                     <div class="row g-3 align-items-end">
                         <div class="col-md-3 col-sm-6">
                             <label class="form-label"><strong>Pick Date</strong></label>
-                            <input type="date" class="form-control" id="newScheduleDate" required>
+                            <input type="date" class="form-control" id="newScheduleDate" required min="<?= date('Y-m-d') ?>">
                             <small class="text-muted">Sunday is closed</small>
                         </div>
                         <div class="col-md-3 col-sm-6">
@@ -177,13 +176,13 @@ require_once '../includes/doctor_header.php';
         <div class="row">
             <div class="col-12">
                 <div class="info-card">
-                    <h4><i class="bi bi-calendar-check"></i> Today's Schedules (<?= $today ?>)</h4>
+                    <h4><i class="bi bi-calendar-check"></i> Today's Schedules (<?= date('F d, Y') ?>)</h4>
                     <div class="table-responsive">
                         <table class="table table-hover" id="todayScheduleTable">
                             <thead>
                                 <tr>
                                     <th>Schedule ID</th>
-                                    <th>Day</th>
+                                    <th>Date</th>
                                     <th>Start Time</th>
                                     <th>End Time</th>
                                     <th>Total Appointments</th>
@@ -194,18 +193,16 @@ require_once '../includes/doctor_header.php';
                                 <?php if (count($todaySchedules) > 0): ?>
                                     <?php foreach ($todaySchedules as $schedule): ?>
                                         <tr data-sched-id="<?= $schedule['SCHED_ID'] ?>" 
-                                            data-date="<?= $schedule['SCHED_DAYS'] ?>"
-                                            data-start="<?= $schedule['SCHED_START_TIME'] ?>"
-                                            data-end="<?= $schedule['SCHED_END_TIME'] ?>">
+                                            data-date="<?= $schedule['SCHED_DAYS'] ?>">
                                             <td><?= htmlspecialchars($schedule['SCHED_ID']) ?></td>
-                                            <td><?= date('M d, Y', strtotime($schedule['schedule_date'])) ?></td>
+                                            <td><?= date('M d, Y', strtotime($schedule['SCHED_DAYS'])) ?></td>
                                             <td><?= htmlspecialchars($schedule['formatted_start']) ?></td>
                                             <td><?= htmlspecialchars($schedule['formatted_end']) ?></td>
                                             <td><?= htmlspecialchars($schedule['total_appointments']) ?></td>
                                             <td class="text-center">
                                                 <button class="btn btn-sm action-btn btn-view-schedule" 
                                                     data-sched-id="<?= $schedule['SCHED_ID'] ?>"
-                                                    data-sched-date="<?= $schedule['schedule_date'] ?>">
+                                                    data-sched-date="<?= $schedule['SCHED_DAYS'] ?>">
                                                     <i class="bi bi-eye"></i> View
                                                 </button>
                                                 <button class="btn btn-sm action-btn btn-edit-schedule btn-warning" 
@@ -257,18 +254,16 @@ require_once '../includes/doctor_header.php';
                                 <?php if (count($schedules) > 0): ?>
                                     <?php foreach ($schedules as $schedule): ?>
                                         <tr data-sched-id="<?= $schedule['SCHED_ID'] ?>" 
-                                            data-date="<?= $schedule['SCHED_DAYS'] ?>"
-                                            data-start="<?= $schedule['SCHED_START_TIME'] ?>"
-                                            data-end="<?= $schedule['SCHED_END_TIME'] ?>">
+                                            data-date="<?= $schedule['SCHED_DAYS'] ?>">
                                             <td><?= htmlspecialchars($schedule['SCHED_ID']) ?></td>
-                                            <td><?= date('M d, Y', strtotime($schedule['schedule_date'])) ?></td>
+                                            <td><?= $schedule['SCHED_DAYS'] !== '0000-00-00' ? date('M d, Y', strtotime($schedule['SCHED_DAYS'])) : 'Invalid Date' ?></td>
                                             <td><?= htmlspecialchars($schedule['formatted_start']) ?></td>
                                             <td><?= htmlspecialchars($schedule['formatted_end']) ?></td>
                                             <td><?= htmlspecialchars($schedule['total_appointments']) ?></td>
                                             <td class="text-center">
                                                 <button class="btn btn-sm action-btn btn-view-schedule" 
                                                     data-sched-id="<?= $schedule['SCHED_ID'] ?>"
-                                                    data-sched-date="<?= $schedule['schedule_date'] ?>">
+                                                    data-sched-date="<?= $schedule['SCHED_DAYS'] ?>">
                                                     <i class="bi bi-eye"></i> View
                                                 </button>
                                                 <button class="btn btn-sm action-btn btn-edit-schedule btn-warning" 
@@ -299,7 +294,7 @@ require_once '../includes/doctor_header.php';
     </div>
 </div>
 
-<!-- View Schedule Modal (Shows Appointments) -->
+<!-- View Schedule Modal -->
 <div class="modal fade" id="viewScheduleModal" tabindex="-1">
     <div class="modal-dialog modal-lg">
         <div class="modal-content">
@@ -345,7 +340,7 @@ require_once '../includes/doctor_header.php';
                     </div>
                     <div class="mb-3">
                         <label class="form-label"><strong>Date</strong></label>
-                        <input type="date" class="form-control" id="edit_sched_date" required>
+                        <input type="date" class="form-control" id="edit_sched_date" required min="<?= date('Y-m-d') ?>">
                         <small class="text-muted">Sunday is closed</small>
                     </div>
                     <div class="mb-3">
@@ -369,7 +364,6 @@ require_once '../includes/doctor_header.php';
     </div>
 </div>
 
-<!-- Bootstrap JS -->
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 <script src="js/doctor_dashboard.js"></script>
 

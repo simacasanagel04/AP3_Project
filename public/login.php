@@ -52,39 +52,34 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     'is_logged_in' => 'true'
                 ];
 
-                /*
-                ============================================
-                SUPERADMIN FIXED REDIRECT
-                ============================================
-                */
-                if (!empty($userData['USER_IS_SUPERADMIN']) && $userData['USER_IS_SUPERADMIN'] == 1) {
+            /*
+            ============================================
+            SUPERADMIN FIXED REDIRECT
+            ============================================
+            */
+            if (!empty($userData['USER_IS_SUPERADMIN']) && $userData['USER_IS_SUPERADMIN'] == 1) {
 
-                    $_SESSION['user_type'] = 'super_admin';
-                    $_SESSION['is_superadmin'] = true;
+                $_SESSION['user_type'] = 'superadmin';
+                $_SESSION['is_superadmin'] = true;
 
-                    $userName = 'Super Administrator';
+                $userName = 'Super Administrator';
 
-                    if (!empty($userData['STAFF_ID'])) {
-                        $_SESSION['staff_id'] = $userData['STAFF_ID'];
-                        $staffData = $staff->getStaffById($userData['STAFF_ID']);
-                        if ($staffData) {
-                            $userName = trim($staffData['STAFF_FIRST_NAME'] . ' ' . $staffData['STAFF_LAST_NAME']) . ' (Admin)';
-                            $localStorageData['staff_id'] = $userData['STAFF_ID'];
-                        }
-                    }
+                // IMPORTANT: Superadmins should NOT have STAFF_ID according to your database constraint
+                // The constraint is: (USER_IS_SUPERADMIN = 1 AND STAFF_ID IS NULL AND DOC_ID IS NULL AND PAT_ID IS NULL)
+                // So we don't fetch staff data for superadmins
 
-                    $localStorageData['user_type'] = 'super_admin';
-                    $localStorageData['is_superadmin'] = true;
-                    $localStorageData['user_name'] = $userName;
+                $localStorageData['user_type'] = 'superadmin';
+                $localStorageData['is_superadmin'] = true;
+                $localStorageData['user_name'] = $userName;
 
-                    // FIXED PATH BELOW:
-                    $localStorageData['dashboard_link'] = 'superadmin/superadmin_dashboard.php';
+                // FIXED PATH:
+                $localStorageData['dashboard_link'] = 'superadmin/superadmin_dashboard.php';
 
-                    $success_login = true;
-                    $user_data_json = json_encode($localStorageData);
+                $success_login = true;
+                $user_data_json = json_encode($localStorageData);
 
-                    // FIXED REDIRECT:
-                    $redirect_url = 'superadmin/superadmin_dashboard.php';
+                // FIXED REDIRECT:
+                $redirect_url = 'superadmin/superadmin_dashboard.php';
 
                 /*
                 ======================================================
@@ -187,13 +182,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Login | AKSyon Medical Center</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css">
-    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet">
-    <style>
-        body {
-            font-family: 'Roboto', sans-serif;
-        }
-    </style>
 </head>
 <body class="bg-light">
 
@@ -204,8 +192,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 <div class="card-body p-5 text-center">
 
                     <div class="mb-4">
-                        <a href="../index.php"><img src="../assets/logo/logo_white_bg.png" alt="AKSyon Medical Center" height="80" class="mb-3"></a>
-                        <h5 class="mt-3" style="font-family: 'Times New Roman', serif;">Welcome Back</h5>
+                        <a href="../index.php"><img src="../assets/logo/logo_white_bg.png" height="80"></a>
+                        <h5 class="mt-3">Welcome Back</h5>
                         <p class="text-muted small">Login to your account.</p>
                     </div>
 
@@ -219,60 +207,48 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                         </div>
                     <?php endif; ?>
 
-                    <form method="POST" action="" id="loginForm">
+                    <form method="POST">
                         <div class="mb-3 text-start">
                             <label class="form-label"><strong>Email:</strong></label>
-                            <input type="email" name="email" id="email" class="form-control" placeholder="Enter email" required value="<?= isset($_POST['email']) ? htmlspecialchars($_POST['email']) : '' ?>">
+                            <input type="email" name="email" class="form-control" required>
                         </div>
 
                         <div class="mb-4 text-start">
                             <label class="form-label"><strong>Password:</strong></label>
-                            <input type="password" name="password" id="password" class="form-control" placeholder="Enter password" required>
+                            <input type="password" name="password" class="form-control" required>
                         </div>
 
-                        <button type="submit" class="btn btn-primary w-100" style="background-color: #336d96; border: none;">
+                        <button type="submit" class="btn btn-primary w-100">
                             LOGIN
                         </button>
                     </form>
 
                     <div class="mt-4">
                         <small class="text-muted">
-                            Don't have an account? <a href="patient_create.php" class="text-primary text-decoration-none">Register</a>
+                            Don't have an account? <a href="patient_create.php">Register</a>
                         </small>
                     </div>
+
                 </div>
             </div>
         </div>
     </div>
 </div>
 
-<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 <script>
-    <?php if ($success_login): ?>
-        // Clear any old data first
-        localStorage.clear();
-        sessionStorage.clear();
-        
-        // Store new user data in localStorage
-        const userData = <?= $user_data_json ?>;
-        localStorage.setItem('aksyon_user_data', JSON.stringify(userData));
-        localStorage.setItem('user_name', userData.user_name || '');
-        localStorage.setItem('is_logged_in', 'true');
-        localStorage.setItem('user_type', userData.user_type || '');
-        
-        // Store superadmin flag if applicable
-        if (userData.is_superadmin) {
-            localStorage.setItem('is_superadmin', 'true');
-        }
-        
-        console.log('User data stored in localStorage:', userData);
-        console.log('Redirecting to:', '<?= $redirect_url ?>');
-        
-        // Redirect after storing
-        setTimeout(function() {
-            window.location.href = '<?= $redirect_url ?>';
-        }, 500);
-    <?php endif; ?>
+<?php if ($success_login): ?>
+    localStorage.clear();
+
+    const userData = <?= $user_data_json ?>;
+    localStorage.setItem('aksyon_user_data', JSON.stringify(userData));
+    localStorage.setItem('user_type', userData.user_type);
+    localStorage.setItem('user_name', userData.user_name);
+
+    setTimeout(() => {
+        window.location.href = '<?= $redirect_url ?>';
+    }, 400);
+<?php endif; ?>
 </script>
+
 </body>
 </html>

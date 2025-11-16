@@ -6,10 +6,18 @@ require_once dirname(__DIR__, 3) . '/classes/Payment_Status.php';
 // Assuming $db is your established PDO database connection
 $paymentStatus = new Payment_Status($db);
 $message = '';
-$user_type = $_SESSION['user_type'] ?? 'super_admin';
 
-// Restrict access
-if ($user_type !== 'super_admin') {
+// Check if user is logged in first
+if (!isset($_SESSION['user_id'])) {
+    echo '<div class="alert alert-danger">Access denied. Please log in first.</div>';
+    return;
+}
+
+// Get user type from session
+$user_type = $_SESSION['user_type'] ?? null;
+
+// Restrict access to super admin only
+if ($user_type !== 'superadmin') {
     echo '<div class="alert alert-danger">Access denied. Only Super Admin can access this module.</div>';
     return;
 }

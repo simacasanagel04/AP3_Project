@@ -17,8 +17,8 @@ if (!isset($db)) {
   ');
 }
 
-// NOW your require_once statements can safely use $db
-require_once dirname(__DIR__, 3) . '/classes/Medical_Record.php';
+// FIX: Correct the class filename and path (matching appointment-module.php pattern)
+require_once __DIR__ . '/../../../../classes/MedicalRecord.php';
 
 $medicalRecord = new MedicalRecord($db);
 $message = '';
@@ -27,7 +27,10 @@ $message = '';
 $user_role = $_SESSION['user_type'] ?? 'unknown';
 $user_id   = $_SESSION['user_id'] ?? 0;
 
-if (!in_array($user_role, ['super_admin', 'staff', 'doctor'])) {
+// FIX: Match the session value format from other modules (no underscore in 'superadmin')
+$user_role_normalized = strtolower(str_replace('_', '', $user_role));
+
+if (!in_array($user_role_normalized, ['superadmin', 'staff', 'doctor'])) {
     echo '<div class="alert alert-danger">Access denied. Only Super Admin, Staff, and Doctors can access this module.</div>';
     return;
 }
@@ -165,7 +168,7 @@ $url_params = http_build_query($current_params);
     <?php endif; ?>
     
     <div class="d-flex gap-2">
-        <?php if (in_array($user_role, ['super_admin', 'staff', 'doctor'])): ?>
+        <?php if (in_array($user_role_normalized, ['superadmin', 'staff', 'doctor'])): ?>
         <a href="?module=medical-record&action=create" class="btn btn-sm <?= $action === 'create' ? 'btn-success' : 'btn-outline-success' ?>">
             Create New
         </a>

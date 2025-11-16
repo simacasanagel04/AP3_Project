@@ -9,29 +9,28 @@ if (!isset($db)) {
       <p><strong>This module cannot be accessed directly.</strong></p>
       <p>Please access it through the Super Admin Dashboard:</p>
       <p class="mb-0">
-        <a href="../superadmin_dashboard.php?module=medical-record" class="btn btn-primary">
-          Go to Dashboard → Medical Records
+        <a href="../superadmin_dashboard.php?module=doctor" class="btn btn-primary">
+          Go to Dashboard → Doctors
         </a>
       </p>
     </div>
   ');
 }
 
-// NOW your require_once statements can safely use $db
-require_once __DIR__ . '/../../../classes/MedicalRecord.php';
-require_once __DIR__ . '/../../../classes/Appointment.php';
+// ✅ FIXED: Changed from MedicalRecord and Appointment to Doctor
+require_once __DIR__ . '/../../../classes/Doctor.php';
+require_once __DIR__ . '/../../../classes/User.php';
 
 $doctor = new Doctor($db);
 $user = new User($db);
 
 $message = '';
 $userMessage = '';
-$user_type = $_SESSION['user_type'] ?? 'super_admin';
+$user_type = $_SESSION['user_type'] ?? 'superadmin'; // ✅ FIXED: Changed from 'super_admin'
 $search = $_GET['search_doctor'] ?? '';
-$newDoctor = null; // This will hold the newly added doctor's details for the modal
+$newDoctor = null;
 
 // --- Fetch Specializations ---
-// ... (Specialization fetch block remains unchanged)
 $specializations = [];
 try {
     $stmt_spec = $db->query("SELECT spec_id, spec_name FROM specialization ORDER BY spec_name");
@@ -41,8 +40,8 @@ try {
     $message = "⚠️ Could not load specializations. Check database connection and 'specialization' table.";
 }
 
-// Restrict access
-if ($user_type !== 'super_admin') {
+// ✅ FIXED: Changed from 'super_admin' to 'superadmin'
+if ($user_type !== 'superadmin') {
     echo '<div class="alert alert-danger">Access denied. Only Super Admin can access this module.</div>';
     return;
 }
@@ -61,7 +60,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             'spec_id'         => $_POST['spec_id']
         ];
 
-        $success = $doctor->create($data); // Assuming create() now returns boolean or error message
+        $success = $doctor->create($data);
         if ($success === true) {
             $message = "✅ Doctor added successfully.";
             $lastId = $db->lastInsertId();
@@ -89,7 +88,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     // CREATE USER (SECOND POST: TRIGGERED BY MODAL BUTTON)
     elseif (isset($_POST['create_user'])) {
         $linked_id = $_POST['linked_id'] ?? null;
-        $temp_password = $_POST['password'] ?? null; // Capture the temporary password
+        $temp_password = $_POST['password'] ?? null;
         
         if (empty($linked_id)) {
             $userMessage = "❌ Doctor ID missing. Please ensure the doctor record exists before creating the user account.";
@@ -98,11 +97,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 'user_name' => $_POST['user_name'],
                 'password'  => password_hash($temp_password, PASSWORD_DEFAULT),
                 'linked_id' => $linked_id,
-                'doc_id'    => $linked_id, // Link to doctor table
+                'doc_id'    => $linked_id,
                 'user_type' => 'doctor'
             ];
             
-            // Assuming $user->addLinkedAccount() returns true on success or an error string/false
             $userCreationResult = $user->addLinkedAccount($userData);
 
             if ($userCreationResult === true || (is_string($userCreationResult) && strpos($userCreationResult, '✅') !== false)) {
@@ -110,7 +108,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                  unset($_SESSION['new_doctor_id']);
                  unset($_SESSION['new_doctor_email']);
             } else {
-                 // Display the specific reason for user creation failure
                  $userMessage = "❌ Failed to create user account. Reason: " . htmlspecialchars($userCreationResult); 
             }
         }
@@ -136,7 +133,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     elseif (isset($_POST['delete'])) {
         $id = $_POST['delete'];
         $success = $doctor->delete($id);
-        // Also delete the linked user account if it exists
         $user->deleteLinkedAccount($id, 'doctor'); 
         $message = $success ? "✅ Doctor deleted successfully." : "❌ Failed to delete doctor.";
     }
@@ -231,7 +227,7 @@ function generateRandomPassword($length = 10) {
                             <td><?= $r['formatted_created_at'] ?? '-' ?></td>
                             <td><?= $r['formatted_updated_at'] ?? '-' ?></td>
                             
-                               <td class="text-center">
+                            <td class="text-center">
                                 <input type="hidden" name="doc_id" value="<?= $r['doc_id'] ?>">                           
                                 <button name="update" class="btn btn-sm btn-success mb-1 w-100">Update</button>                                
                                 <button name="delete" value="<?= $r['doc_id'] ?>" 
@@ -239,13 +235,11 @@ function generateRandomPassword($length = 10) {
                                         onclick="return confirm('Delete this doctor?')">
                                     Delete
                                 </button>
-                                   <a href="?module=appointment&doc_id=<?= $r['doc_id'] ?>" 
+                                <a href="?module=appointment&doc_id=<?= $r['doc_id'] ?>" 
                                    class="btn btn-sm btn-info mb-1 w-100" 
                                    title="View Appointments for Doctor ID: <?= $r['doc_id'] ?>">
                                     View Appts
                                 </a>
-                            </td>
-
                             </td>
                         </form>
                     </tr>
@@ -301,31 +295,12 @@ function validateDoctorForm(f) {
     return true;
 }
 
-// Show the modal only if a new doctor was just added (before the user account is created)
-<?php 
-// Only check for new_doctor_id. new_doctor_email might be empty if the record failed to save.
-if (isset($_SESSION['new_doctor_id'])): 
-?>
+<?php if (isset($_SESSION['new_doctor_id'])): ?>
 document.addEventListener("DOMContentLoaded", () => {
-    // Check if the linked_id is present (meaning a doctor was just created)
     if (document.querySelector('input[name="linked_id"]').value) {
         const modal = new bootstrap.Modal(document.getElementById('autoUserDoctorModal'));
         modal.show();
     }
-    
-    // NOTE: Session variables are now unset *only* after successful user creation (in the PHP block)
-    // or when the user closes the modal without creating an account (which we can't control easily).
 });
-
-// We need a way to clear the session if the user clicks close without creating the account.
-// This client-side AJAX call handles the 'Close' button click.
-document.getElementById('autoUserDoctorModal').addEventListener('hidden.bs.modal', function (event) {
-    // Use the Fetch API to send a request to clear the session variables, 
-    // but this would require a separate PHP endpoint or a GET request.
-    // For simplicity, we rely on the user creation POST clearing it, or a page refresh clearing it eventually.
-    
-    // For now, let's keep the session clear logic server-side in the create_user block.
-});
-
 <?php endif; ?>
 </script>

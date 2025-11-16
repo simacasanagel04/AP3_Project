@@ -6,10 +6,10 @@ require_once dirname(__DIR__, 3) . '/classes/Status.php';
 // Assuming $db is your established PDO database connection
 $appointmentStatus = new Status($db);
 $message = '';
-$user_type = $_SESSION['user_type'] ?? 'super_admin';
+$user_type = $_SESSION['user_type'] ?? '';
 
-// Restrict access
-if ($user_type !== 'super_admin') {
+// Restrict access - FIXED: Check for 'superadmin' (no underscore)
+if ($user_type !== 'superadmin') {
     echo '<div class="alert alert-danger">Access denied. Only Super Admin can access this module.</div>';
     return;
 }
@@ -120,7 +120,7 @@ $records = $appointmentStatus->all();
                                                 <option value="Cancelled" <?= $r['status_name'] == 'Cancelled' ? 'selected' : '' ?>>Cancelled</option>
                                             </select>
                                         </td>
-                                        <td><?= date('M d, Y H:i A', strtotime($r['STATUS_CREATED_AT'])) ?></td>
+                                        <td><?= date('M d, Y H:i A', strtotime($r['STAT_CREATED_AT'])) ?></td>
                                         <td class="text-nowrap">
                                             <button type="submit" name="update_status" class="btn btn-sm btn-success">Update</button>
                                             <button type="submit" name="delete_status" value="<?= $r['stat_id'] ?>" 

@@ -34,7 +34,7 @@ class Appointment {
         }
 
         $data['APPT_ID'] = $this->generateNewApptId();
-        $data['STAT_ID'] = $data['stat_id'] ?? 5;
+        $data['STAT_ID'] = $data['stat_id'] ?? 1;
         $data['DOC_ID'] = $data['doc_id'] ?? null;
         $data['SERV_ID'] = $data['serv_id'] ?? null;
 
@@ -87,11 +87,10 @@ class Appointment {
         return $year . '-' . $month . '-' . str_pad($nextSequence, 7, '0', STR_PAD_LEFT);
     }
 
-    /** READ ALL (with optional search) - FIXED VERSION */
+    /** READ ALL (with optional search) - FIXED WITH CORRECT UPPERCASE COLUMNS */
     public function readAll($search = null) {
         error_log("=== readAll() called with search: " . var_export($search, true) . " ===");
         
-        // Simple query - NOTE: status table uses lowercase column names
         $query = "SELECT
             a.APPT_ID, 
             a.APPT_DATE, 
@@ -107,14 +106,13 @@ class Appointment {
             COALESCE(d.DOC_FIRST_NAME, 'Dr.') AS doctor_first_name,
             COALESCE(d.DOC_LAST_NAME, 'Unknown') AS doctor_last_name,
             COALESCE(s.SERV_NAME, 'N/A') AS service_name,
-            COALESCE(st.status_name, 'Unknown') AS status_name
+            COALESCE(st.STAT_NAME, 'Unknown') AS status_name
         FROM appointment a
         LEFT JOIN patient p ON a.PAT_ID = p.PAT_ID
         LEFT JOIN doctor d ON a.DOC_ID = d.DOC_ID
         LEFT JOIN service s ON a.SERV_ID = s.SERV_ID
-        LEFT JOIN status st ON a.STAT_ID = st.stat_id";
+        LEFT JOIN status st ON a.STAT_ID = st.STAT_ID";
 
-        // Only add WHERE clause if search is actually provided and not empty
         if (!empty($search) && trim($search) !== '') {
             $query .= " WHERE a.APPT_ID LIKE :search";
         }
@@ -132,7 +130,6 @@ class Appointment {
                 return [];
             }
             
-            // Only bind search parameter if it was actually provided
             if (!empty($search) && trim($search) !== '') {
                 $like = "%" . $search . "%";
                 $stmt->bindParam(':search', $like, PDO::PARAM_STR);
@@ -155,7 +152,6 @@ class Appointment {
             
             if (!empty($result)) {
                 error_log("Sample row keys: " . implode(', ', array_keys($result[0])));
-                error_log("Sample row data: " . print_r($result[0], true));
             } else {
                 error_log("⚠️ Query returned 0 rows");
             }
@@ -165,7 +161,6 @@ class Appointment {
         } catch (PDOException $e) {
             error_log("❌ readAll() EXCEPTION: " . $e->getMessage());
             error_log("SQL State: " . $e->getCode());
-            error_log("Stack trace: " . $e->getTraceAsString());
             return [];
         }
     }
@@ -222,7 +217,6 @@ class Appointment {
         }
     }
 
-    // Get all appointments for a patient
     public function getByPatientId($pat_id) {
         try {
             $sql = "SELECT 
@@ -262,7 +256,6 @@ class Appointment {
         return $stmt->fetch(PDO::FETCH_ASSOC);
     }
 
-    // Get appointment by ID
     public function findById($app_id) {
         try {
             $sql = "SELECT 
@@ -314,7 +307,6 @@ class Appointment {
         return $success;
     }
 
-    // Update only status
     public function updateStatus($data) {
         try {
             $sql = "UPDATE {$this->table} 

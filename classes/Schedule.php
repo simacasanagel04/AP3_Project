@@ -1,5 +1,5 @@
 <?php
-// /classes/Schedule.php
+// classes/Schedule.php
 class Schedule {
     private $conn;
     private $table = "schedule";
@@ -18,7 +18,8 @@ class Schedule {
                     INNER JOIN doctor d ON s.DOC_ID = d.DOC_ID 
                     WHERE d.SPEC_ID = :spec_id 
                       AND s.SCHED_DAYS >= CURDATE() 
-                      AND s.SCHED_DAYS <= DATE_ADD(CURDATE(), INTERVAL :days DAY) 
+                      AND s.SCHED_DAYS <= DATE_ADD(CURDATE(), INTERVAL :days DAY)
+                      AND s.SCHED_DAYS != '0000-00-00'
                     ORDER BY s.SCHED_DAYS";
             $stmt = $this->conn->prepare($sql);
             $stmt->execute([
@@ -118,7 +119,6 @@ class Schedule {
         $sql = "INSERT INTO {$this->table} 
                 (DOC_ID, SCHED_DAYS, SCHED_START_TIME, SCHED_END_TIME, SCHED_CREATED_AT) 
                 VALUES (:doc_id, :days, :start_time, :end_time, NOW())";
-        // Removed SCHED_UPDATED_AT from INSERT
         $stmt = $this->conn->prepare($sql);
         try {
             return $stmt->execute([
@@ -151,16 +151,13 @@ class Schedule {
     // Process rows to add formatted fields
     private function formatScheduleRows($rows) {
         foreach ($rows as &$row) {
-            // Use date() for formatting in PHP, keeping raw time fields for <input type="time">
             $row['formatted_start_time'] = date('h:i A', strtotime($row['SCHED_START_TIME']));
             $row['formatted_end_time'] = date('h:i A', strtotime($row['SCHED_END_TIME']));
 
-            // Format Created/Updated time
             $created = date('M d, Y', strtotime($row['SCHED_CREATED_AT']));
             $updated = $row['SCHED_UPDATED_AT'] ? date('H:i:s', strtotime($row['SCHED_UPDATED_AT'])) : '—';
             $row['formatted_created_at'] = $created . "<br>" . $updated;
 
-            // Ensure SCHED_START_TIME and SCHED_END_TIME are raw HH:MM:SS for inputs
             $row['SCHED_START_TIME'] = date('H:i:s', strtotime($row['SCHED_START_TIME']));
             $row['SCHED_END_TIME'] = date('H:i:s', strtotime($row['SCHED_END_TIME']));
         }
@@ -169,7 +166,7 @@ class Schedule {
 
     // Read all schedules
     public function all() {
-        $sql = $this->getBaseScheduleQuery() . " ORDER BY s.SCHED_DAYS, s.SCHED_START_TIME ASC";
+        $sql = $this->getBaseScheduleQuery() . " WHERE s.SCHED_DAYS != '0000-00-00' ORDER BY s.SCHED_DAYS DESC, s.SCHED_START_TIME ASC";
         $stmt = $this->conn->query($sql);
         $rows = $stmt->fetchAll(PDO::FETCH_ASSOC);
         return $this->formatScheduleRows($rows);
@@ -177,7 +174,7 @@ class Schedule {
 
     // Read schedules for a specific doctor
     public function getByDoctorId($doc_id) {
-        $sql = $this->getBaseScheduleQuery() . " WHERE s.DOC_ID = :doc_id ORDER BY s.SCHED_DAYS, s.SCHED_START_TIME ASC";
+        $sql = $this->getBaseScheduleQuery() . " WHERE s.DOC_ID = :doc_id AND s.SCHED_DAYS != '0000-00-00' ORDER BY s.SCHED_DAYS DESC, s.SCHED_START_TIME ASC";
         $stmt = $this->conn->prepare($sql);
         $stmt->execute([':doc_id' => $doc_id]);
         $rows = $stmt->fetchAll(PDO::FETCH_ASSOC);
@@ -187,7 +184,7 @@ class Schedule {
     // READ TODAY'S SCHEDULES
     public function todaySchedule() {
         date_default_timezone_set('Asia/Manila');
-        $today = date('l'); // e.g., Monday
+        $today = date('Y-m-d');
         $sql = $this->getBaseScheduleQuery() . " WHERE s.SCHED_DAYS = :today ORDER BY s.SCHED_START_TIME ASC";
         try {
             $stmt = $this->conn->prepare($sql);
@@ -237,7 +234,7 @@ class Schedule {
         }
     }
 
-    // Helper to get all doctors (needed for the form dropdown)
+    // Helper to get all doctors
     public function getAllDoctors() {
         $sql = "SELECT 
                     DOC_ID, 
