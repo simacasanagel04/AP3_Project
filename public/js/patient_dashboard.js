@@ -141,24 +141,51 @@ document.addEventListener('DOMContentLoaded', function () {
     }
 
     // 3. Date change - Load available time slots
-    if (dateInput) {
-        dateInput.addEventListener('change', function() {
-            const selectedDate = this.value;
-            const specId = departmentSelect.value;
+if (dateInput) {
+    dateInput.addEventListener('change', function() {
+        const selectedDate = this.value;
+        const specId = departmentSelect.value;
 
-            timeSelect.innerHTML = '<option value="">-- Loading... --</option>';
+        // ========================================
+        // FIX 1: BLOCK SUNDAYS (Day 0)
+        // ========================================
+        const selectedDay = new Date(selectedDate + 'T00:00:00');
+        const dayOfWeek = selectedDay.getDay();
+
+        if (dayOfWeek === 0) {
+            alert('⚠️ CLOSED ON SUNDAYS\n\nOur clinic operates Monday-Saturday only.\nMonday-Friday: 8:00 AM - 6:00 PM\nSaturday: 9:00 AM - 5:00 PM\n\nPlease select another date.');
+            this.value = '';
+            timeSelect.innerHTML = '<option value="">-- Select Date First --</option>';
             timeSelect.disabled = true;
-
-            if (!selectedDate || !specId) return;
-
-            // Check if date is available
-            const dateAvailable = availableDates.some(d => d === selectedDate);
-            if (!dateAvailable) {
-                alert('Selected date is not available. Please choose another date.');
-                this.value = '';
-                timeSelect.innerHTML = '<option value="">-- Select Date First --</option>';
-                return;
+            
+            // Update note
+            const noteEl = document.getElementById('dateNote');
+            if (noteEl) {
+                noteEl.textContent = '⚠️ Sundays are closed. Please select Monday-Saturday.';
+                noteEl.style.color = '#dc3545';
             }
+            return;
+        }
+
+        // Reset note color
+        const noteEl = document.getElementById('dateNote');
+        if (noteEl) {
+            noteEl.style.color = '';
+        }
+
+        timeSelect.innerHTML = '<option value="">-- Loading... --</option>';
+        timeSelect.disabled = true;
+
+        if (!selectedDate || !specId) return;
+
+        // Check if date is available
+        const dateAvailable = availableDates.some(d => d === selectedDate);
+        if (!dateAvailable) {
+            alert('Selected date is not available. Please choose another date.');
+            this.value = '';
+            timeSelect.innerHTML = '<option value="">-- Select Date First --</option>';
+            return;
+        }
 
             // Fetch available time slots
             fetch(`ajax/patient_get_avail_times.php?spec_id=${specId}&date=${selectedDate}`)
@@ -838,6 +865,36 @@ function fetchAvailableDatesForUpdate(specId, currentDate) {
                 const dateInput = document.getElementById('update_date');
                 const availableDates = data.dates;
                 
+                // ========================================
+                // FIX 4: ADD SUNDAY BLOCKING TO UPDATE MODAL
+                // ========================================
+                // Add change listener for Sunday blocking
+                if (!dateInput.dataset.listenerAdded) {
+                    dateInput.addEventListener('change', function() {
+                        const selectedDay = new Date(this.value + 'T00:00:00');
+                        const dayOfWeek = selectedDay.getDay();
+                        
+                        if (dayOfWeek === 0) {
+                            alert('⚠️ CLOSED ON SUNDAYS\n\nOur clinic operates Monday-Saturday only.\nPlease select another date.');
+                            this.value = this.dataset.currentDate || '';
+                            
+                            const noteEl = document.getElementById('update_date_note');
+                            if (noteEl) {
+                                noteEl.textContent = '⚠️ Sundays are closed';
+                                noteEl.style.color = '#dc3545';
+                            }
+                            return;
+                        }
+                        
+                        // Reset note color
+                        const noteEl = document.getElementById('update_date_note');
+                        if (noteEl) {
+                            noteEl.style.color = '';
+                        }
+                    });
+                    dateInput.dataset.listenerAdded = 'true';
+                }
+                
                 // Set min and max date
                 const today = new Date().toISOString().split('T')[0];
                 const maxDate = new Date();
@@ -851,13 +908,12 @@ function fetchAvailableDatesForUpdate(specId, currentDate) {
                 // Add note
                 const noteEl = document.getElementById('update_date_note');
                 if (noteEl) {
-                    noteEl.textContent = `${availableDates.length} dates available`;
+                    noteEl.textContent = `${availableDates.length} dates available (Mon-Sat only)`;
                 }
             }
         })
         .catch(error => console.error('Error fetching dates:', error));
 }
-
 function fetchAvailableTimesForUpdate(specId, selectedDate, currentTime) {
     const timeSelect = document.getElementById('update_time');
     timeSelect.innerHTML = '<option value="">-- Loading... --</option>';

@@ -52,7 +52,7 @@ if (!$patientData) {
 <div class="sidebar">
     <div class="logo-area">
         <div class="d-flex align-items-center mb-4">
-            <a href="../index.php"><img src="../assets/logo/logo.png" alt="Logo" class="logo-img" style="width: 200px; height: auto;"></a>
+            <a href="../index.php"><img src="https://res.cloudinary.com/dibojpqg2/image/upload/v1763156755/logo_jbpnwf.png" alt="Logo" class="logo-img" style="width: 200px; height: auto;"></a>
         </div>
     </div>
 

@@ -180,7 +180,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                         <div class="row g-3 mt-2">
                             <div class="col-md-6">
                                 <label class="form-label">Email <span class="text-danger">*</span></label>
-                                <input type="text" class="form-control" name="pat_email" value="<?= htmlspecialchars($formData['pat_email']) ?>" placeholder="Any format for testing" required>
+                                <input type="text" class="form-control" name="pat_email" value="<?= htmlspecialchars($formData['pat_email']) ?>"  required>
                                 <small class="text-muted">You can use any format for testing</small>
                             </div>
                             <div class="col-md-6">

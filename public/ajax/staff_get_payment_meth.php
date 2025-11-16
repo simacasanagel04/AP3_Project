@@ -1,4 +1,5 @@
 <?php
+// public/ajax/staff_get_payment_meth.php
 // for Staff Payment
 
 session_start();

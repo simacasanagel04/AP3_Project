@@ -6,11 +6,11 @@ require_once '../config/Database.php';
 require_once '../classes/Payment.php';
 include '../includes/staff_header.php';
 
-// Check if user is logged in as staff
-// if (!isset($_SESSION['user_id']) || !isset($_SESSION['staff_id'])) {
-//     header("Location: login.php");
-//     exit();
-// }
+// Redirect if not logged in (BEFORE including header)
+if (!isset($_SESSION['staff_id'])) {
+    header("Location: login.php");
+    exit();
+}
 
 $db = (new Database())->connect();
 $payment = new Payment($db);
@@ -432,6 +432,22 @@ $filteredTotal = count($payments);
 
 <!-- Alert Container -->
 <div class="alert-container" id="alertContainer"></div>
+
+<footer>
+    <div class="container">
+        <div class="row align-items-center small">
+            <div class="col-md-8 text-center text-md-start">
+                <p class="mb-0 text-black">© 2025 AKSyon Medical Center. All rights reserved.</p>
+            </div>
+            <div class="col-md-4 text-center text-md-end">
+                <a href="https://www.facebook.com/" class="text-black mx-2"><i class="bi bi-facebook fs-5"></i></a>
+                <a href="https://www.instagram.com/" class="text-black mx-2"><i class="bi bi-instagram fs-5"></i></a>
+                <a href="https://www.linkedin.com/" class="text-black mx-2"><i class="bi bi-linkedin fs-5"></i></a>
+            </div>
+        </div>
+    </div>
+</footer>
+
 
 <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>

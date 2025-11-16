@@ -6,13 +6,13 @@ session_start();
 require_once __DIR__ . '/../config/Database.php';
 
 // Optional: if you use a Staff class for user info, require it
-// require_once __DIR__ . '/../classes/Staff.php';
+require_once __DIR__ . '/../classes/Staff.php';
 
-// Optional: auth check (uncomment if you want to enforce login)
-// if (!isset($_SESSION['STAFF_ID'])) {
-//     header('Location: ../public/login.php');
-//     exit();
-// }
+// Redirect if not logged in (BEFORE including header)
+if (!isset($_SESSION['staff_id'])) {
+    header("Location: login.php");
+    exit();
+}
 
 // === Connect to DB safely ===
 try {
@@ -65,54 +65,17 @@ $quickActions = [
   <meta charset="utf-8">
   <title>Staff Dashboard</title>
   <meta name="viewport" content="width=device-width,initial-scale=1">
-
-  <!-- Bootstrap 5 CSS -->
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
-
-  <!-- Bootstrap Icons -->
   <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet">
-
   <style>
-    :root {
-      --accent: #003366;
-      --muted: #6c757d;
-      --card-bg: #ffffff;
-      --page-bg: #f4f7fb;
-    }
-    body { background: var(--page-bg); font-family: "Segoe UI", Roboto, Arial, sans-serif; color: #111827; margin: 0; padding: 0; }
-    .dashboard-title { font-size: 1.9rem; font-weight: 800; color: var(--accent); }
-    .card-stat { border-radius: 14px; padding: 20px; background: var(--card-bg); border: none; box-shadow: 0 6px 18px rgba(2,6,23,0.06); transition: .18s; }
-    .card-stat:hover { transform: translateY(-6px); box-shadow: 0 14px 30px rgba(2,6,23,0.08); }
-    .quick-card {
-      border-radius: 12px;
-      background: var(--card-bg);
-      padding: 18px;
-      display: flex;
-      gap: 12px;
-      align-items: center;
-      box-shadow: 0 6px 18px rgba(2,6,23,0.04);
-      transition: transform .15s, box-shadow .15s;
-      text-decoration: none;
-      color: inherit;
-    }
-    .quick-card:hover { transform: translateY(-6px); box-shadow: 0 16px 36px rgba(2,6,23,0.08); text-decoration: none; }
-    .quick-icon {
-      width: 56px;
-      height: 56px;
-      border-radius: 10px;
-      display:flex;
-      align-items:center;
-      justify-content:center;
-      background: linear-gradient(180deg, rgba(0,51,102,0.08), rgba(0,51,102,0.02));
-      color: var(--accent);
-      font-size: 1.6rem;
-    }
-    .quick-text .title { font-weight:700; margin:0; }
-    .quick-text .desc  { font-size: .875rem; color: var(--muted); margin:0; }
-    footer { color: var(--muted); }
-    @media (max-width: 767px) {
-      .quick-icon { width: 48px; height:48px; font-size:1.25rem; }
-    }
+    body { background: #f4f7fb; }
+    .dashboard-title { color: #003366; }
+    .card-stat { border-radius: 14px; border: none; transition: .18s; }
+    .card-stat:hover { transform: translateY(-6px); }
+    .quick-card { border-radius: 12px; background: #fff; transition: transform .15s; }
+    .quick-card:hover { transform: translateY(-6px); text-decoration: none; }
+    .quick-icon { width: 56px; height: 56px; border-radius: 10px; background: linear-gradient(180deg, rgba(0,51,102,0.08), rgba(0,51,102,0.02)); color: #003366; font-size: 1.6rem; }
+    @media (max-width: 767px) { .quick-icon { width: 48px; height: 48px; font-size: 1.25rem; } }
   </style>
 </head>
 <body>
@@ -122,7 +85,7 @@ $quickActions = [
   <div class="container py-4">
 
     <div class="d-flex justify-content-between align-items-center mb-4 flex-wrap">
-      <h4 class="dashboard-title mb-0">Staff Dashboard</h4>
+      <h4 class="dashboard-title mb-0 fw-bold fs-3">Staff Dashboard</h4>
       <div class="mt-2 mt-md-0">
         <span class="me-3 fw-semibold"><?= date('l, F j, Y') ?></span>
         <span id="live-clock" class="fw-bold text-primary"></span>
@@ -132,14 +95,14 @@ $quickActions = [
     <!-- Top Stats -->
     <div class="row g-4 mb-4">
       <div class="col-12 col-md-6">
-        <div class="card-stat text-center">
+        <div class="card card-stat shadow text-center p-4">
           <h6 class="text-muted">Total Doctors</h6>
           <h2 class="fw-bold text-primary"><?= htmlspecialchars($total_doctors) ?></h2>
           <small class="text-muted">Active Doctors</small>
         </div>
       </div>
       <div class="col-12 col-md-6">
-        <div class="card-stat text-center">
+        <div class="card card-stat shadow text-center p-4">
           <h6 class="text-muted">Total Staff</h6>
           <h2 class="fw-bold text-success"><?= htmlspecialchars($total_staff) ?></h2>
           <small class="text-muted">Including Admins</small>
@@ -158,13 +121,13 @@ $quickActions = [
             <div class="row g-3">
               <?php foreach ($quickActions as $i => $act): ?>
                 <div class="col-12 col-md-6 col-lg-4">
-                  <a class="quick-card" href="<?= htmlspecialchars($act['link']) ?>">
-                    <div class="quick-icon">
+                  <a class="quick-card d-flex gap-3 align-items-center p-3 shadow-sm text-decoration-none text-dark" href="<?= htmlspecialchars($act['link']) ?>">
+                    <div class="quick-icon d-flex align-items-center justify-content-center">
                       <i class="bi bi-<?= htmlspecialchars($act['icon']) ?>"></i>
                     </div>
-                    <div class="quick-text">
-                      <p class="title mb-0"><?= htmlspecialchars($act['label']) ?></p>
-                      <p class="desc mb-0"><?= htmlspecialchars($act['desc']) ?></p>
+                    <div>
+                      <p class="fw-bold mb-0"><?= htmlspecialchars($act['label']) ?></p>
+                      <p class="text-muted small mb-0"><?= htmlspecialchars($act['desc']) ?></p>
                     </div>
                   </a>
                 </div>
@@ -176,7 +139,7 @@ $quickActions = [
 
     </div>
 
-    <footer class="text-center mt-4">
+    <footer class="text-center text-muted mt-4">
       <p class="mt-3 mb-0">© <?= date('Y') ?> AKSyon Medical Center. All Rights Reserved.</p>
     </footer>
 
@@ -195,7 +158,6 @@ $quickActions = [
     updateClock();
   </script>
 
-  <!-- Bootstrap JS -->
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 </body>
 </html>

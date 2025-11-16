@@ -1,7 +1,5 @@
 <?php
 // public/ajax/add_schedule.php
-// for doctor_schedule.php
-
 session_start();
 require_once '../../config/Database.php';
 
@@ -60,25 +58,25 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     try {
         $db = (new Database())->connect();
         
-        // Check for overlapping schedules
+        // Check for overlapping schedules on the SAME DATE
         $checkSql = "SELECT COUNT(*) FROM schedule 
                      WHERE DOC_ID = ? 
-                     AND SCHED_DAYS LIKE ?
+                     AND SCHED_DAYS = ?
                      AND ((SCHED_START_TIME < ? AND SCHED_END_TIME > ?) 
                      OR (SCHED_START_TIME < ? AND SCHED_END_TIME > ?))";
         $checkStmt = $db->prepare($checkSql);
-        $dayName = date('l', strtotime($date));
-        $checkStmt->execute([$doc_id, "%$dayName%", $end_time, $start_time, $end_time, $start_time]);
+        $checkStmt->execute([$doc_id, $date, $end_time, $start_time, $end_time, $start_time]);
         
         if ($checkStmt->fetchColumn() > 0) {
             echo json_encode(['success' => false, 'message' => 'Schedule overlaps with existing schedule']);
             exit;
         }
 
+        // Insert the schedule with the actual DATE
         $sql = "INSERT INTO schedule (DOC_ID, SCHED_DAYS, SCHED_START_TIME, SCHED_END_TIME, SCHED_CREATED_AT) 
                 VALUES (?, ?, ?, ?, NOW())";
         $stmt = $db->prepare($sql);
-        $result = $stmt->execute([$doc_id, $dayName, $start_time, $end_time]);
+        $result = $stmt->execute([$doc_id, $date, $start_time, $end_time]);
 
         if ($result) {
             $sched_id = $db->lastInsertId();
