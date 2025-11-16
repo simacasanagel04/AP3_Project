@@ -1,6 +1,9 @@
 <?php 
 // public/patient_dashb.php
 
+// Set timezone to Philippines (Asia/Manila) - CRITICAL FIX
+date_default_timezone_set('Asia/Manila');
+
 include '../includes/patient_header.php'; 
 
 // Get filter parameters
@@ -9,6 +12,10 @@ $filter_date = isset($_GET['filter_date']) ? trim($_GET['filter_date']) : '';
 
 // Fetch all appointments for this patient
 $appointments = $patient->getPatientAppointments($pat_id);
+
+// Define today's date FIRST
+$today = date('Y-m-d');
+$now = new DateTime();
 
 // Apply filters
 $filtered_appointments = $appointments;
@@ -25,14 +32,12 @@ if (!empty($filter_date)) {
     });
 }
 
-// Separate appointments
-$today = date('Y-m-d');
-$now = new DateTime();
-
+// Separate appointments using raw app_date field (YYYY-MM-DD format)
 $today_appointments = array_filter($filtered_appointments, function($appt) use ($today) {
     return $appt['app_date'] === $today && $appt['app_status'] != 3; // Exclude cancelled
 });
 
+// Upcoming appointments are FUTURE dates only (greater than today)
 $upcoming_appointments = array_filter($filtered_appointments, function($appt) use ($today) {
     return $appt['app_date'] > $today && $appt['app_status'] == 1; // Only scheduled
 });
@@ -178,11 +183,11 @@ $total_appointments = count($appointments);
                             ?>
                         </td>
                         <td>
-                            <button class="btn btn-sm btn-info me-1" onclick="viewAppointment(<?= htmlspecialchars(json_encode($appt)) ?>)">
+                            <button class="btn btn-sm btn-info me-1" onclick='viewAppointment(<?= json_encode($appt, JSON_HEX_APOS | JSON_HEX_QUOT) ?>)'>
                                 <i class="bi bi-eye"></i> View
                             </button>
                             <?php if ($status == 1): ?>
-                            <button class="btn btn-sm btn-warning me-1" onclick="updateAppointment(<?= $appt['app_id'] ?>, <?= htmlspecialchars(json_encode($appt)) ?>)">
+                            <button class="btn btn-sm btn-warning me-1" onclick='updateAppointment("<?= $appt['app_id'] ?>", <?= json_encode($appt, JSON_HEX_APOS | JSON_HEX_QUOT) ?>)'>
                                 <i class="bi bi-pencil"></i> Update
                             </button>
                             <button class="btn btn-sm btn-danger" onclick="cancelAppointment(<?= $appt['app_id'] ?>)">
@@ -243,11 +248,11 @@ $total_appointments = count($appointments);
                             ?>
                         </td>
                         <td>
-                            <button class="btn btn-sm btn-info me-1" onclick="viewAppointment(<?= htmlspecialchars(json_encode($appt)) ?>)">
+                            <button class="btn btn-sm btn-info me-1" onclick='viewAppointment(<?= json_encode($appt, JSON_HEX_APOS | JSON_HEX_QUOT) ?>)'>
                                 <i class="bi bi-eye"></i> View
                             </button>
                             <?php if ($status == 1): ?>
-                            <button class="btn btn-sm btn-warning me-1" onclick="updateAppointment(<?= $appt['app_id'] ?>, <?= htmlspecialchars(json_encode($appt)) ?>)">
+                            <button class="btn btn-sm btn-warning me-1" onclick='updateAppointment("<?= $appt['app_id'] ?>", <?= json_encode($appt, JSON_HEX_APOS | JSON_HEX_QUOT) ?>)'>
                                 <i class="bi bi-pencil"></i> Update
                             </button>
                             <button class="btn btn-sm btn-danger" onclick="cancelAppointment(<?= $appt['app_id'] ?>)">
@@ -297,27 +302,29 @@ $total_appointments = count($appointments);
             <form id="updateForm">
                 <div class="modal-body">
                     <input type="hidden" id="update_app_id" name="app_id">
+                    <input type="hidden" id="update_spec_id" name="spec_id">
+                    <input type="hidden" id="update_doc_id" name="doc_id">
                     
                     <div class="alert alert-info">
                         <i class="bi bi-info-circle me-2"></i>
-                        <strong>Note:</strong> You can only reschedule to dates when doctors with the same specialization are available.
+                        <strong>Note:</strong> You can only reschedule to dates when doctors with the same specialization are available. Clinic is closed on Sundays.
                     </div>
                     
                     <div class="row g-3">
                         <div class="col-md-6">
-                            <label class="form-label">Appointment Date</label>
+                            <label class="form-label">Appointment Date <span class="text-danger">*</span></label>
                             <input type="date" class="form-control" id="update_date" name="app_date" required>
-                            <small class="text-muted" id="update_date_note">Available dates will be loaded</small>
+                            <small class="text-muted" id="update_date_note">Mon-Sat only. Sundays closed.</small>
                         </div>
                         <div class="col-md-6">
-                            <label class="form-label">Appointment Time</label>
+                            <label class="form-label">Appointment Time <span class="text-danger">*</span></label>
                             <select class="form-select" id="update_time" name="app_time" required>
                                 <option value="">-- Select Date First --</option>
                             </select>
-                            <small class="text-muted">30-minute time slots</small>
+                            <small class="text-muted">30-minute time slots with available doctors</small>
                         </div>
                         <div class="col-12">
-                            <label class="form-label">Status</label>
+                            <label class="form-label">Status <span class="text-danger">*</span></label>
                             <select class="form-select" id="update_status" name="app_status" required>
                                 <option value="1">Scheduled</option>
                                 <option value="2">Completed</option>

@@ -1,6 +1,6 @@
 <?php
 // public/ajax/patient_book_appointment.php
-// for user patient
+// FIXED VERSION - Properly retrieves custom APPT_ID from trigger
 
 session_start();
 require_once __DIR__ . '/../../config/Database.php';
@@ -38,13 +38,31 @@ try {
     // Start transaction
     $db->beginTransaction();
     
-    // Create appointment
+    // ========================================
+    // FIX: Call stored procedure to get APPT_ID first
+    // ========================================
+    $sqlGetId = "CALL generate_appointment_id(:appt_date, @new_appt_id)";
+    $stmtGetId = $db->prepare($sqlGetId);
+    $stmtGetId->execute([':appt_date' => $input['appt_date']]);
+    
+    // Retrieve the generated ID
+    $resultId = $db->query("SELECT @new_appt_id as appt_id")->fetch(PDO::FETCH_ASSOC);
+    $apptId = $resultId['appt_id'];
+    
+    if (!$apptId) {
+        throw new Exception('Failed to generate appointment ID');
+    }
+    
+    // ========================================
+    // FIX: Insert appointment WITH the generated APPT_ID
+    // ========================================
     $sqlAppt = "INSERT INTO appointment 
-                (APPT_DATE, APPT_TIME, APPT_CREATED_AT, PAT_ID, DOC_ID, SERV_ID, STAT_ID)
-                VALUES (:appt_date, :appt_time, NOW(), :pat_id, :doc_id, :serv_id, 1)";
+                (APPT_ID, APPT_DATE, APPT_TIME, APPT_CREATED_AT, PAT_ID, DOC_ID, SERV_ID, STAT_ID)
+                VALUES (:appt_id, :appt_date, :appt_time, NOW(), :pat_id, :doc_id, :serv_id, 1)";
     
     $stmtAppt = $db->prepare($sqlAppt);
     $apptCreated = $stmtAppt->execute([
+        ':appt_id' => $apptId,
         ':appt_date' => $input['appt_date'],
         ':appt_time' => $input['appt_time'],
         ':pat_id' => $input['pat_id'],
@@ -56,10 +74,9 @@ try {
         throw new Exception('Failed to create appointment');
     }
     
-    // Get appointment ID
-    $apptId = $db->lastInsertId();
-    
-    // Create payment record
+    // ========================================
+    // FIX: Now create payment with the correct APPT_ID
+    // ========================================
     $sqlPayment = "INSERT INTO payment 
                    (PAYMT_AMOUNT_PAID, PAYMT_DATE, PYMT_CREATED_AT, PYMT_METH_ID, PYMT_STAT_ID, APPT_ID)
                    VALUES (:amount, NOW(), NOW(), :method, 2, :appt_id)";
