@@ -1,4 +1,6 @@
 <?php
+echo "LOADING DATABASE FILE...<br>";
+
 class Database {
 
     private $conn;
