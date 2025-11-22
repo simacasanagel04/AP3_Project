@@ -141,51 +141,51 @@ document.addEventListener('DOMContentLoaded', function () {
     }
 
     // 3. Date change - Load available time slots
-if (dateInput) {
-    dateInput.addEventListener('change', function() {
-        const selectedDate = this.value;
-        const specId = departmentSelect.value;
+    if (dateInput) {
+        dateInput.addEventListener('change', function() {
+            const selectedDate = this.value;
+            const specId = departmentSelect.value;
 
-        // ========================================
-        // FIX 1: BLOCK SUNDAYS (Day 0)
-        // ========================================
-        const selectedDay = new Date(selectedDate + 'T00:00:00');
-        const dayOfWeek = selectedDay.getDay();
+            // ========================================
+            // FIX 1: BLOCK SUNDAYS (Day 0)
+            // ========================================
+            const selectedDay = new Date(selectedDate + 'T00:00:00');
+            const dayOfWeek = selectedDay.getDay();
 
-        if (dayOfWeek === 0) {
-            alert('⚠️ CLOSED ON SUNDAYS\n\nOur clinic operates Monday-Saturday only.\nMonday-Friday: 8:00 AM - 6:00 PM\nSaturday: 9:00 AM - 5:00 PM\n\nPlease select another date.');
-            this.value = '';
-            timeSelect.innerHTML = '<option value="">-- Select Date First --</option>';
-            timeSelect.disabled = true;
-            
-            // Update note
+            if (dayOfWeek === 0) {
+                alert('⚠️ CLOSED ON SUNDAYS\n\nOur clinic operates Monday-Saturday only.\nMonday-Friday: 8:00 AM - 6:00 PM\nSaturday: 9:00 AM - 5:00 PM\n\nPlease select another date.');
+                this.value = '';
+                timeSelect.innerHTML = '<option value="">-- Select Date First --</option>';
+                timeSelect.disabled = true;
+                
+                // Update note
+                const noteEl = document.getElementById('dateNote');
+                if (noteEl) {
+                    noteEl.textContent = '⚠️ Sundays are closed. Please select Monday-Saturday.';
+                    noteEl.style.color = '#dc3545';
+                }
+                return;
+            }
+
+            // Reset note color
             const noteEl = document.getElementById('dateNote');
             if (noteEl) {
-                noteEl.textContent = '⚠️ Sundays are closed. Please select Monday-Saturday.';
-                noteEl.style.color = '#dc3545';
+                noteEl.style.color = '';
             }
-            return;
-        }
 
-        // Reset note color
-        const noteEl = document.getElementById('dateNote');
-        if (noteEl) {
-            noteEl.style.color = '';
-        }
+            timeSelect.innerHTML = '<option value="">-- Loading... --</option>';
+            timeSelect.disabled = true;
 
-        timeSelect.innerHTML = '<option value="">-- Loading... --</option>';
-        timeSelect.disabled = true;
+            if (!selectedDate || !specId) return;
 
-        if (!selectedDate || !specId) return;
-
-        // Check if date is available
-        const dateAvailable = availableDates.some(d => d === selectedDate);
-        if (!dateAvailable) {
-            alert('Selected date is not available. Please choose another date.');
-            this.value = '';
-            timeSelect.innerHTML = '<option value="">-- Select Date First --</option>';
-            return;
-        }
+            // Check if date is available
+            const dateAvailable = availableDates.some(d => d === selectedDate);
+            if (!dateAvailable) {
+                alert('Selected date is not available. Please choose another date.');
+                this.value = '';
+                timeSelect.innerHTML = '<option value="">-- Select Date First --</option>';
+                return;
+            }
 
             // Fetch available time slots
             fetch(`ajax/patient_get_avail_times.php?spec_id=${specId}&date=${selectedDate}`)
@@ -254,245 +254,477 @@ if (dateInput) {
         });
     }
 
-    // ===============================
-    // PAYMENT FUNCTIONALITY
-    // ===============================
+    // ============================================================================
+    // PROFESSIONAL MODAL-BASED PAYMENT SYSTEM
+    // ============================================================================
 
+    // ========================================================================
+    // ELEMENT REFERENCES
+    // ========================================================================
     const paymentMethodSelect = document.getElementById('paymentMethodSelect');
-    const paymentCardContainer = document.getElementById('paymentCardContainer');
+    const proceedPaymentBtn = document.getElementById('proceedPaymentBtn');
+    const cancelPaymentBtn = document.getElementById('cancelPaymentBtn');
+    const paymentModalElement = document.getElementById('paymentModal');
+    const paymentFormContainer = document.getElementById('paymentFormContainer');
+    const paymentIcon = document.getElementById('paymentIcon');
+    const paymentAmount = document.getElementById('paymentAmount');
+    const paymentModalTitle = document.getElementById('paymentModalTitle');
+    const confirmPaymentBtn = document.getElementById('confirmPaymentBtn');
     const bookBtn = document.getElementById('bookBtn');
 
-    let selectedPaymentMethod = null;
+    let paymentModal = null;
+    if (paymentModalElement) {
+        paymentModal = new bootstrap.Modal(paymentModalElement);
+    }
 
-    // Payment method selection
+    let selectedPaymentMethod = null;
+    let selectedPaymentMethodName = null;
+
+    // ========================================================================
+    // PAYMENT METHOD SELECTION
+    // ========================================================================
     if (paymentMethodSelect) {
         paymentMethodSelect.addEventListener('change', function() {
             selectedPaymentMethod = this.value;
-            const methodName = this.options[this.selectedIndex].text;
+            selectedPaymentMethodName = this.options[this.selectedIndex].text;
 
-            if (!selectedPaymentMethod) {
-                paymentCardContainer.innerHTML = '';
-                bookBtn.disabled = true;
-                return;
+            if (selectedPaymentMethod) {
+                proceedPaymentBtn.disabled = false;
+            } else {
+                proceedPaymentBtn.disabled = true;
             }
-
-            // Generate payment confirmation card based on method
-            let cardHTML = '';
-
-            switch(methodName.toLowerCase()) {
-                case 'cash':
-                    cardHTML = `
-                        <div class="card-form active">
-                            <h5><i class="bi bi-cash-coin"></i> Cash Payment</h5>
-                            <div class="alert alert-info mt-3">
-                                <strong>Payment Instructions:</strong>
-                                <ul class="mb-0 mt-2">
-                                    <li>Pay at the clinic upon arrival</li>
-                                    <li>Bring exact amount if possible: ₱${selectedServicePrice.toFixed(2)}</li>
-                                    <li>Payment status will be marked as PENDING until confirmed by staff</li>
-                                </ul>
-                            </div>
-                            <div class="form-check mt-3">
-                                <input class="form-check-input" type="checkbox" id="confirmCash" required>
-                                <label class="form-check-label" for="confirmCash">
-                                    I understand that I need to pay ₱${selectedServicePrice.toFixed(2)} in cash at the clinic
-                                </label>
-                            </div>
-                        </div>
-                    `;
-                    break;
-
-                case 'debit card':
-                    cardHTML = `
-                        <div class="card-form active">
-                            <h5><i class="bi bi-credit-card"></i> Debit Card Payment</h5>
-                            <p class="text-muted">Enter your debit card details</p>
-                            <div class="mb-3">
-                                <label class="form-label">Card Number</label>
-                                <input type="text" class="form-control" id="debitCardNumber" placeholder="1234 5678 9012 3456" maxlength="19" required>
-                            </div>
-                            <div class="row g-3 mb-3">
-                                <div class="col-6">
-                                    <label class="form-label">Expiry Date</label>
-                                    <input type="text" class="form-control" id="debitExpiry" placeholder="MM/YY" maxlength="5" required>
-                                </div>
-                                <div class="col-6">
-                                    <label class="form-label">CVV</label>
-                                    <input type="text" class="form-control" id="debitCVV" placeholder="123" maxlength="3" required>
-                                </div>
-                            </div>
-                            <div class="mb-3">
-                                <label class="form-label">Cardholder Name</label>
-                                <input type="text" class="form-control" id="debitCardName" placeholder="JOHN DOE" required>
-                            </div>
-                            <div class="form-check">
-                                <input class="form-check-input" type="checkbox" id="confirmDebit" required>
-                                <label class="form-check-label" for="confirmDebit">
-                                    I confirm the card details are correct (Simulation only)
-                                </label>
-                            </div>
-                        </div>
-                    `;
-                    break;
-
-                case 'credit card':
-                    cardHTML = `
-                        <div class="card-form active">
-                            <h5><i class="bi bi-credit-card-2-front"></i> Credit Card Payment</h5>
-                            <p class="text-muted">Enter your credit card details</p>
-                            <div class="mb-3">
-                                <label class="form-label">Card Number</label>
-                                <input type="text" class="form-control" id="creditCardNumber" placeholder="1234 5678 9012 3456" maxlength="19" required>
-                                <small class="text-muted">We accept Visa, MasterCard, American Express</small>
-                            </div>
-                            <div class="row g-3 mb-3">
-                                <div class="col-6">
-                                    <label class="form-label">Expiry Date</label>
-                                    <input type="text" class="form-control" id="creditExpiry" placeholder="MM/YY" maxlength="5" required>
-                                </div>
-                                <div class="col-6">
-                                    <label class="form-label">CVV</label>
-                                    <input type="text" class="form-control" id="creditCVV" placeholder="123" maxlength="4" required>
-                                </div>
-                            </div>
-                            <div class="mb-3">
-                                <label class="form-label">Cardholder Name</label>
-                                <input type="text" class="form-control" id="creditCardName" placeholder="JOHN DOE" required>
-                            </div>
-                            <div class="form-check">
-                                <input class="form-check-input" type="checkbox" id="confirmCredit" required>
-                                <label class="form-check-label" for="confirmCredit">
-                                    I confirm the card details are correct (Simulation only)
-                                </label>
-                            </div>
-                        </div>
-                    `;
-                    break;
-
-                case 'bank transfer':
-                    cardHTML = `
-                        <div class="card-form active">
-                            <h5><i class="bi bi-bank"></i> Bank Transfer</h5>
-                            <div class="alert alert-warning mt-3">
-                                <strong>Bank Transfer Instructions:</strong>
-                                <ul class="mb-0 mt-2">
-                                    <li><strong>Bank Name:</strong> AKSyon Bank</li>
-                                    <li><strong>Account Name:</strong> AKSyon Medical Center</li>
-                                    <li><strong>Account Number:</strong> 1234-5678-9012</li>
-                                    <li><strong>Amount:</strong> ₱${selectedServicePrice.toFixed(2)}</li>
-                                </ul>
-                            </div>
-                            <div class="mb-3">
-                                <label class="form-label">Reference Number</label>
-                                <input type="text" class="form-control" id="bankRefNumber" placeholder="Enter transfer reference number" required>
-                            </div>
-                            <div class="mb-3">
-                                <label class="form-label">Transfer Date</label>
-                                <input type="date" class="form-control" id="bankTransferDate" max="${new Date().toISOString().split('T')[0]}" required>
-                            </div>
-                            <div class="form-check">
-                                <input class="form-check-input" type="checkbox" id="confirmBank" required>
-                                <label class="form-check-label" for="confirmBank">
-                                    I confirm that I have completed the bank transfer (Simulation only)
-                                </label>
-                            </div>
-                        </div>
-                    `;
-                    break;
-
-                case 'mobile payment':
-                    cardHTML = `
-                        <div class="card-form active">
-                            <h5><i class="bi bi-phone"></i> Mobile Payment</h5>
-                            <div class="alert alert-info mt-3">
-                                <strong>Supported Mobile Payment Platforms:</strong>
-                                <p class="mb-0 mt-2">GCash, PayMaya, GrabPay</p>
-                            </div>
-                            <div class="mb-3">
-                                <label class="form-label">Select Platform</label>
-                                <select class="form-select" id="mobilePlatform" required>
-                                    <option value="">-- Select Platform --</option>
-                                    <option value="GCash">GCash</option>
-                                    <option value="PayMaya">PayMaya</option>
-                                    <option value="GrabPay">GrabPay</option>
-                                </select>
-                            </div>
-                            <div class="mb-3">
-                                <label class="form-label">Mobile Number</label>
-                                <input type="text" class="form-control" id="mobileNumber" placeholder="09XX XXX XXXX" maxlength="11" required>
-                            </div>
-                            <div class="mb-3">
-                                <label class="form-label">Transaction Reference</label>
-                                <input type="text" class="form-control" id="mobileRefNumber" placeholder="Enter transaction reference" required>
-                            </div>
-                            <div class="form-check">
-                                <input class="form-check-input" type="checkbox" id="confirmMobile" required>
-                                <label class="form-check-label" for="confirmMobile">
-                                    I confirm the mobile payment details (Simulation only)
-                                </label>
-                            </div>
-                        </div>
-                    `;
-                    break;
-
-                default:
-                    cardHTML = `
-                        <div class="card-form active">
-                            <h5><i class="bi bi-building"></i> ${methodName}</h5>
-                            <div class="alert alert-info mt-3">
-                                <strong><i class="bi bi-info-circle"></i> Payment at Clinic</strong>
-                                <ul class="mb-0 mt-2">
-                                    <li>Payment will be processed upon your arrival at the clinic</li>
-                                    <li>Please arrive 10-15 minutes before your scheduled appointment</li>
-                                    <li>Bring valid ID and appointment confirmation</li>
-                                    <li>Amount to pay: ₱${selectedServicePrice.toFixed(2)}</li>
-                                    <li>Payment status will be marked as PENDING until confirmed by staff</li>
-                                </ul>
-                            </div>
-                            <div class="alert alert-warning">
-                                <i class="bi bi-exclamation-triangle"></i> <strong>Important:</strong> Failure to arrive on time may result in appointment cancellation.
-                            </div>
-                            <div class="form-check mt-3">
-                                <input class="form-check-input" type="checkbox" id="confirmOther" required>
-                                <label class="form-check-label" for="confirmOther">
-                                    I understand that I need to pay ₱${selectedServicePrice.toFixed(2)} at the clinic upon arrival
-                                </label>
-                            </div>
-                        </div>
-                    `;
-            }
-
-            paymentCardContainer.innerHTML = cardHTML;
-            bookBtn.disabled = false;
-
-            // Auto-format card inputs
-            formatCardInputs();
         });
     }
 
-    // Book appointment button
-    if (bookBtn) {
-        bookBtn.addEventListener('click', function() {
-            if (!validatePaymentForm()) {
-                alert('Please fill in all required payment fields');
+    // ========================================================================
+    // PROCEED TO PAYMENT BUTTON
+    // ========================================================================
+    if (proceedPaymentBtn) {
+        proceedPaymentBtn.addEventListener('click', function() {
+            if (!selectedPaymentMethod) {
+                alert('Please select a payment method');
                 return;
             }
 
-            // Prepare appointment data
+            // Get price from summary
+            const priceText = document.getElementById('summaryPrice').textContent;
+            selectedServicePrice = parseFloat(priceText.replace('₱', '').replace(',', ''));
+
+            // Update modal with payment method details
+            updatePaymentModal(selectedPaymentMethod, selectedPaymentMethodName, selectedServicePrice);
+
+            // Show modal
+            if (paymentModal) {
+                paymentModal.show();
+            }
+        });
+    }
+
+    // ========================================================================
+    // CANCEL PAYMENT
+    // ========================================================================
+    if (cancelPaymentBtn) {
+        cancelPaymentBtn.addEventListener('click', function() {
+            // Reset payment section
+            paymentMethodSelect.value = '';
+            proceedPaymentBtn.disabled = true;
+            selectedPaymentMethod = null;
+            selectedPaymentMethodName = null;
+            
+            // Go back to appointment selection
+            historyTab.classList.add('active');
+            bookTab.classList.remove('active');
+            historySection.style.display = 'block';
+            bookSection.style.display = 'none';
+            paymentSection.style.display = 'none';
+        });
+    }
+
+    // ========================================================================
+    // UPDATE PAYMENT MODAL BASED ON SELECTED METHOD
+    // ========================================================================
+    function updatePaymentModal(methodId, methodName, price) {
+        // Update title and amount
+        paymentModalTitle.textContent = methodName;
+        paymentAmount.textContent = '₱' + price.toFixed(2);
+
+        // Clear container
+        paymentFormContainer.innerHTML = '';
+
+        // Update icon based on payment method
+        const lowerMethodName = methodName.toLowerCase();
+        updatePaymentIcon(lowerMethodName);
+
+        // Generate form based on payment method
+        let formHTML = '';
+
+        if (lowerMethodName.includes('cash')) {
+            formHTML = generateCashForm(price);
+        } else if (lowerMethodName.includes('debit')) {
+            formHTML = generateCardForm('debit', price);
+        } else if (lowerMethodName.includes('credit')) {
+            formHTML = generateCardForm('credit', price);
+        } else if (lowerMethodName.includes('bank')) {
+            formHTML = generateBankTransferForm(price);
+        } else if (lowerMethodName.includes('mobile') || lowerMethodName.includes('gcash') || lowerMethodName.includes('paymaya')) {
+            formHTML = generateMobilePaymentForm(price, methodName);
+        } else {
+            formHTML = generateDefaultPaymentForm(price, methodName);
+        }
+
+        paymentFormContainer.innerHTML = formHTML;
+        
+        // Attach event listeners for form inputs
+        attachFormListeners();
+    }
+
+    // ========================================================================
+    // PAYMENT ICON UPDATER
+    // ========================================================================
+    function updatePaymentIcon(methodName) {
+        const iconMap = {
+            'cash': 'bi-cash-coin',
+            'debit': 'bi-credit-card',
+            'credit': 'bi-credit-card-2-front',
+            'bank': 'bi-bank2',
+            'mobile': 'bi-phone',
+            'gcash': 'bi-wallet2',
+            'paymaya': 'bi-wallet2'
+        };
+
+        let iconClass = 'bi-credit-card';
+        for (const [key, icon] of Object.entries(iconMap)) {
+            if (methodName.includes(key)) {
+                iconClass = icon;
+                break;
+            }
+        }
+
+        if (paymentIcon) {
+            paymentIcon.className = `bi ${iconClass}`;
+        }
+    }
+
+    // ========================================================================
+    // PAYMENT FORM GENERATORS
+    // ========================================================================
+
+    /**
+     * CASH PAYMENT FORM
+     */
+    function generateCashForm(price) {
+        return `
+            <div class="payment-form-card">
+                <div class="d-flex align-items-center justify-content-center mb-4">
+                    <div style="width: 100px; height: 60px; background: linear-gradient(135deg, #ffd700 0%, #ffed4e 100%); border-radius: 8px; display: flex; align-items: center; justify-content: center;">
+                        <i class="bi bi-cash-coin" style="font-size: 2rem; color: #333;"></i>
+                    </div>
+                </div>
+                
+                <div class="alert alert-info" role="alert">
+                    <h6 class="alert-heading"><i class="bi bi-info-circle"></i> Payment Instructions</h6>
+                    <ul class="mb-0 mt-2">
+                        <li>Pay at the clinic upon arrival</li>
+                        <li><strong>Amount to pay: ₱${price.toFixed(2)}</strong></li>
+                        <li>Bring exact amount if possible</li>
+                        <li>Payment will be marked as PENDING until confirmed</li>
+                    </ul>
+                </div>
+
+                <div class="form-check mt-4">
+                    <input class="form-check-input" type="checkbox" id="confirmCash" required>
+                    <label class="form-check-label" for="confirmCash">
+                        I understand and accept cash payment terms
+                    </label>
+                </div>
+            </div>
+        `;
+    }
+
+    /**
+     * DEBIT/CREDIT CARD FORM
+     */
+    function generateCardForm(cardType, price) {
+        const isCredit = cardType === 'credit';
+        const title = isCredit ? 'Credit Card' : 'Debit Card';
+        const icon = isCredit ? 'bi-credit-card-2-front' : 'bi-credit-card';
+        const gradient = isCredit ? 'linear-gradient(135deg, #6e759dff 0%, #b07bf5ff 100%)' : 'linear-gradient(135deg, #34a853 0%, #4285f4 100%)';
+        
+        return `
+            <div class="payment-form-card">
+                <!-- Card Preview -->
+                <div class="card-preview mb-4" style="background: ${gradient}; border-radius: 12px; padding: 30px; color: white; min-height: 200px; display: flex; flex-direction: column; justify-content: space-between;">
+                    <div>
+                        <i class="bi ${icon}" style="font-size: 2.5rem;"></i>
+                    </div>
+                    <div>
+                        <p class="mb-2" style="font-size: 0.9rem; opacity: 0.8;">Card Number</p>
+                        <p style="font-size: 1.2rem; letter-spacing: 2px; font-family: monospace;" id="cardNumberDisplay">•••• •••• •••• ••••</p>
+                        <div class="row mt-4">
+                            <div class="col-6">
+                                <p style="font-size: 0.8rem; opacity: 0.8;">EXPIRY</p>
+                                <p style="font-size: 1rem; font-family: monospace;" id="cardExpiryDisplay">MM/YY</p>
+                            </div>
+                            <div class="col-6 text-end">
+                                <p style="font-size: 0.8rem; opacity: 0.8;">CVV</p>
+                                <p style="font-size: 1rem; font-family: monospace;" id="cardCVVDisplay">•••</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Form Fields -->
+                <div class="mb-3">
+                    <label class="form-label">Cardholder Name</label>
+                    <input type="text" class="form-control" id="${cardType}CardName" placeholder="Enter full name on card" required>
+                </div>
+
+                <div class="mb-3">
+                    <label class="form-label">Card Number</label>
+                    <input type="text" class="form-control" id="${cardType}CardNumber" placeholder="1234 5678 9012 3456" maxlength="19" required>
+                </div>
+
+                <div class="row g-2">
+                    <div class="col-6">
+                        <label class="form-label">Expiry Date</label>
+                        <input type="text" class="form-control" id="${cardType}Expiry" placeholder="MM/YY" maxlength="5" required>
+                    </div>
+                    <div class="col-6">
+                        <label class="form-label">CVV</label>
+                        <input type="password" class="form-control" id="${cardType}CVV" placeholder="123" maxlength="4" required>
+                    </div>
+                </div>
+
+                <div class="form-check mt-4">
+                    <input class="form-check-input" type="checkbox" id="confirm${cardType.charAt(0).toUpperCase() + cardType.slice(1)}" required>
+                    <label class="form-check-label" for="confirm${cardType.charAt(0).toUpperCase() + cardType.slice(1)}">
+                        I confirm the ${title} details are correct and authorize this payment
+                    </label>
+                </div>
+            </div>
+        `;
+    }
+
+    /**
+     * BANK TRANSFER FORM
+     */
+    function generateBankTransferForm(price) {
+        return `
+            <div class="payment-form-card">
+
+                <div class="alert alert-warning">
+                    <h6 class="alert-heading"><i class="bi bi-exclamation-triangle"></i> Bank Transfer Details</h6>
+                    <div class="mt-3">
+                        <p class="mb-2"><strong>Bank Name:</strong> <code>UnionBank of the Philippines</code></p>
+                        <p class="mb-2"><strong>Account Name:</strong> <code>AKSyon Medical Center</code></p>
+                        <p class="mb-2"><strong>Account Number:</strong> <code>1234 5678 9012</code></p>
+                        <p class="mb-0"><strong>Amount:</strong> <code>₱${price.toFixed(2)}</code></p>
+                    </div>
+                </div>
+
+                <div class="mb-3">
+                    <label class="form-label">Reference Number</label>
+                    <input type="text" class="form-control" id="bankRefNumber" placeholder="Enter bank transfer reference" required>
+                </div>
+
+                <div class="mb-3">
+                    <label class="form-label">Transfer Date</label>
+                    <input type="date" class="form-control" id="bankTransferDate" max="${new Date().toISOString().split('T')[0]}" required>
+                </div>
+
+                <div class="form-check">
+                    <input class="form-check-input" type="checkbox" id="confirmBank" required>
+                    <label class="form-check-label" for="confirmBank">
+                        I confirm that I have completed the bank transfer
+                    </label>
+                </div>
+            </div>
+        `;
+    }
+
+    /**
+     * MOBILE PAYMENT FORM
+     */
+    function generateMobilePaymentForm(price, methodName) {
+        return `
+            <div class="payment-form-card">
+                <div class="d-flex align-items-center justify-content-center mb-4">
+                    <div style="width: 100px; height: 100px; background: linear-gradient(135deg, #1f2937 0%, #374151 100%); border-radius: 12px; display: flex; align-items: center; justify-content: center; position: relative; border: 3px solid #e5e7eb;">
+                        <div style="text-align: center; color: white;">
+                            <i class="bi bi-phone" style="font-size: 2rem; display: block; margin-bottom: 5px;"></i>
+                            <small style="font-size: 0.7rem;">E-Wallet</small>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="alert alert-info">
+                    <h6 class="alert-heading"><i class="bi bi-info-circle"></i> Supported Platforms</h6>
+                    <div class="d-flex gap-2 mt-3">
+                        <span class="badge bg-primary">GCash</span>
+                        <span class="badge bg-info">PayMaya</span>
+                        <span class="badge bg-success">GrabPay</span>
+                    </div>
+                </div>
+
+                <div class="mb-3">
+                    <label class="form-label">Mobile Payment Platform</label>
+                    <select class="form-select" id="mobilePlatform" required>
+                        <option value="">-- Select Platform --</option>
+                        <option value="GCash">GCash</option>
+                        <option value="PayMaya">PayMaya</option>
+                        <option value="GrabPay">GrabPay</option>
+                    </select>
+                </div>
+
+                <div class="mb-3">
+                    <label class="form-label">Mobile Number</label>
+                    <input type="text" class="form-control" id="mobileNumber" placeholder="09XX XXX XXXX" maxlength="11" required>
+                </div>
+
+                <div class="mb-3">
+                    <label class="form-label">Transaction Reference</label>
+                    <input type="text" class="form-control" id="mobileRefNumber" placeholder="Enter reference number from your app" required>
+                </div>
+
+                <div class="form-check">
+                    <input class="form-check-input" type="checkbox" id="confirmMobile" required>
+                    <label class="form-check-label" for="confirmMobile">
+                        I confirm the mobile payment details and have completed the transaction
+                    </label>
+                </div>
+            </div>
+        `;
+    }
+
+    /**
+     * DEFAULT PAYMENT FORM
+     */
+    function generateDefaultPaymentForm(price, methodName) {
+        return `
+            <div class="payment-form-card">
+                <div class="alert alert-info">
+                    <h6 class="alert-heading"><i class="bi bi-info-circle"></i> Payment Instructions</h6>
+                    <ul class="mb-0 mt-2">
+                        <li>Payment will be processed upon your arrival at the clinic</li>
+                        <li>Please arrive 10-15 minutes before your scheduled appointment</li>
+                        <li>Bring valid ID and appointment confirmation</li>
+                        <li><strong>Amount to pay: ₱${price.toFixed(2)}</strong></li>
+                    </ul>
+                </div>
+
+                <div class="alert alert-warning mt-3">
+                    <i class="bi bi-exclamation-triangle"></i> <strong>Important:</strong> Failure to arrive on time may result in appointment cancellation.
+                </div>
+
+                <div class="form-check mt-4">
+                    <input class="form-check-input" type="checkbox" id="confirmOther" required>
+                    <label class="form-check-label" for="confirmOther">
+                        I understand the payment terms and conditions
+                    </label>
+                </div>
+            </div>
+        `;
+    }
+
+    // ========================================================================
+    // ATTACH FORM LISTENERS (Card Input Formatting)
+    // ========================================================================
+    function attachFormListeners() {
+        // Format card number and update display
+        const cardNumberInputs = document.querySelectorAll('[id$="CardNumber"]');
+        cardNumberInputs.forEach(input => {
+            input.addEventListener('input', function(e) {
+                let value = e.target.value.replace(/\s/g, '');
+                let formattedValue = value.match(/.{1,4}/g)?.join(' ') || value;
+                e.target.value = formattedValue;
+
+                // Update display
+                if (e.target.id.includes('debit') || e.target.id.includes('credit')) {
+                    const display = document.getElementById('cardNumberDisplay');
+                    if (display) {
+                        const lastFour = value.slice(-4) || '••••';
+                        display.textContent = `•••• •••• •••• ${lastFour}`;
+                    }
+                }
+            });
+        });
+
+        // Format expiry date
+        const expiryInputs = document.querySelectorAll('[id$="Expiry"]');
+        expiryInputs.forEach(input => {
+            input.addEventListener('input', function(e) {
+                let value = e.target.value.replace(/\D/g, '');
+                if (value.length >= 2) {
+                    value = value.slice(0, 2) + '/' + value.slice(2, 4);
+                }
+                e.target.value = value;
+
+                // Update display
+                const display = document.getElementById('cardExpiryDisplay');
+                if (display) {
+                    display.textContent = value || 'MM/YY';
+                }
+            });
+        });
+
+        // Format CVV display
+        const cvvInputs = document.querySelectorAll('[id$="CVV"]');
+        cvvInputs.forEach(input => {
+            input.addEventListener('input', function(e) {
+                e.target.value = e.target.value.replace(/\D/g, '').slice(0, 4);
+
+                // Update display
+                const display = document.getElementById('cardCVVDisplay');
+                if (display) {
+                    display.textContent = '•'.repeat(e.target.value.length) || '•••';
+                }
+            });
+        });
+
+        // Format mobile number
+        const mobileInputs = document.querySelectorAll('[id*="Mobile"]');
+        mobileInputs.forEach(input => {
+            if (input.id === 'mobileNumber') {
+                input.addEventListener('input', function(e) {
+                    e.target.value = e.target.value.replace(/\D/g, '').slice(0, 11);
+                });
+            }
+        });
+
+        // Format cardholder name (letters only)
+        const nameInputs = document.querySelectorAll('[id$="CardName"]');
+        nameInputs.forEach(input => {
+            input.addEventListener('input', function(e) {
+                e.target.value = e.target.value.replace(/[^a-zA-Z\s]/g, '');
+            });
+        });
+    }
+
+    // ========================================================================
+    // CONFIRM PAYMENT & BOOK APPOINTMENT
+    // ========================================================================
+    if (confirmPaymentBtn) {
+        confirmPaymentBtn.addEventListener('click', function() {
+            if (!validatePaymentForm()) {
+                alert('Please fill in all required fields correctly');
+                return;
+            }
+
+            // Get appointment data
             const appointmentData = {
                 pat_id: document.getElementById('patientId').value,
                 doc_id: document.getElementById('selectedDoctorId').value,
                 serv_id: serviceSelect.value,
                 appt_date: dateInput.value,
                 appt_time: timeSelect.value,
-                stat_id: 1, // Scheduled
+                stat_id: 1,
                 pymt_meth_id: selectedPaymentMethod,
                 pymt_amount: selectedServicePrice
             };
 
-            // Show loading state
-            bookBtn.disabled = true;
-            bookBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Booking...';
+            // Show loading
+            confirmPaymentBtn.disabled = true;
+            confirmPaymentBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Processing...';
 
             // Submit appointment
             fetch('ajax/patient_book_appointment.php', {
@@ -505,104 +737,62 @@ if (dateInput) {
             .then(response => response.json())
             .then(data => {
                 if (data.success) {
-                    alert('✓ Appointment booked successfully! Redirecting to your dashboard...');
-                    window.location.href = 'patient_dashb.php';
+                    alert('Appointment booked successfully!');
+                    if (paymentModal) {
+                        paymentModal.hide();
+                    }
+                    setTimeout(() => {
+                        window.location.href = 'patient_dashb.php';
+                    }, 1000);
                 } else {
                     alert('✗ Error: ' + (data.message || 'Failed to book appointment'));
-                    bookBtn.disabled = false;
-                    bookBtn.innerHTML = 'BOOK APPOINTMENT';
+                    confirmPaymentBtn.disabled = false;
+                    confirmPaymentBtn.innerHTML = 'CONFIRM & BOOK';
                 }
             })
             .catch(error => {
-                console.error('Error booking appointment:', error);
-                alert('✗ An error occurred while booking the appointment');
-                bookBtn.disabled = false;
-                bookBtn.innerHTML = 'BOOK APPOINTMENT';
+                console.error('Error:', error);
+                alert('An error occurred');
+                confirmPaymentBtn.disabled = false;
+                confirmPaymentBtn.innerHTML = 'CONFIRM & BOOK';
             });
         });
     }
 
-    // Validate payment form based on selected method
+    // ========================================================================
+    // VALIDATE PAYMENT FORM
+    // ========================================================================
     function validatePaymentForm() {
-        const methodName = paymentMethodSelect.options[paymentMethodSelect.selectedIndex].text.toLowerCase();
+        const methodName = selectedPaymentMethodName.toLowerCase();
 
-        switch(methodName) {
-            case 'cash':
-                return document.getElementById('confirmCash')?.checked;
-            
-            case 'debit card':
-                return document.getElementById('debitCardNumber')?.value &&
-                       document.getElementById('debitExpiry')?.value &&
-                       document.getElementById('debitCVV')?.value &&
-                       document.getElementById('debitCardName')?.value &&
-                       document.getElementById('confirmDebit')?.checked;
-            
-            case 'credit card':
-                return document.getElementById('creditCardNumber')?.value &&
-                       document.getElementById('creditExpiry')?.value &&
-                       document.getElementById('creditCVV')?.value &&
-                       document.getElementById('creditCardName')?.value &&
-                       document.getElementById('confirmCredit')?.checked;
-            
-            case 'bank transfer':
-                return document.getElementById('bankRefNumber')?.value &&
-                       document.getElementById('bankTransferDate')?.value &&
-                       document.getElementById('confirmBank')?.checked;
-            
-            case 'mobile payment':
-                return document.getElementById('mobilePlatform')?.value &&
-                       document.getElementById('mobileNumber')?.value &&
-                       document.getElementById('mobileRefNumber')?.value &&
-                       document.getElementById('confirmMobile')?.checked;
-            
-            default:
-                return document.getElementById('confirmOther')?.checked;
+        if (methodName.includes('cash')) {
+            return document.getElementById('confirmCash')?.checked;
+        } else if (methodName.includes('debit')) {
+            return validateCardForm('debit');
+        } else if (methodName.includes('credit')) {
+            return validateCardForm('credit');
+        } else if (methodName.includes('bank')) {
+            return document.getElementById('bankRefNumber')?.value &&
+                   document.getElementById('bankTransferDate')?.value &&
+                   document.getElementById('confirmBank')?.checked;
+        } else if (methodName.includes('mobile') || methodName.includes('gcash') || methodName.includes('paymaya')) {
+            return document.getElementById('mobilePlatform')?.value &&
+                   document.getElementById('mobileNumber')?.value &&
+                   document.getElementById('mobileRefNumber')?.value &&
+                   document.getElementById('confirmMobile')?.checked;
+        } else {
+            return document.getElementById('confirmOther')?.checked;
         }
     }
 
-    // Format card number inputs
-    function formatCardInputs() {
-        const cardInputs = [
-            document.getElementById('debitCardNumber'),
-            document.getElementById('creditCardNumber')
-        ];
+    function validateCardForm(cardType) {
+        const cardNum = document.getElementById(`${cardType}CardNumber`)?.value.replace(/\s/g, '');
+        const expiry = document.getElementById(`${cardType}Expiry`)?.value;
+        const cvv = document.getElementById(`${cardType}CVV`)?.value;
+        const name = document.getElementById(`${cardType}CardName`)?.value;
+        const confirm = document.getElementById(`confirm${cardType.charAt(0).toUpperCase() + cardType.slice(1)}`)?.checked;
 
-        cardInputs.forEach(input => {
-            if (input) {
-                input.addEventListener('input', function(e) {
-                    let value = e.target.value.replace(/\s/g, '');
-                    let formattedValue = value.match(/.{1,4}/g)?.join(' ') || value;
-                    e.target.value = formattedValue;
-                });
-            }
-        });
-
-        // Format expiry date
-        const expiryInputs = [
-            document.getElementById('debitExpiry'),
-            document.getElementById('creditExpiry')
-        ];
-
-        expiryInputs.forEach(input => {
-            if (input) {
-                input.addEventListener('input', function(e) {
-                    let value = e.target.value.replace(/\D/g, '');
-                    if (value.length >= 2) {
-                        value = value.slice(0, 2) + '/' + value.slice(2, 4);
-                    }
-                    e.target.value = value;
-                });
-            }
-        });
-
-        // Format mobile number
-        const mobileInput = document.getElementById('mobileNumber');
-        if (mobileInput) {
-            mobileInput.addEventListener('input', function(e) {
-                let value = e.target.value.replace(/\D/g, '');
-                e.target.value = value.slice(0, 11);
-            });
-        }
+        return cardNum && cardNum.length >= 13 && expiry && expiry.length === 5 && cvv && cvv.length >= 3 && name && confirm;
     }
 
     // ===============================
@@ -737,6 +927,71 @@ if (dateInput) {
             });
         });
     }
+
+    // ===============================
+    // VIEW PATIENTS - SEARCH/FILTER
+    // ===============================
+
+    const searchName = document.getElementById('searchName');
+    const applySearchBtn = document.getElementById('applySearchBtn');
+    const clearSearchBtn = document.getElementById('clearSearchBtn');
+    const patientsTable = document.getElementById('patientsTable');
+    const filterTotal = document.getElementById('filterTotal');
+
+    if (applySearchBtn) {
+        applySearchBtn.addEventListener('click', function() {
+            filterPatients();
+        });
+    }
+
+    if (clearSearchBtn) {
+        clearSearchBtn.addEventListener('click', function() {
+            if (searchName) {
+                searchName.value = '';
+            }
+            filterPatients();
+        });
+    }
+
+    if (searchName) {
+        searchName.addEventListener('keyup', function(e) {
+            if (e.key === 'Enter') {
+                filterPatients();
+            }
+        });
+    }
+
+    function filterPatients() {
+        if (!patientsTable) return;
+
+        const searchTerm = searchName ? searchName.value.trim().toLowerCase() : '';
+        const rows = patientsTable.querySelectorAll('tbody tr');
+        let visibleCount = 0;
+
+        rows.forEach(row => {
+            const nameData = row.dataset.name || '';
+            
+            if (!searchTerm || nameData.includes(searchTerm)) {
+                row.style.display = '';
+                visibleCount++;
+            } else {
+                row.style.display = 'none';
+            }
+        });
+
+        if (filterTotal) {
+            filterTotal.textContent = visibleCount;
+        }
+    }
+
+    function updateInitialCounts() {
+        if (patientsTable && filterTotal) {
+            const totalRows = patientsTable.querySelectorAll('tbody tr').length;
+            filterTotal.textContent = totalRows;
+        }
+    }
+
+    updateInitialCounts();
 });
 
 // ===============================
@@ -1126,72 +1381,4 @@ function initSettingsForm() {
         });
     }
 }
-
 window.togglePassword = togglePassword;
-
-// ===============================
-// VIEW PATIENTS - SEARCH/FILTER
-// ===============================
-
-document.addEventListener('DOMContentLoaded', function() {
-    const searchName = document.getElementById('searchName');
-    const applySearchBtn = document.getElementById('applySearchBtn');
-    const clearSearchBtn = document.getElementById('clearSearchBtn');
-    const patientsTable = document.getElementById('patientsTable');
-    const filterTotal = document.getElementById('filterTotal');
-
-    if (applySearchBtn) {
-        applySearchBtn.addEventListener('click', function() {
-            filterPatients();
-        });
-    }
-
-    if (clearSearchBtn) {
-        clearSearchBtn.addEventListener('click', function() {
-            if (searchName) {
-                searchName.value = '';
-            }
-            filterPatients();
-        });
-    }
-
-    if (searchName) {
-        searchName.addEventListener('keyup', function(e) {
-            if (e.key === 'Enter') {
-                filterPatients();
-            }
-        });
-    }
-
-    function filterPatients() {
-        if (!patientsTable) return;
-
-        const searchTerm = searchName ? searchName.value.trim().toLowerCase() : '';
-        const rows = patientsTable.querySelectorAll('tbody tr');
-        let visibleCount = 0;
-
-        rows.forEach(row => {
-            const nameData = row.dataset.name || '';
-            
-            if (!searchTerm || nameData.includes(searchTerm)) {
-                row.style.display = '';
-                visibleCount++;
-            } else {
-                row.style.display = 'none';
-            }
-        });
-
-        if (filterTotal) {
-            filterTotal.textContent = visibleCount;
-        }
-    }
-
-    function updateInitialCounts() {
-        if (patientsTable && filterTotal) {
-            const totalRows = patientsTable.querySelectorAll('tbody tr').length;
-            filterTotal.textContent = totalRows;
-        }
-    }
-
-    updateInitialCounts();
-});

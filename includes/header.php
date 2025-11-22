@@ -23,18 +23,9 @@ $isLoggedIn = false;
 
 if ($user_type) {
     switch ($user_type) {
+        case 'superadmin':
         case 'super_admin':
-            $staff_id = $_SESSION['staff_id'] ?? null;
-            if ($staff_id) {
-                $staffData = $staff->getStaffById($staff_id);
-                if ($staffData) {
-                    $userName = trim($staffData['STAFF_FIRST_NAME'] . ' ' . $staffData['STAFF_LAST_NAME']) . ' (Admin)';
-                } else {
-                    $userName = 'Super Administrator';
-                }
-            } else {
-                $userName = 'Super Administrator';
-            }
+            $userName = 'Super Administrator';
             $dashboardLink = 'public/superadmin/superadmin_dashboard.php';
             $isLoggedIn = true;
             break;
@@ -222,13 +213,14 @@ if ($user_type) {
             is_logged_in: 'true',
             user_type: <?= json_encode($user_type) ?>,
             dashboard_link: <?= json_encode($dashboardLink) ?>,
-            is_superadmin: <?= $user_type === 'super_admin' ? 'true' : 'false' ?>
+            is_superadmin: <?= ($user_type === 'superadmin' || $user_type === 'super_admin') ? 'true' : 'false' ?>
         };
         localStorage.setItem('aksyon_user_data', JSON.stringify(userData));
         localStorage.setItem('user_name', userData.user_name);
         localStorage.setItem('is_logged_in', 'true');
         localStorage.setItem('user_type', userData.user_type);
-        <?php if ($user_type === 'super_admin'): ?>
+        localStorage.setItem('dashboard_link', userData.dashboard_link);
+        <?php if ($user_type === 'superadmin' || $user_type === 'super_admin'): ?>
         localStorage.setItem('is_superadmin', 'true');
         <?php endif; ?>
         console.log('User session active:', userData);
@@ -241,6 +233,7 @@ if ($user_type) {
         localStorage.removeItem('is_logged_in');
         localStorage.removeItem('user_type');
         localStorage.removeItem('is_superadmin');
+        localStorage.removeItem('dashboard_link');
         console.log('No active user session');
     </script>
     <?php endif; ?>

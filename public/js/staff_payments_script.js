@@ -53,6 +53,7 @@ document.addEventListener('DOMContentLoaded', function() {
                                 var option = new Option(appt.appt_display, appt.APPT_ID, false, false);
                                 $('#add_appt_id').append(option);
                             });
+                            $('#add_appt_id').trigger('change');
                         }
                     },
                     error: function(xhr, status, error) {
@@ -111,12 +112,12 @@ document.addEventListener('DOMContentLoaded', function() {
                 dataType: 'json',
                 success: function(response) {
                     console.log('Appointment details response:', response);
-                    if (response.success) {
+                    if (response.success && response.details) {
                         // Populate appointment details
                         document.getElementById('add_patient_name').value = response.details.patient_name || 'N/A';
-                        document.getElementById('add_service_name').value = response.details.SERV_NAME || 'N/A';
-                        document.getElementById('add_appt_date').value = formatDate(response.details.APPT_DATE) || 'N/A';
-                        document.getElementById('add_service_price').value = parseFloat(response.details.SERV_PRICE || 0).toFixed(2);
+                        document.getElementById('add_service_name').value = response.details.serv_name || 'N/A';
+                        document.getElementById('add_appt_date').value = response.details.formatted_appt_date || 'N/A';
+                        document.getElementById('add_service_price').value = parseFloat(response.details.serv_price || 0).toFixed(2);
 
                         // Show appointment details
                         document.getElementById('appointmentDetails').classList.remove('d-none');
@@ -130,16 +131,20 @@ document.addEventListener('DOMContentLoaded', function() {
                         }
                     } else {
                         showAlert('error', response.message || 'Failed to load appointment details');
+                        document.getElementById('appointmentDetails').classList.add('d-none');
+                        document.getElementById('submitPaymentBtn').disabled = true;
                     }
                 },
                 error: function(xhr, status, error) {
                     console.error('Error loading appointment details:', error);
                     showAlert('error', 'Error loading appointment details');
+                    document.getElementById('submitPaymentBtn').disabled = true;
                 }
             });
         } else {
             document.getElementById('appointmentDetails').classList.add('d-none');
             document.getElementById('submitPaymentBtn').disabled = true;
+            document.getElementById('previousPaymentsAlert').style.display = 'none';
         }
     });
 
@@ -148,15 +153,23 @@ document.addEventListener('DOMContentLoaded', function() {
         const alertDiv = document.getElementById('previousPaymentsAlert');
         const listDiv = document.getElementById('previousPaymentsList');
         
+        if (!payments || payments.length === 0) {
+            alertDiv.style.display = 'none';
+            return;
+        }
+
         let html = '<table class="table table-sm table-bordered mb-0"><thead><tr><th>Payment ID</th><th>Amount</th><th>Method</th><th>Status</th><th>Date</th></tr></thead><tbody>';
         
         payments.forEach(function(payment) {
+            const statusClass = payment.PYMT_STAT_NAME === 'Paid' ? 'success' : 
+                               payment.PYMT_STAT_NAME === 'Pending' ? 'warning' : 
+                               payment.PYMT_STAT_NAME === 'Refunded' ? 'secondary' : 'dark';
             html += `<tr>
                 <td>${payment.PAYMT_ID}</td>
                 <td>₱${parseFloat(payment.PAYMT_AMOUNT_PAID).toFixed(2)}</td>
-                <td>${payment.PYMT_METH_NAME}</td>
-                <td><span class="badge bg-${payment.PYMT_STAT_NAME === 'Paid' ? 'success' : 'warning'}">${payment.PYMT_STAT_NAME}</span></td>
-                <td>${payment.formatted_date}</td>
+                <td>${payment.PYMT_METH_NAME || 'N/A'}</td>
+                <td><span class="badge bg-${statusClass}">${payment.PYMT_STAT_NAME}</span></td>
+                <td>${payment.formatted_date || 'N/A'}</td>
             </tr>`;
         });
         
@@ -175,7 +188,6 @@ document.addEventListener('DOMContentLoaded', function() {
             if (statusText === 'Paid') {
                 dateField.disabled = false;
                 dateField.required = true;
-                // Set current datetime if empty
                 if (!dateField.value) {
                     dateField.value = getCurrentDateTime();
                 }
@@ -222,7 +234,10 @@ document.addEventListener('DOMContentLoaded', function() {
             formData.append('payment_status', document.getElementById('add_payment_status').value);
             
             const dateField = document.getElementById('add_payment_date');
-            if (!dateField.disabled && dateField.value) {
+            const statusSelect = document.getElementById('add_payment_status');
+            const statusText = statusSelect.options[statusSelect.selectedIndex].text;
+
+            if (statusText === 'Paid' && dateField.value) {
                 formData.append('payment_date', dateField.value);
             } else {
                 formData.append('payment_date', getCurrentDateTime());
@@ -241,17 +256,14 @@ document.addEventListener('DOMContentLoaded', function() {
                     console.log('Add payment response:', response);
                     if (response.success) {
                         showAlert('success', response.message);
-                        setTimeout(function() {
-                            window.location.reload();
-                        }, 1500);
+                        setTimeout(() => location.reload(), 1500);
                     } else {
                         showAlert('error', response.message || 'Failed to add payment');
                     }
                 },
-                error: function(xhr, status, error) {
-                    console.error('Error adding payment:', error);
-                    console.error('Response:', xhr.responseText);
-                    showAlert('error', 'Error processing payment');
+                error: function(xhr) {
+                    console.error('AJAX Error:', xhr.responseText);
+                    showAlert('error', 'Server error. Please try again.');
                 }
             });
         });
@@ -273,18 +285,21 @@ document.addEventListener('DOMContentLoaded', function() {
                 dataType: 'json',
                 success: function(response) {
                     console.log('Payment details for update:', response);
-                    if (response.success) {
+                    if (response.success && response.payment) {
                         const payment = response.payment;
                         
-                        document.getElementById('update_paymt_id').value = payment.PAYMT_ID;
-                        document.getElementById('update_paymt_id_display').value = payment.PAYMT_ID;
-                        document.getElementById('update_appt_id').value = payment.APPT_ID;
-                        document.getElementById('update_amount').value = parseFloat(payment.PAYMT_AMOUNT_PAID).toFixed(2);
+                        document.getElementById('update_paymt_id').value = payment.paymt_id;
+                        document.getElementById('update_paymt_id_display').value = payment.paymt_id;
+                        document.getElementById('update_appt_id').value = payment.app_id;
+                        document.getElementById('update_appt_id_hidden').value = payment.app_id;
+                        document.getElementById('update_amount').value = parseFloat(payment.paymt_amount_paid).toFixed(2);
                         document.getElementById('update_payment_method').value = payment.PYMT_METH_ID;
                         document.getElementById('update_payment_status').value = payment.PYMT_STAT_ID;
                         
-                        if (payment.PAYMT_DATE) {
-                            const date = new Date(payment.PAYMT_DATE);
+                        if (payment.formatted_paymt_date) {
+                            document.getElementById('update_payment_date').value = payment.formatted_paymt_date;
+                        } else if (payment.paymt_date) {
+                            const date = new Date(payment.paymt_date);
                             document.getElementById('update_payment_date').value = formatDateTimeLocal(date);
                         }
                         
@@ -297,8 +312,8 @@ document.addEventListener('DOMContentLoaded', function() {
                         showAlert('error', response.message || 'Failed to load payment details');
                     }
                 },
-                error: function(xhr, status, error) {
-                    console.error('Error loading payment details:', error);
+                error: function(xhr) {
+                    console.error('Error loading payment details:', xhr.responseText);
                     showAlert('error', 'Error loading payment details');
                 }
             });
@@ -314,12 +329,16 @@ document.addEventListener('DOMContentLoaded', function() {
             const formData = new FormData();
             formData.append('action', 'update_payment');
             formData.append('paymt_id', document.getElementById('update_paymt_id').value);
+            formData.append('appt_id', document.getElementById('update_appt_id_hidden').value);
             formData.append('amount', document.getElementById('update_amount').value);
             formData.append('payment_method', document.getElementById('update_payment_method').value);
             formData.append('payment_status', document.getElementById('update_payment_status').value);
             
             const dateField = document.getElementById('update_payment_date');
-            if (!dateField.disabled && dateField.value) {
+            const statusSelect = document.getElementById('update_payment_status');
+            const statusText = statusSelect.options[statusSelect.selectedIndex].text;
+
+            if (statusText === 'Paid' && dateField.value) {
                 formData.append('payment_date', dateField.value);
             } else {
                 formData.append('payment_date', getCurrentDateTime());
@@ -338,16 +357,13 @@ document.addEventListener('DOMContentLoaded', function() {
                     console.log('Update payment response:', response);
                     if (response.success) {
                         showAlert('success', response.message);
-                        setTimeout(function() {
-                            window.location.reload();
-                        }, 1500);
+                        setTimeout(() => location.reload(), 1500);
                     } else {
                         showAlert('error', response.message || 'Failed to update payment');
                     }
                 },
-                error: function(xhr, status, error) {
-                    console.error('Error updating payment:', error);
-                    console.error('Response:', xhr.responseText);
+                error: function(xhr) {
+                    console.error('AJAX Error:', xhr.responseText);
                     showAlert('error', 'Error updating payment');
                 }
             });
@@ -360,7 +376,6 @@ document.addEventListener('DOMContentLoaded', function() {
     const openAddModalBtn = document.getElementById('openAddModalBtn');
     if (openAddModalBtn) {
         openAddModalBtn.addEventListener('click', function() {
-            // Set current date/time in the Created At field
             const now = new Date();
             const formatted = now.toLocaleString('en-US', { 
                 month: 'long', 
@@ -387,18 +402,15 @@ document.addEventListener('DOMContentLoaded', function() {
             const id = this.dataset.id;
             const name = this.dataset.name;
             
-            // Check which modal to open based on which page we're on
             const editMethodId = document.getElementById('edit_method_id');
             const editStatusId = document.getElementById('edit_status_id');
             
             if (editMethodId) {
-                // Payment Method page
                 editMethodId.value = id;
                 document.getElementById('edit_method_name').value = name;
                 const modal = new bootstrap.Modal(document.getElementById('editModal'));
                 modal.show();
             } else if (editStatusId) {
-                // Payment Status page
                 editStatusId.value = id;
                 document.getElementById('edit_status_name').value = name;
                 const modal = new bootstrap.Modal(document.getElementById('editModal'));
@@ -412,7 +424,7 @@ document.addEventListener('DOMContentLoaded', function() {
     alerts.forEach(alert => {
         setTimeout(() => {
             const bsAlert = bootstrap.Alert.getOrCreateInstance(alert);
-            bsAlert.close();
+            if (bsAlert) bsAlert.close();
         }, 5000);
     });
 
@@ -435,9 +447,7 @@ document.addEventListener('DOMContentLoaded', function() {
         
         setTimeout(function() {
             const alert = alertContainer.querySelector('.alert');
-            if (alert) {
-                alert.remove();
-            }
+            if (alert) alert.remove();
         }, 5000);
     }
 

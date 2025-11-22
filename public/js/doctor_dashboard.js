@@ -584,18 +584,18 @@ document.addEventListener('DOMContentLoaded', function () {
     }
 
     // ========================================================================
-    // SECTION 9: MEDICAL RECORDS PAGE - FILTER FUNCTIONALITY
+    // SECTION 9: MEDICAL RECORDS PAGE - FILTER FUNCTIONALITY (CONSOLIDATED)
     // ========================================================================
 
     // ===============================
-    // MEDICAL RECORDS PAGE - FILTER FUNCTIONALITY
+    // MEDICAL RECORDS PAGE - UNIFIED FILTER FUNCTIONALITY
     // ===============================
     const medRecFilterBtn = document.getElementById('filterBtn');
     const medRecClearFilterBtn = document.getElementById('clearFilterBtn');
     const medRecFilterByDate = document.getElementById('filterByDate');
     const medRecSearchPatientName = document.getElementById('searchPatientName');
     const medRecSearchApptId = document.getElementById('searchApptId');
-    const medRecTableRows = document.querySelectorAll('#medRecTable tbody tr');
+    const medRecSearchMedRecId = document.getElementById('searchMedRecId');
     const filteredCardWrapper = document.getElementById('filteredCardWrapper');
     const filteredRecordsCount = document.getElementById('filteredRecordsCount');
 
@@ -604,12 +604,15 @@ document.addEventListener('DOMContentLoaded', function () {
             const dateValue = medRecFilterByDate ? medRecFilterByDate.value : '';
             const nameValue = medRecSearchPatientName ? medRecSearchPatientName.value.toLowerCase().trim() : '';
             const apptIdValue = medRecSearchApptId ? medRecSearchApptId.value.trim() : '';
+            const medRecIdValue = medRecSearchMedRecId ? medRecSearchMedRecId.value.trim() : '';
 
+            // Get all table rows ONCE
+            const medRecTableRows = document.querySelectorAll('#medRecTable tbody tr');
             let visibleCount = 0;
 
             medRecTableRows.forEach(row => {
                 // Skip the "no records" row
-                if (row.cells.length < 6) {
+                if (row.cells.length < 7) {
                     row.style.display = 'none';
                     return;
                 }
@@ -617,10 +620,12 @@ document.addEventListener('DOMContentLoaded', function () {
                 const rowDate = row.getAttribute('data-date');
                 const rowPatient = row.getAttribute('data-patient');
                 const rowApptId = row.getAttribute('data-apptid');
+                const rowMedRecId = row.getAttribute('data-medrecid');
 
                 let matchDate = true;
                 let matchName = true;
                 let matchApptId = true;
+                let matchMedRecId = true;
 
                 // Check date filter
                 if (dateValue && rowDate !== dateValue) {
@@ -629,7 +634,6 @@ document.addEventListener('DOMContentLoaded', function () {
 
                 // Check name filter
                 if (nameValue) {
-                    // Split patient name into parts (first, middle, last) and check each
                     const nameParts = rowPatient.toLowerCase().split(/\s+/);
                     const nameMatches = nameParts.some(part => part.includes(nameValue));
                     if (!nameMatches) matchName = false;
@@ -640,8 +644,13 @@ document.addEventListener('DOMContentLoaded', function () {
                     matchApptId = false;
                 }
 
+                // Check medical record ID filter
+                if (medRecIdValue && rowMedRecId !== medRecIdValue) {
+                    matchMedRecId = false;
+                }
+
                 // Show row if all filters match
-                if (matchDate && matchName && matchApptId) {
+                if (matchDate && matchName && matchApptId && matchMedRecId) {
                     row.style.display = '';
                     visibleCount++;
                 } else {
@@ -650,13 +659,15 @@ document.addEventListener('DOMContentLoaded', function () {
             });
 
             // Show filtered count card
-            if (dateValue || nameValue || apptIdValue) {
+            if (dateValue || nameValue || apptIdValue || medRecIdValue) {
                 if (filteredCardWrapper) filteredCardWrapper.style.display = 'block';
                 if (filteredRecordsCount) filteredRecordsCount.textContent = visibleCount;
-            }
 
-            if (visibleCount === 0) {
-                alert('No records match your filter criteria');
+                if (visibleCount === 0) {
+                    alert('No records match your filter criteria');
+                }
+            } else {
+                alert('Please enter at least one filter criteria');
             }
         });
     }
@@ -669,8 +680,10 @@ document.addEventListener('DOMContentLoaded', function () {
             if (medRecFilterByDate) medRecFilterByDate.value = '';
             if (medRecSearchPatientName) medRecSearchPatientName.value = '';
             if (medRecSearchApptId) medRecSearchApptId.value = '';
+            if (medRecSearchMedRecId) medRecSearchMedRecId.value = '';
             
-            medRecTableRows.forEach(row => {
+            // Reset all table rows ONCE
+            document.querySelectorAll('#medRecTable tbody tr').forEach(row => {
                 row.style.display = '';
             });
 
@@ -1339,111 +1352,6 @@ if (addMedicalRecordForm) {
                 console.error('Error:', error);
                 alert('An error occurred while updating the record');
             });
-        });
-    }
-
-    // ========================================================================
-    // SECTION 17: MEDICAL RECORDS - ENHANCED FILTER WITH MED REC ID
-    // ========================================================================
-
-    // ===============================
-    // FILTER BUTTON WITH MEDICAL RECORD ID SEARCH
-    // ===============================
-    const medRecFilterBtnEnhanced = document.getElementById('filterBtn');
-    const medRecClearFilterBtnEnhanced = document.getElementById('clearFilterBtn');
-    const medRecFilterByDateEnhanced = document.getElementById('filterByDate');
-    const medRecSearchPatientNameEnhanced = document.getElementById('searchPatientName');
-    const medRecSearchApptIdEnhanced = document.getElementById('searchApptId');
-    const medRecSearchMedRecId = document.getElementById('searchMedRecId');
-    const medRecTableRowsEnhanced = document.querySelectorAll('#medRecTable tbody tr');
-    const filteredCardWrapperEnhanced = document.getElementById('filteredCardWrapper');
-    const filteredRecordsCountEnhanced = document.getElementById('filteredRecordsCount');
-
-    if (medRecFilterBtnEnhanced) {
-        medRecFilterBtnEnhanced.addEventListener('click', function () {
-            const dateValue = medRecFilterByDateEnhanced ? medRecFilterByDateEnhanced.value : '';
-            const nameValue = medRecSearchPatientNameEnhanced ? medRecSearchPatientNameEnhanced.value.toLowerCase().trim() : '';
-            const apptIdValue = medRecSearchApptIdEnhanced ? medRecSearchApptIdEnhanced.value.trim() : '';
-            const medRecIdValue = medRecSearchMedRecId ? medRecSearchMedRecId.value.trim() : '';
-
-            let visibleCount = 0;
-
-            medRecTableRowsEnhanced.forEach(row => {
-                // Skip the "no records" row
-                if (row.cells.length < 7) {
-                    row.style.display = 'none';
-                    return;
-                }
-
-                const rowDate = row.getAttribute('data-date');
-                const rowPatient = row.getAttribute('data-patient');
-                const rowApptId = row.getAttribute('data-apptid');
-                const rowMedRecId = row.getAttribute('data-medrecid');
-
-                let matchDate = true;
-                let matchName = true;
-                let matchApptId = true;
-                let matchMedRecId = true;
-
-                // Check date filter
-                if (dateValue && rowDate !== dateValue) {
-                    matchDate = false;
-                }
-
-                // Check name filter
-                if (nameValue) {
-                    // Split patient name into parts (first, middle, last) and check each
-                    const nameParts = rowPatient.toLowerCase().split(/\s+/);
-                    const nameMatches = nameParts.some(part => part.includes(nameValue));
-                    if (!nameMatches) matchName = false;
-                }
-
-                // Check appointment ID filter
-                if (apptIdValue && rowApptId !== apptIdValue) {
-                    matchApptId = false;
-                }
-
-                // Check medical record ID filter
-                if (medRecIdValue && rowMedRecId !== medRecIdValue) {
-                    matchMedRecId = false;
-                }
-
-                // Show row if all filters match
-                if (matchDate && matchName && matchApptId && matchMedRecId) {
-                    row.style.display = '';
-                    visibleCount++;
-                } else {
-                    row.style.display = 'none';
-                }
-            });
-
-            // Show filtered count card
-            if (dateValue || nameValue || apptIdValue || medRecIdValue) {
-                if (filteredCardWrapperEnhanced) filteredCardWrapperEnhanced.style.display = 'block';
-                if (filteredRecordsCountEnhanced) filteredRecordsCountEnhanced.textContent = visibleCount;
-            }
-
-            if (visibleCount === 0) {
-                alert('No records match your filter criteria');
-            }
-        });
-    }
-
-    // ===============================
-    // CLEAR FILTER BUTTON
-    // ===============================
-    if (medRecClearFilterBtnEnhanced) {
-        medRecClearFilterBtnEnhanced.addEventListener('click', function () {
-            if (medRecFilterByDateEnhanced) medRecFilterByDateEnhanced.value = '';
-            if (medRecSearchPatientNameEnhanced) medRecSearchPatientNameEnhanced.value = '';
-            if (medRecSearchApptIdEnhanced) medRecSearchApptIdEnhanced.value = '';
-            if (medRecSearchMedRecId) medRecSearchMedRecId.value = '';
-            
-            medRecTableRowsEnhanced.forEach(row => {
-                row.style.display = '';
-            });
-
-            if (filteredCardWrapperEnhanced) filteredCardWrapperEnhanced.style.display = 'none';
         });
     }
 

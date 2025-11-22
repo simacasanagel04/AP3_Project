@@ -223,11 +223,11 @@ class Payment {
 
             $stmt = $this->conn->prepare($sql);
             $success = $stmt->execute([
-                ':paymt_amount_paid' => $payment['paymt_amount_paid'],
-                ':paymt_date'        => trim($payment['paymt_date']),
+                ':paymt_amount_paid' => (float)$payment['paymt_amount_paid'],
+                ':paymt_date'        => trim($payment['paymt_date']) . ' ' . date('H:i:s'),
                 ':pymt_meth_id'      => (int)trim($payment['pymt_meth_id']),
                 ':pymt_stat_id'      => (int)trim($payment['pymt_stat_id']),
-                ':appt_id'           => (int)trim($payment['appt_id'])
+                ':appt_id'           => trim($payment['appt_id'])
             ]);
 
             if ($success) {
@@ -240,7 +240,7 @@ class Payment {
         }
     }
 
-    // UPDATE
+    // UPDATE - FIXED VERSION
     public function update($payment) {
         try {
             $sql = "UPDATE {$this->table_payment}
@@ -253,14 +253,35 @@ class Payment {
                     WHERE PAYMT_ID = :paymt_id";
 
             $stmt = $this->conn->prepare($sql);
-            return $stmt->execute([
+            
+            // CONVERT DATE TO DATETIME - ADD TIME IF ONLY DATE PROVIDED
+            $paymt_date_value = trim($payment['paymt_date']);
+            if (!strpos($paymt_date_value, ':')) {
+                // Only date provided (YYYY-MM-DD), add default time
+                $paymt_date_value .= ' ' . date('H:i:s');
+            }
+
+            $params = [
                 ':paymt_id'          => (int)trim($payment['paymt_id']),
-                ':paymt_amount_paid' => $payment['paymt_amount_paid'],
-                ':paymt_date'        => $payment['paymt_date'],
-                ':pymt_meth_id'      => (int)$payment['pymt_meth_id'],
-                ':pymt_stat_id'      => (int)$payment['pymt_stat_id'],
-                ':appt_id'           => (int)$payment['appt_id']
-            ]);
+                ':paymt_amount_paid' => (float)$payment['paymt_amount_paid'],
+                ':paymt_date'        => $paymt_date_value,
+                ':pymt_meth_id'      => (int)trim($payment['pymt_meth_id']),
+                ':pymt_stat_id'      => (int)trim($payment['pymt_stat_id']),
+                ':appt_id'           => trim($payment['appt_id'])
+            ];
+
+            error_log("Payment Update Debug - Params: " . json_encode($params));
+            
+            $result = $stmt->execute($params);
+            
+            if (!$result) {
+                error_log("Update failed. Error Info: " . json_encode($stmt->errorInfo()));
+                return false;
+            }
+            
+            error_log("Payment ID {$payment['paymt_id']} updated successfully");
+            return true;
+            
         } catch (PDOException $e) {
             error_log("Error updating payment: " . $e->getMessage());
             return false;
@@ -279,80 +300,71 @@ class Payment {
         }
     }
 
-    // ==================== NEW METHODS ADDED BELOW ====================
+    // ==================== NEW METHODS ====================
 
-    /**
-     * Fetch all payments with dynamic filters
-     */
-    /**
- * Fetch all payments with dynamic filters
- */
-public function allWithFilters($filters = []) {
-    try {
-        $sql = "SELECT 
-                    p.PAYMT_ID,
-                    p.APPT_ID,
-                    p.PAYMT_AMOUNT_PAID,
-                    p.PYMT_METH_ID,
-                    p.PYMT_STAT_ID,
-                    pm.PYMT_METH_NAME,
-                    ps.PYMT_STAT_NAME,
-                    s.SERV_NAME,
-                    DATE_FORMAT(p.PAYMT_DATE, '%M %d, %Y %h:%i %p') as formatted_paymt_date,
-                    CONCAT(pat.PAT_FIRST_NAME, ' ', COALESCE(pat.PAT_MIDDLE_INIT, ''), '. ', pat.PAT_LAST_NAME) as patient_name
-                FROM {$this->table_payment} p
-                LEFT JOIN {$this->table_payment_method} pm ON p.PYMT_METH_ID = pm.PYMT_METH_ID
-                LEFT JOIN {$this->table_payment_status} ps ON p.PYMT_STAT_ID = ps.PYMT_STAT_ID
-                LEFT JOIN {$this->table_appointment} a ON p.APPT_ID = a.APPT_ID
-                LEFT JOIN patient pat ON a.PAT_ID = pat.PAT_ID
-                LEFT JOIN service s ON a.SERV_ID = s.SERV_ID
-                WHERE 1=1";
+    public function allWithFilters($filters = []) {
+        try {
+            $sql = "SELECT 
+                        p.PAYMT_ID,
+                        p.APPT_ID,
+                        p.PAYMT_AMOUNT_PAID,
+                        p.PYMT_METH_ID,
+                        p.PYMT_STAT_ID,
+                        pm.PYMT_METH_NAME,
+                        ps.PYMT_STAT_NAME,
+                        s.SERV_NAME,
+                        DATE_FORMAT(p.PAYMT_DATE, '%M %d, %Y %h:%i %p') as formatted_paymt_date,
+                        CONCAT(pat.PAT_FIRST_NAME, ' ', COALESCE(pat.PAT_MIDDLE_INIT, ''), '. ', pat.PAT_LAST_NAME) as patient_name
+                    FROM {$this->table_payment} p
+                    LEFT JOIN {$this->table_payment_method} pm ON p.PYMT_METH_ID = pm.PYMT_METH_ID
+                    LEFT JOIN {$this->table_payment_status} ps ON p.PYMT_STAT_ID = ps.PYMT_STAT_ID
+                    LEFT JOIN {$this->table_appointment} a ON p.APPT_ID = a.APPT_ID
+                    LEFT JOIN patient pat ON a.PAT_ID = pat.PAT_ID
+                    LEFT JOIN service s ON a.SERV_ID = s.SERV_ID
+                    WHERE 1=1";
 
-        $params = [];
+            $params = [];
 
-        if (!empty($filters['appt_id'])) {
-            $sql .= " AND p.APPT_ID = :appt_id";
-            $params[':appt_id'] = $filters['appt_id'];
-        }
-        if (!empty($filters['paymt_id'])) {
-            $sql .= " AND p.PAYMT_ID = :paymt_id";
-            $params[':paymt_id'] = $filters['paymt_id'];
-        }
-        if (!empty($filters['pymt_stat_id'])) {
-            $sql .= " AND p.PYMT_STAT_ID = :pymt_stat_id";
-            $params[':pymt_stat_id'] = $filters['pymt_stat_id'];
-        }
-        if (!empty($filters['pymt_meth_id'])) {
-            $sql .= " AND p.PYMT_METH_ID = :pymt_meth_id";
-            $params[':pymt_meth_id'] = $filters['pymt_meth_id'];
-        }
-        if (!empty($filters['patient_name'])) {
-            $sql .= " AND CONCAT(pat.PAT_FIRST_NAME, ' ', pat.PAT_LAST_NAME) LIKE :patient_name";
-            $params[':patient_name'] = '%' . $filters['patient_name'] . '%';
-        }
-        if (!empty($filters['date_from'])) {
-            $sql .= " AND p.PAYMT_DATE >= :date_from";
-            $params[':date_from'] = $filters['date_from'] . ' 00:00:00';
-        }
-        if (!empty($filters['date_to'])) {
-            $sql .= " AND p.PAYMT_DATE <= :date_to";
-            $params[':date_to'] = $filters['date_to'] . ' 23:59:59';
-        }
+            if (!empty($filters['appt_id'])) {
+                $sql .= " AND p.APPT_ID = :appt_id";
+                $params[':appt_id'] = $filters['appt_id'];
+            }
+            if (!empty($filters['paymt_id'])) {
+                $sql .= " AND p.PAYMT_ID = :paymt_id";
+                $params[':paymt_id'] = $filters['paymt_id'];
+            }
+            if (!empty($filters['pymt_stat_id'])) {
+                $sql .= " AND p.PYMT_STAT_ID = :pymt_stat_id";
+                $params[':pymt_stat_id'] = $filters['pymt_stat_id'];
+            }
+            if (!empty($filters['pymt_meth_id'])) {
+                $sql .= " AND p.PYMT_METH_ID = :pymt_meth_id";
+                $params[':pymt_meth_id'] = $filters['pymt_meth_id'];
+            }
+            if (!empty($filters['patient_name'])) {
+                $sql .= " AND CONCAT(pat.PAT_FIRST_NAME, ' ', pat.PAT_LAST_NAME) LIKE :patient_name";
+                $params[':patient_name'] = '%' . $filters['patient_name'] . '%';
+            }
+            if (!empty($filters['date_from'])) {
+                $sql .= " AND p.PAYMT_DATE >= :date_from";
+                $params[':date_from'] = $filters['date_from'] . ' 00:00:00';
+            }
+            if (!empty($filters['date_to'])) {
+                $sql .= " AND p.PAYMT_DATE <= :date_to";
+                $params[':date_to'] = $filters['date_to'] . ' 23:59:59';
+            }
 
-        $sql .= " ORDER BY p.PAYMT_ID DESC";
+            $sql .= " ORDER BY p.PAYMT_ID DESC";
 
-        $stmt = $this->conn->prepare($sql);
-        $stmt->execute($params);
-        return $stmt->fetchAll(PDO::FETCH_ASSOC);
-    } catch (PDOException $e) {
-        error_log("Error in allWithFilters: " . $e->getMessage());
-        return [];
+            $stmt = $this->conn->prepare($sql);
+            $stmt->execute($params);
+            return $stmt->fetchAll(PDO::FETCH_ASSOC);
+        } catch (PDOException $e) {
+            error_log("Error in allWithFilters: " . $e->getMessage());
+            return [];
+        }
     }
-}
 
-    /**
-     * Get appointment details by APPT_ID
-     */
     public function getAppointmentDetails($appt_id) {
         try {
             $sql = "SELECT 
@@ -378,9 +390,6 @@ public function allWithFilters($filters = []) {
         }
     }
 
-    /**
-     * Get all payments for a specific appointment
-     */
     public function getPaymentsByAppointment($appt_id) {
         try {
             $sql = "SELECT 
@@ -404,9 +413,6 @@ public function allWithFilters($filters = []) {
         }
     }
 
-    /**
-     * Search appointments for Select2 dropdown
-     */
     public function searchAppointments($search = '') {
         try {
             $sql = "SELECT 
@@ -433,13 +439,8 @@ public function allWithFilters($filters = []) {
         }
     }
 
-    /**
-     * Get all appointments for dropdown (initial load)
-     */
     public function getAllAppointmentsForDropdown() {
-        return $this->searchAppointments(); // Reuse logic
+        return $this->searchAppointments();
     }
-
-    // ==================== END NEW METHODS ====================
 }
 ?>
