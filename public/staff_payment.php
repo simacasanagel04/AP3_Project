@@ -180,7 +180,7 @@ $filteredTotal = count($payments);
                             <div class="d-flex justify-content-between align-items-center">
                                 <div>
                                     <h6 class="card-subtitle mb-2">Filtered Results</h6>
-                                    <h3 class="card-title mb-0"><?= $filteredTotal ?></h3>
+                                    <h3 class="card-title mb-0"><?= count(array_filter($filters)) > 0 ? $filteredTotal : '—' ?></h3>
                                 </div>
                                 <i class="bi bi-funnel fs-1 opacity-50"></i>
                             </div>
@@ -374,6 +374,7 @@ $filteredTotal = count($payments);
             <form id="updatePaymentForm">
                 <div class="modal-body">
                     <input type="hidden" id="update_paymt_id" name="update_paymt_id">
+                    <input type="hidden" id="update_appt_id_hidden" name="update_appt_id_hidden">
                     <div class="row g-3">
                         <div class="col-md-6">
                             <label for="update_paymt_id_display" class="form-label">Payment ID</label>

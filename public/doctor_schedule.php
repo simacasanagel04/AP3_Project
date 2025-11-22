@@ -113,7 +113,7 @@ require_once '../includes/doctor_header.php';
             <div class="info-card">
                 <div class="row g-3 align-items-end">
                     <div class="col-md-3 col-sm-6">
-                        <label class="form-label"><strong><i class="bi bi-calendar-week"></i> Filter by Weekday</strong></label>
+                        <label class="form-label"><strong><i class="bi bi-calendar-week"></i> Filter by Days</strong></label>
                         <select class="form-select" id="filterByWeekday">
                             <option value="">-- All Days --</option>
                             <option value="Monday">Monday</option>
@@ -162,7 +162,7 @@ require_once '../includes/doctor_header.php';
                 <form id="scheduleForm">
                     <div class="row g-3 align-items-end">
                         <div class="col-md-3 col-sm-6">
-                            <label class="form-label"><strong>Select Weekday</strong></label>
+                            <label class="form-label"><strong>Select Days</strong></label>
                             <select class="form-select" id="newScheduleWeekday" required>
                                 <option value="">-- Select Day --</option>
                                 <option value="Monday">Monday</option>
@@ -208,7 +208,7 @@ require_once '../includes/doctor_header.php';
                             <thead>
                                 <tr>
                                     <th>Schedule ID</th>
-                                    <th>Weekday</th>
+                                    <th>Days</th>
                                     <th>Start Time</th>
                                     <th>End Time</th>
                                     <th>Total Appointments</th>
@@ -269,7 +269,7 @@ require_once '../includes/doctor_header.php';
                             <thead>
                                 <tr>
                                     <th>Schedule ID</th>
-                                    <th>Weekday</th>
+                                    <th>Days</th>
                                     <th>Start Time</th>
                                     <th>End Time</th>
                                     <th>Total Appointments</th>
@@ -331,7 +331,7 @@ require_once '../includes/doctor_header.php';
             <div class="modal-body">
                 <div class="mb-3">
                     <strong>Schedule ID:</strong> <span id="view_modal_sched_id"></span> | 
-                    <strong>Weekday:</strong> <span id="view_modal_weekday"></span>
+                    <strong>Day:</strong> <span id="view_modal_weekday"></span>
                 </div>
                 <div id="scheduleAppointmentsList">
                     <div class="text-center">
@@ -365,7 +365,7 @@ require_once '../includes/doctor_header.php';
                         <input type="text" class="form-control" id="edit_sched_id_display" readonly>
                     </div>
                     <div class="mb-3">
-                        <label class="form-label"><strong>Weekday</strong></label>
+                        <label class="form-label"><strong>Day</strong></label>
                         <select class="form-select" id="edit_sched_weekday" required>
                             <option value="">-- Select Day --</option>
                             <option value="Monday">Monday</option>

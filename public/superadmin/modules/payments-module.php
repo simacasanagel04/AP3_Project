@@ -33,7 +33,7 @@ if (!$is_superadmin) {
 $methods = $paymentMethod->getAllForDropdown();
 $statuses = $paymentStatus->all();
 
-// Fetch Appointments with Patient Names - FIXED QUERY
+// Fetch Appointments with Patient Names
 $appointments = [];
 try {
     $sql_appointments = "SELECT a.APPT_ID, 
@@ -81,10 +81,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             'pymt_stat_id'      => $_POST['pymt_stat_id']
         ];
 
+        error_log("Updating payment with data: " . json_encode($data));
         $success = $payment->update($data);
         $message = $success 
             ? "✅ Payment ID {$data['paymt_id']} updated successfully." 
-            : "❌ Failed to update payment.";
+            : "❌ Failed to update payment. Check error logs.";
     }
     
     elseif (isset($_POST['delete'])) {
@@ -99,7 +100,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 // Fetch payment records
 $records = !empty($search) ? $payment->searchWithDetails($search) : $payment->all();
 
-// Merge patient names into payment records - FIXED QUERY
+// Merge patient names into payment records
 $display_records = [];
 if (!empty($records)) {
     try {
@@ -108,7 +109,6 @@ if (!empty($records)) {
         if (!empty($appt_ids)) {
             $ids_placeholder = implode(',', array_fill(0, count($appt_ids), '?'));
             
-            // FIXED: Use correct uppercase column names
             $sql_patient_names = "SELECT a.APPT_ID as app_id, 
                                         CONCAT(p.PAT_LAST_NAME, ', ', p.PAT_FIRST_NAME) as patient_name
                                   FROM appointment a
@@ -241,52 +241,53 @@ $url_params = http_build_query($current_params);
             </thead>
             <tbody>
                 <?php foreach ($display_records as $r): ?>
-                    <tr>
-                        <form method="POST">
-                            <input type="hidden" name="paymt_id" value="<?= $r['paymt_id'] ?>">
-                            <td class="text-center fw-bold"><?= $r['paymt_id'] ?></td>
-                            <td>
-                                <input type="text" name="appt_id" value="<?= htmlspecialchars($r['app_id']) ?>" class="form-control form-control-sm" readonly>
-                            </td>
-                            <td><?= htmlspecialchars($r['patient_name'] ?? 'N/A') ?></td>
-                            <td>
-                                <input type="number" step="0.01" name="paymt_amount_paid" value="<?= htmlspecialchars($r['paymt_amount_paid']) ?>" class="form-control form-control-sm" required>
-                            </td>
-                            <td>
-                                <select name="pymt_meth_id" class="form-select form-select-sm" required>
-                                    <?php foreach ($methods as $method): 
-                                        $is_selected = ($r['pymt_meth_name'] == $method['pymt_meth_name']); 
-                                    ?>
-                                        <option value="<?= htmlspecialchars($method['pymt_meth_id']) ?>" <?= $is_selected ? 'selected' : '' ?>>
-                                            <?= htmlspecialchars($method['pymt_meth_name']) ?>
-                                        </option>
-                                    <?php endforeach; ?>
-                                </select>
-                            </td>
-                            <td>
-                                <select name="pymt_stat_id" class="form-select form-select-sm" required>
-                                    <?php foreach ($statuses as $status): 
-                                        $is_selected = ($r['pymt_stat_name'] == $status['pymt_stat_name']);
-                                    ?>
-                                        <option value="<?= htmlspecialchars($status['pymt_stat_id']) ?>" <?= $is_selected ? 'selected' : '' ?>>
-                                            <?= htmlspecialchars($status['pymt_stat_name']) ?>
-                                        </option>
-                                    <?php endforeach; ?>
-                                </select>
-                            </td>
-                            <td>
-                                <?php 
-                                    $payment_date_only = date('Y-m-d', strtotime($r['paymt_date']));
+                <tr>
+                    <form method="POST">
+                        <td class="text-center fw-bold"><?= $r['paymt_id'] ?></td>
+                        <td>
+                            <input type="text" value="<?= htmlspecialchars($r['app_id']) ?>" class="form-control form-control-sm" readonly>
+                        </td>
+                        <td><?= htmlspecialchars($r['patient_name'] ?? 'N/A') ?></td>
+                        <td>
+                            <input type="number" step="0.01" name="paymt_amount_paid" value="<?= htmlspecialchars($r['paymt_amount_paid']) ?>" class="form-control form-control-sm" required>
+                        </td>
+                        <td>
+                            <select name="pymt_meth_id" class="form-select form-select-sm" required>
+                                <?php foreach ($methods as $method): 
+                                    $is_selected = ($r['pymt_meth_name'] == $method['pymt_meth_name']); 
                                 ?>
-                                <input type="date" name="paymt_date" value="<?= htmlspecialchars($payment_date_only) ?>" class="form-control form-control-sm" required>
-                            </td>
-                            <td class="text-nowrap small text-muted"><?= $r['formatted_created_at'] ?? '-' ?></td>
-                            <td class="text-center">
-                                <button type="submit" name="update" class="btn btn-sm btn-success mb-1">Update</button>
-                                <button type="button" class="btn btn-sm btn-danger" data-bs-toggle="modal" data-bs-target="#deletePaymentModal" data-payment-id="<?= $r['paymt_id'] ?>">Delete</button>
-                            </td>
-                        </form>
-                    </tr>
+                                    <option value="<?= htmlspecialchars($method['pymt_meth_id']) ?>" <?= $is_selected ? 'selected' : '' ?>>
+                                        <?= htmlspecialchars($method['pymt_meth_name']) ?>
+                                    </option>
+                                <?php endforeach; ?>
+                            </select>
+                        </td>
+                        <td>
+                            <select name="pymt_stat_id" class="form-select form-select-sm" required>
+                                <?php foreach ($statuses as $status): 
+                                    $is_selected = ($r['pymt_stat_name'] == $status['pymt_stat_name']);
+                                ?>
+                                    <option value="<?= htmlspecialchars($status['pymt_stat_id']) ?>" <?= $is_selected ? 'selected' : '' ?>>
+                                        <?= htmlspecialchars($status['pymt_stat_name']) ?>
+                                    </option>
+                                <?php endforeach; ?>
+                            </select>
+                        </td>
+                        <td>
+                            <?php 
+                                $payment_date_only = date('Y-m-d', strtotime($r['paymt_date']));
+                            ?>
+                            <input type="date" name="paymt_date" value="<?= htmlspecialchars($payment_date_only) ?>" class="form-control form-control-sm" required>
+                        </td>
+                        <td class="text-nowrap small text-muted"><?= $r['formatted_created_at'] ?? '-' ?></td>
+                        <td class="text-center">
+                            <input type="hidden" name="paymt_id" value="<?= $r['paymt_id'] ?>">
+                            <input type="hidden" name="appt_id" value="<?= htmlspecialchars($r['app_id']) ?>">
+                            <button type="submit" name="update" value="1" class="btn btn-sm btn-success mb-1">Update</button>
+                            <button type="button" class="btn btn-sm btn-danger" data-bs-toggle="modal" data-bs-target="#deletePaymentModal" data-payment-id="<?= $r['paymt_id'] ?>">Delete</button>
+                        </td>
+                    </form>
+                </tr>
                 <?php endforeach; ?>
             </tbody>
         </table>

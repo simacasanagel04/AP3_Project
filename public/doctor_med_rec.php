@@ -9,7 +9,7 @@ $db = (new Database())->connect();
 $doc_id = $_SESSION['doc_id'] ?? null;
 
 // Fetch all medical records for this doctor
-$query = "SELECT 
+$query = "SELECT DISTINCT
     mr.MED_REC_ID,
     mr.MED_REC_DIAGNOSIS,
     mr.MED_REC_PRESCRIPTION,

@@ -29,18 +29,31 @@ $patientAppointments = $appointment->getByPatientId($pat_id);
 // Get appointments with payment info
 $appointmentsWithPayment = [];
 foreach ($patientAppointments as $appt) {
-    $paymentInfo = $db->query("
-        SELECT 
-            p.PAYMT_AMOUNT_PAID,
-            pm.pymt_meth_name,
-            ps.PYMT_STAT_NAME
-        FROM payment p
-        LEFT JOIN payment_method pm ON p.pymt_meth_id = pm.pymt_meth_id
-        LEFT JOIN payment_status ps ON p.PYMT_STAT_ID = ps.PYMT_STAT_ID
-        WHERE p.APPT_ID = " . $appt['app_id']
-    )->fetch(PDO::FETCH_ASSOC);
+    try {
+        $paymentQuery = "
+            SELECT 
+                p.PAYMT_AMOUNT_PAID,
+                pm.PYMT_METH_NAME,
+                ps.PYMT_STAT_NAME
+            FROM payment p
+            LEFT JOIN payment_method pm ON p.PYMT_METH_ID = pm.PYMT_METH_ID
+            LEFT JOIN payment_status ps ON p.PYMT_STAT_ID = ps.PYMT_STAT_ID
+            WHERE p.APPT_ID = :appt_id
+            LIMIT 1
+        ";
+        
+        $paymentStmt = $db->prepare($paymentQuery);
+        $paymentStmt->bindParam(':appt_id', $appt['app_id'], PDO::PARAM_STR);
+        $paymentStmt->execute();
+        
+        $paymentInfo = $paymentStmt->fetch(PDO::FETCH_ASSOC);
+        
+        $appt['payment_info'] = $paymentInfo;
+    } catch (PDOException $e) {
+        error_log("Payment query error for appointment {$appt['app_id']}: " . $e->getMessage());
+        $appt['payment_info'] = null;
+    }
     
-    $appt['payment_info'] = $paymentInfo;
     $appointmentsWithPayment[] = $appt;
 }
 
@@ -121,7 +134,7 @@ foreach ($appointmentsWithPayment as $appt) {
 
         <div class="mb-3">
             <label class="form-label"><strong>SERVICE PRICE</strong></label>
-            <div class="form-control bg-light" id="servicePrice" style="font-weight:600; color:var(--blue);">₱0.00</div>
+            <div class="form-control bg-light fw-semibold text-primary" id="servicePrice">₱0.00</div>
         </div>
 
         <div class="mb-3">
@@ -149,9 +162,9 @@ foreach ($appointmentsWithPayment as $appt) {
     <h4 class="mb-3">BOOKED APPOINTMENTS HISTORY</h4>
     
     <!-- FILTER CARD -->
-    <div class="card mb-3">
+    <div class="card mb-3 shadow-sm">
         <div class="card-body">
-            <h6 class="card-title mb-3">Filter Appointments</h6>
+            <h6 class="card-title mb-3 fw-semibold">Filter Appointments</h6>
             <div class="row g-3">
                 <div class="col-md-4">
                     <label class="form-label">Appointment ID</label>
@@ -180,8 +193,8 @@ foreach ($appointmentsWithPayment as $appt) {
     </div>
 
     <div class="table-responsive">
-        <table class="table table-bordered align-middle" id="appointmentsTable">
-            <thead>
+        <table class="table table-bordered table-hover align-middle" id="appointmentsTable">
+            <thead class="table-light">
                 <tr>
                     <th>Appointment ID</th>
                     <th>Doctor</th>
@@ -196,9 +209,9 @@ foreach ($appointmentsWithPayment as $appt) {
             <tbody>
                 <?php if (empty($appointmentsWithPayment)): ?>
                     <tr>
-                        <td colspan="8" class="text-center py-4">
-                            <i class="bi bi-calendar-x" style="font-size: 3rem; opacity: 0.3;"></i>
-                            <p class="mt-2">No appointments found</p>
+                        <td colspan="8" class="text-center py-5">
+                            <i class="bi bi-calendar-x opacity-25" style="font-size: 3rem;"></i>
+                            <p class="mt-2 text-muted">No appointments found</p>
                         </td>
                     </tr>
                 <?php else: ?>
@@ -209,9 +222,9 @@ foreach ($appointmentsWithPayment as $appt) {
                                       ($appt['app_status'] == 2 ? 'bg-success' : 'bg-danger');
                         
                         $payInfo = $appt['payment_info'];
-                        $payAmount = $payInfo ? '₱' . number_format($payInfo['PAYMT_AMOUNT_PAID'], 2) : 'N/A';
-                        $payMethod = $payInfo ? $payInfo['pymt_meth_name'] : 'N/A';
-                        $payStatus = $payInfo ? $payInfo['PYMT_STAT_NAME'] : 'N/A';
+                        $payAmount = $payInfo && $payInfo['PAYMT_AMOUNT_PAID'] ? '₱' . number_format($payInfo['PAYMT_AMOUNT_PAID'], 2) : 'N/A';
+                        $payMethod = $payInfo && $payInfo['PYMT_METH_NAME'] ? $payInfo['PYMT_METH_NAME'] : 'N/A';
+                        $payStatus = $payInfo && $payInfo['PYMT_STAT_NAME'] ? $payInfo['PYMT_STAT_NAME'] : 'N/A';
                         $payStatusClass = $payInfo && $payInfo['PYMT_STAT_NAME'] == 'Paid' ? 'text-success' : 
                                          ($payInfo && $payInfo['PYMT_STAT_NAME'] == 'Pending' ? 'text-warning' : 'text-danger');
                     ?>
@@ -225,7 +238,7 @@ foreach ($appointmentsWithPayment as $appt) {
                         <td>
                             <strong><?= $payAmount ?></strong><br>
                             <small class="text-muted"><?= $payMethod ?></small><br>
-                            <small class="<?= $payStatusClass ?>"><?= $payStatus ?></small>
+                            <small class="fw-semibold <?= $payStatusClass ?>"><?= $payStatus ?></small>
                         </td>
                         <td><?= htmlspecialchars(date('M d, Y', strtotime($appt['app_date']))) ?></td>
                     </tr>
@@ -237,29 +250,66 @@ foreach ($appointmentsWithPayment as $appt) {
 </div>
 
 <!-- PAYMENT SECTION -->
-<div id="paymentSection" class="payment-section" style="display: none;">
-    <div class="payment-header">
-        Please select a payment method to complete your booking.<br>
+<div id="paymentSection" class="payment-section border border-2 border-primary rounded-3 p-4 bg-light bg-gradient" style="display: none;">
+    <div class="bg-primary bg-gradient text-white p-3 rounded-3 text-center mb-4">
+        <h5 class="mb-0 fw-semibold">Complete Your Payment</h5>
     </div>
 
-    <div class="service-summary">
-        <span id="summaryService">Service Name</span>
-        <strong id="summaryPrice">₱0.00</strong>
+    <div class="bg-white border border-2 p-3 rounded-3 d-flex justify-content-between align-items-center fw-semibold mb-4 shadow-sm">
+        <span id="summaryService" class="fs-6 text-dark">Service Name</span>
+        <strong id="summaryPrice" class="fs-6 text-primary">₱0.00</strong>
     </div>
 
-    <div class="mb-3">
-        <label class="form-label"><strong>PAYMENT METHOD</strong></label>
-        <select class="form-select" id="paymentMethodSelect" required>
-            <option value="">-- Select Payment Method --</option>
+    <div class="mb-4">
+        <label class="form-label fw-bold text-uppercase">Select Payment Method</label>
+        <select class="fs-6 form-select border-2" id="paymentMethodSelect" required>
+            <option value="">-- Choose Payment Method --</option>
             <?php foreach ($allPaymentMethods as $method): ?>
                 <option value="<?= $method['pymt_meth_id'] ?>"><?= htmlspecialchars($method['pymt_meth_name']) ?></option>
             <?php endforeach; ?>
         </select>
     </div>
 
-    <div id="paymentCardContainer"></div>
+    <div class="d-flex gap-3 justify-content-center">
+        <button type="button" class="btn btn-outline-secondary px-4 fw-semibold" id="cancelPaymentBtn">CANCEL</button>
+        <button type="button" class="btn btn-primary px-4 fw-semibold text-uppercase" id="proceedPaymentBtn" disabled>PROCEED TO PAYMENT</button>
+    </div>
+</div>
 
-    <button type="button" class="btn btn-book" id="bookBtn" disabled>BOOK APPOINTMENT</button>
+<!-- PAYMENT MODAL -->
+<div class="modal fade" id="paymentModal" tabindex="-1" data-bs-backdrop="static" data-bs-keyboard="false">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content border-0 shadow-lg rounded-4">
+            <!-- Header with gradient -->
+            <div class="modal-header bg-primary bg-gradient text-white p-4 border-0">
+                <div>
+                    <h5 class="modal-title fw-semibold mb-1" id="paymentModalTitle">Payment Method</h5>
+                    <small class="opacity-75">Complete your appointment booking</small>
+                </div>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+
+            <!-- Body -->
+            <div class="modal-body p-4">
+                <!-- Payment Icon Section -->
+                <div class="text-center mb-4">
+                    <p class="text-muted mb-1">Amount to Pay:</p>
+                    <h3 class="fw-bold" id="paymentAmount">₱0.00</h3>
+                </div>
+
+                <hr class="my-4">
+
+                <!-- Payment Form Container -->
+                <div id="paymentFormContainer"></div>
+            </div>
+
+            <!-- Footer -->
+            <div class="modal-footer bg-light p-4 border-top">
+                <button type="button" class="btn btn-outline-secondary px-5" data-bs-dismiss="modal">CANCEL</button>
+                <button type="button" class="btn btn-success px-5 fw-semibold" id="confirmPaymentBtn">CONFIRM & BOOK</button>
+            </div>
+        </div>
+    </div>
 </div>
 
 </div> <!-- END .main-content -->

@@ -190,9 +190,6 @@ $total_appointments = count($appointments);
                             <button class="btn btn-sm btn-warning me-1" onclick='updateAppointment("<?= $appt['app_id'] ?>", <?= json_encode($appt, JSON_HEX_APOS | JSON_HEX_QUOT) ?>)'>
                                 <i class="bi bi-pencil"></i> Update
                             </button>
-                            <button class="btn btn-sm btn-danger" onclick="cancelAppointment(<?= $appt['app_id'] ?>)">
-                                <i class="bi bi-x-circle"></i> Cancel
-                            </button>
                             <?php endif; ?>
                         </td>
                     </tr>
@@ -254,9 +251,6 @@ $total_appointments = count($appointments);
                             <?php if ($status == 1): ?>
                             <button class="btn btn-sm btn-warning me-1" onclick='updateAppointment("<?= $appt['app_id'] ?>", <?= json_encode($appt, JSON_HEX_APOS | JSON_HEX_QUOT) ?>)'>
                                 <i class="bi bi-pencil"></i> Update
-                            </button>
-                            <button class="btn btn-sm btn-danger" onclick="cancelAppointment(<?= $appt['app_id'] ?>)">
-                                <i class="bi bi-x-circle"></i> Cancel
                             </button>
                             <?php endif; ?>
                         </td>
