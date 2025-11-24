@@ -1,40 +1,38 @@
 <?php
-// config/Database.php
+echo "LOADING DATABASE FILE...<br>";
 
 class Database {
+
     private $conn;
 
     public function connect() {
-        if ($this->conn !== null) {
-            return $this->conn;
-        }
 
+        // pull the Supabase DB URL from Heroku
         $databaseUrl = getenv("DATABASE_URL");
 
         if (!$databaseUrl) {
-            die("DATABASE_URL is not set. Please add it in Heroku Config Vars.");
+            die("ERROR: DATABASE_URL is missing in Heroku config.");
         }
 
+        // parse Heroku PostgreSQL URL
+        $url = parse_url($databaseUrl);
+
+        $host = $url["host"];
+        $username = $url["user"];
+        $password = $url["pass"];
+        $dbname = ltrim($url["path"], '/');
+        $port = $url["port"] ?? 5432;
+
         try {
-            // Parse MySQL URL from Railway via Heroku
-            $url = parse_url($databaseUrl);
-
-            $host = $url['host'];
-            $username = $url['user'];
-            $password = $url['pass'];
-            $dbname = ltrim($url['path'], '/');
-            $port = isset($url['port']) ? $url['port'] : 3306;
-
-            $dsn = "mysql:host={$host};port={$port};dbname={$dbname};charset=utf8mb4";
-
+            $dsn = "pgsql:host=$host;port=$port;dbname=$dbname";
             $this->conn = new PDO($dsn, $username, $password);
             $this->conn->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
 
-        } catch (PDOException $e) {
-            die("Database Connection Failed: " . $e->getMessage());
-        }
+            return $this->conn;
 
-        return $this->conn;
+        } catch (PDOException $e) {
+            die("SUPABASE CONNECTION FAILED: " . $e->getMessage());
+        }
     }
 }
 ?>
