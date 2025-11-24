@@ -61,6 +61,10 @@ if (!empty($patientData['pat_dob'])) {
             <div class="modal-body">
                 <div class="row g-3">
                     <div class="col-md-6">
+                        <strong><i class="bi bi-hash me-2"></i>Patient ID:</strong>
+                        <p class="mb-0"><?= htmlspecialchars($pat_id) ?></p>
+                    </div>
+                    <div class="col-md-6">
                         <strong><i class="bi bi-person me-2"></i>Full Name:</strong>
                         <p class="mb-0"><?= htmlspecialchars($patientData['pat_first_name'] . ' ' . 
                             (!empty($patientData['pat_middle_init']) ? $patientData['pat_middle_init'] . '. ' : '') . 
@@ -86,7 +90,7 @@ if (!empty($patientData['pat_dob'])) {
                         <strong><i class="bi bi-envelope me-2"></i>Email:</strong>
                         <p class="mb-0"><?= htmlspecialchars($patientData['pat_email'] ?? 'N/A') ?></p>
                     </div>
-                    <div class="col-12">
+                    <div class="col-md-6">
                         <strong><i class="bi bi-geo-alt me-2"></i>Address:</strong>
                         <p class="mb-0"><?= htmlspecialchars($patientData['pat_address']) ?></p>
                     </div>

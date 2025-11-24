@@ -51,8 +51,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     if (empty($formData['spec_id'])) $errors[] = "Specialization is required.";
 
     if (empty($errors)) {
+        error_log("=== DOCTOR CREATE DEBUG ===");
+        error_log("Form data: " . print_r($formData, true));
+
         try {
-            // Insert without doc_id (let database auto-increment)
+            // Insert doctor
             $newDoctor = [
                 'doc_first_name' => $formData['doc_first_name'],
                 'doc_middle_init' => $formData['doc_middle_init'],
@@ -62,9 +65,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 'spec_id' => $formData['spec_id']
             ];
 
-            $new_doc_id = $doctor->create($newDoctor);
+            $result = $doctor->create($newDoctor);
 
-            if ($new_doc_id) {
+            error_log("Create result: " . var_export($result, true));
+            error_log("Result type: " . gettype($result));
+
+            // Check if result is numeric ID (success)
+            if ($result !== false && is_numeric($result) && $result > 0) {
+                $new_doc_id = $result;
                 $status = "success";
                 $message = "Doctor <strong>{$formData['doc_first_name']} {$formData['doc_last_name']}</strong> registered successfully!";
 
@@ -72,6 +80,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $_SESSION['pending_doc_id'] = $new_doc_id;
                 $_SESSION['pending_email'] = $formData['doc_email'];
                 $_SESSION['pending_user_type'] = 'doctor';
+                
                 error_log("SUCCESS! Doctor ID: $new_doc_id stored in session");
 
                 // Clear form
@@ -79,17 +88,26 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
                 // Redirect after 5 seconds
                 header("Refresh: 5; url=signup.php");
-                exit();
+            } elseif ($result === "DUPLICATE_CONTACT_NUMBER") {
+                $status = "error";
+                $message = "Contact number already exists. Please use a different contact number.";
+                error_log("ERROR: Duplicate contact number");
             } else {
                 $status = "error";
-                $message = "Failed to register doctor. Please check if email or contact number already exists.";
-                error_log("ERROR: Insert failed");
+                $message = is_string($result) ? $result : "Failed to register doctor. Please try again.";
+                error_log("ERROR: " . var_export($result, true));
             }
         } catch (PDOException $e) {
             $status = "error";
             // Check for duplicate entry
             if ($e->getCode() == 23000) {
-                $message = "Email or contact number already exists. Please use different credentials.";
+                if (strpos($e->getMessage(), 'DOC_EMAIL') !== false) {
+                    $message = "Email already exists. Please use a different email address.";
+                } elseif (strpos($e->getMessage(), 'DOC_CONTACT_NUM') !== false) {
+                    $message = "Contact number already exists. Please use a different contact number.";
+                } else {
+                    $message = "Email or contact number already exists. Please use different credentials.";
+                }
             } else {
                 $message = "Database error occurred. Please try again.";
             }
@@ -108,7 +126,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Doctor Registration | AKSyon Medical Center</title>
+    <title>Doctor Registration</title>
+
+    <!-- FAVICON -->
+    <link rel="icon" href="https://res.cloudinary.com/dibojpqg2/image/upload/v1763945513/AKSyon_favicon_1_foov82.png" type="image/png">
+    <link rel="shortcut icon" href="https://res.cloudinary.com/dibojpqg2/image/upload/v1763945513/AKSyon_favicon_1_foov82.png" type="image/png">
+    <link rel="apple-touch-icon" href="https://res.cloudinary.com/dibojpqg2/image/upload/v1763945513/AKSyon_favicon_1_foov82.png">
+
     <!-- Bootstrap 5 -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
     <!-- Bootstrap Icons -->
@@ -136,14 +160,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     <div class="card-body p-3">
                         <!-- ALERT -->
                         <?php if ($message): ?>
-                            <div class="alert alert-<?= $status === 'success' ? 'success' : 'danger' ?> alert-dismissible
-                            fade show" role="alert">
+                            <div class="alert alert-<?= $status === 'success' ? 'success' : 'danger' ?> alert-dismissible fade show" role="alert">
                                 <?= $message ?>
                                 <?php if ($status === 'success'): ?>
                                     <br>
-                                    <strong>Your Doctor ID:
-                                        <?= htmlspecialchars($new_doc_id) ?>
-                                    </strong>
+                                    <strong>Your Doctor ID: <?= htmlspecialchars($new_doc_id) ?></strong>
                                     <br><small>Redirecting to account creation in 5 seconds...</small>
                                 <?php endif; ?>
                                 <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
@@ -153,40 +174,30 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                         <form method="post" action="" id="doctorForm" novalidate>
                             <div class="row g-3">
                                 <div class="col-md-4">
-                                    <label class="form-label">First Name <span
-                                            class="text-danger">*</span></label>
-                                    <input type="text" class="form-control" name="doc_first_name" value="<?=
-                                        htmlspecialchars($formData['doc_first_name']) ?>" required>
+                                    <label class="form-label">First Name <span class="text-danger">*</span></label>
+                                    <input type="text" class="form-control" name="doc_first_name" value="<?= htmlspecialchars($formData['doc_first_name']) ?>" required>
                                 </div>
                                 <div class="col-md-2">
                                     <label class="form-label">M.I.</label>
-                                    <input type="text" class="form-control" name="doc_middle_init" value="<?=
-                                        htmlspecialchars($formData['doc_middle_init']) ?>" maxlength="5">
+                                    <input type="text" class="form-control" name="doc_middle_init" value="<?= htmlspecialchars($formData['doc_middle_init']) ?>" maxlength="5">
                                 </div>
                                 <div class="col-md-6">
-                                    <label class="form-label">Last Name <span
-                                            class="text-danger">*</span></label>
-                                    <input type="text" class="form-control" name="doc_last_name" value="<?=
-                                        htmlspecialchars($formData['doc_last_name']) ?>" required>
+                                    <label class="form-label">Last Name <span class="text-danger">*</span></label>
+                                    <input type="text" class="form-control" name="doc_last_name" value="<?= htmlspecialchars($formData['doc_last_name']) ?>" required>
                                 </div>
                             </div>
                             <div class="row g-3 mt-2">
                                 <div class="col-md-6">
                                     <label class="form-label">Email <span class="text-danger">*</span></label>
-                                    <input type="email" class="form-control" name="doc_email" value="<?=
-                                        htmlspecialchars($formData['doc_email']) ?>" required>
+                                    <input type="email" class="form-control" name="doc_email" value="<?= htmlspecialchars($formData['doc_email']) ?>" required>
                                 </div>
                                 <div class="col-md-6">
-                                    <label class="form-label">Contact Number <span
-                                            class="text-danger">*</span></label>
-                                    <input type="tel" class="form-control" name="doc_contact_num" value="<?=
-                                        htmlspecialchars($formData['doc_contact_num']) ?>" placeholder="09XX-XXX-XXXX"
-                                        required>
+                                    <label class="form-label">Contact Number <span class="text-danger">*</span></label>
+                                    <input type="tel" class="form-control" name="doc_contact_num" value="<?= htmlspecialchars($formData['doc_contact_num']) ?>" placeholder="09XX-XXX-XXXX" required>
                                 </div>
                             </div>
                             <div class="mt-3">
-                                <label class="form-label">Specialization <span
-                                        class="text-danger">*</span></label>
+                                <label class="form-label">Specialization <span class="text-danger">*</span></label>
                                 <select class="form-select" name="spec_id" required>
                                     <option value="">-- Select Specialization --</option>
                                     <?php foreach ($specializations as $spec): ?>
@@ -203,8 +214,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                             </div>
                             <div class="mt-4 text-center">
                                 <small class="text-muted">
-                                    Already have an account? <a href="login.php"
-                                        class="text-primary text-decoration-none">LOGIN</a>
+                                    Already have an account? <a href="login.php" class="text-primary text-decoration-none">LOGIN</a>
                                 </small>
                             </div>
                         </form>
@@ -213,9 +223,51 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             </div>
         </div>
     </div>
-    <script src="js/doctor_dashboard.js"></script>
+    
     <!-- Bootstrap JS -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
-   
+    <script src="js/doctor_dashboard.js"></script>
+
+    <!-- FORM VALIDATION -->
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            const form = document.getElementById('doctorForm');
+            const nextBtn = document.getElementById('nextBtn');
+            const required = form.querySelectorAll('[required]');
+
+            function validate() {
+                let valid = true;
+                required.forEach(field => {
+                    const value = field.value.trim();
+                    if (!value) {
+                        valid = false;
+                        field.classList.add('is-invalid');
+                    } else {
+                        field.classList.remove('is-invalid');
+                    }
+                });
+                
+                // Enable button if all required fields are filled
+                nextBtn.disabled = !valid;
+                
+                // Change button appearance based on validity
+                if (valid) {
+                    nextBtn.classList.remove('btn-secondary');
+                    nextBtn.classList.add('btn-primary');
+                } else {
+                    nextBtn.classList.remove('btn-primary');
+                    nextBtn.classList.add('btn-secondary');
+                }
+            }
+
+            required.forEach(field => {
+                field.addEventListener('input', validate);
+                field.addEventListener('change', validate);
+            });
+
+            // Run validation on page load
+            validate();
+        });
+    </script>
 </body>
 </html>

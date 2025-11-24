@@ -64,17 +64,19 @@ $quickActions = [
 <head>
   <meta charset="utf-8">
   <title>Staff Dashboard</title>
+
+  <!-- FAVICON -->
+  <link rel="icon" href="https://res.cloudinary.com/dibojpqg2/image/upload/v1763945513/AKSyon_favicon_1_foov82.png" type="image/png">
+  <link rel="shortcut icon" href="https://res.cloudinary.com/dibojpqg2/image/upload/v1763945513/AKSyon_favicon_1_foov82.png" type="image/png">
+  <link rel="apple-touch-icon" href="https://res.cloudinary.com/dibojpqg2/image/upload/v1763945513/AKSyon_favicon_1_foov82.png">
+
   <meta name="viewport" content="width=device-width,initial-scale=1">
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
   <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet">
   <style>
     body { background: #f4f7fb; }
     .dashboard-title { color: #003366; }
-    .card-stat { border-radius: 14px; border: none; transition: .18s; }
-    .card-stat:hover { transform: translateY(-6px); }
-    .quick-card { border-radius: 12px; background: #fff; transition: transform .15s; }
-    .quick-card:hover { transform: translateY(-6px); text-decoration: none; }
-    .quick-icon { width: 56px; height: 56px; border-radius: 10px; background: linear-gradient(180deg, rgba(0,51,102,0.08), rgba(0,51,102,0.02)); color: #003366; font-size: 1.6rem; }
+    .quick-icon { width: 56px; height: 56px; background: linear-gradient(180deg, rgba(0,51,102,0.08), rgba(0,51,102,0.02)); color: #003366; font-size: 1.6rem; }
     @media (max-width: 767px) { .quick-icon { width: 48px; height: 48px; font-size: 1.25rem; } }
   </style>
 </head>
@@ -95,14 +97,14 @@ $quickActions = [
     <!-- Top Stats -->
     <div class="row g-4 mb-4">
       <div class="col-12 col-md-6">
-        <div class="card card-stat shadow text-center p-4">
+        <div class="card shadow text-center p-4 border-0 rounded-4 transition-transform" onmouseover="this.style.transform='translateY(-6px)'" onmouseout="this.style.transform='translateY(0)'">
           <h6 class="text-muted">Total Doctors</h6>
           <h2 class="fw-bold text-primary"><?= htmlspecialchars($total_doctors) ?></h2>
           <small class="text-muted">Active Doctors</small>
         </div>
       </div>
       <div class="col-12 col-md-6">
-        <div class="card card-stat shadow text-center p-4">
+        <div class="card shadow text-center p-4 border-0 rounded-4 transition-transform" onmouseover="this.style.transform='translateY(-6px)'" onmouseout="this.style.transform='translateY(0)'">
           <h6 class="text-muted">Total Staff</h6>
           <h2 class="fw-bold text-success"><?= htmlspecialchars($total_staff) ?></h2>
           <small class="text-muted">Including Admins</small>
@@ -121,8 +123,8 @@ $quickActions = [
             <div class="row g-3">
               <?php foreach ($quickActions as $i => $act): ?>
                 <div class="col-12 col-md-6 col-lg-4">
-                  <a class="quick-card d-flex gap-3 align-items-center p-3 shadow-sm text-decoration-none text-dark" href="<?= htmlspecialchars($act['link']) ?>">
-                    <div class="quick-icon d-flex align-items-center justify-content-center">
+                  <a class="card d-flex flex-row gap-3 align-items-center p-3 shadow-sm text-decoration-none text-dark rounded-3 transition-transform" href="<?= htmlspecialchars($act['link']) ?>" onmouseover="this.style.transform='translateY(-6px)'" onmouseout="this.style.transform='translateY(0)'">
+                    <div class="quick-icon d-flex align-items-center justify-content-center rounded-3">
                       <i class="bi bi-<?= htmlspecialchars($act['icon']) ?>"></i>
                     </div>
                     <div>

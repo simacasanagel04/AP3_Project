@@ -46,28 +46,65 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     }
 
     if (empty($errors)) {
-        // Since Staff::create returns the ID on success, we use it directly
-        $new_staff_id = $staff->create($formData);
+        error_log("=== STAFF CREATE DEBUG ===");
+        error_log("Form data: " . print_r($formData, true));
 
-        if ($new_staff_id) {
+        // Prepare data in the format Staff::create() expects
+        $staffData = [
+            'first_name'  => $formData['STAFF_FIRST_NAME'],
+            'middle_init' => $formData['STAFF_MIDDLE_INIT'],
+            'last_name'   => $formData['STAFF_LAST_NAME'],
+            'email'       => $formData['STAFF_EMAIL'],
+            'phone'       => $formData['STAFF_CONTACT_NUM']
+        ];
 
-            // Save staff info to session for sign up (optional, but good for context)
-            $_SESSION['pending_staff_id'] = $new_staff_id;
-            $_SESSION['pending_email']    = $formData['STAFF_EMAIL'];
-            $_SESSION['pending_name']     = $formData['STAFF_FIRST_NAME'] . ' ' . $formData['STAFF_LAST_NAME'];
-            
-            // Redirect immediately to sign_up.php
-            header("Location: signup.php?staff_id=" . $new_staff_id);
-            exit;
-        } else {
+        // Call create WITHOUT user_type check (since this is public registration)
+        try {
+            // Direct SQL insert since we're bypassing the user_type restriction
+            $sql = "INSERT INTO staff 
+                    (STAFF_FIRST_NAME, STAFF_LAST_NAME, STAFF_MIDDLE_INIT, STAFF_CONTACT_NUM, STAFF_EMAIL, STAFF_CREATED_AT, STAFF_UPDATED_AT) 
+                    VALUES (:first_name, :last_name, :middle_init, :phone, :email, NOW(), NOW())";
+            $stmt = $db->prepare($sql);
+            $result = $stmt->execute([
+                ':first_name'  => $staffData['first_name'],
+                ':last_name'   => $staffData['last_name'],
+                ':middle_init' => $staffData['middle_init'] ?: null,
+                ':phone'       => $staffData['phone'],
+                ':email'       => $staffData['email']
+            ]);
+
+            if ($result) {
+                $new_staff_id = $db->lastInsertId();
+                error_log("SUCCESS! Staff ID: $new_staff_id");
+
+                // Save staff info to session for sign up
+                $_SESSION['pending_staff_id'] = $new_staff_id;
+                $_SESSION['pending_email']    = $formData['STAFF_EMAIL'];
+                $_SESSION['pending_name']     = $formData['STAFF_FIRST_NAME'] . ' ' . $formData['STAFF_LAST_NAME'];
+                $_SESSION['pending_user_type'] = 'staff';
+
+                $status = "success";
+                $message = "Staff <strong>{$formData['STAFF_FIRST_NAME']} {$formData['STAFF_LAST_NAME']}</strong> registered successfully!";
+
+                // Clear form
+                $formData = array_fill_keys(array_keys($formData), '');
+
+                // Redirect after 2 seconds
+                header("Refresh: 2; url=signup.php");
+            } else {
+                $status = "error";
+                $message = "Database error occurred during staff creation. Please try again.";
+                error_log("ERROR: Staff creation failed");
+            }
+        } catch (PDOException $e) {
             $status = "error";
-            $message = "Database error occurred during staff creation. Please check logs.";
+            $message = "Database error: " . $e->getMessage();
+            error_log("PDO EXCEPTION in staff create: " . $e->getMessage());
         }
     } else {
         $status = "error";
         $message = implode("<br>", $errors);
     }
-  
 }
 ?>
 
@@ -76,7 +113,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Staff Registration | AKSyon Medical Center</title>
+  <title>Staff Registration</title>
+
+  <!-- FAVICON -->
+  <link rel="icon" href="https://res.cloudinary.com/dibojpqg2/image/upload/v1763945513/AKSyon_favicon_1_foov82.png" type="image/png">
+  <link rel="shortcut icon" href="https://res.cloudinary.com/dibojpqg2/image/upload/v1763945513/AKSyon_favicon_1_foov82.png" type="image/png">
+  <link rel="apple-touch-icon" href="https://res.cloudinary.com/dibojpqg2/image/upload/v1763945513/AKSyon_favicon_1_foov82.png">
 
   <!-- Bootstrap -->
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
@@ -106,6 +148,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
           <?php if ($message): ?>
             <div class="alert alert-<?= $status === 'success' ? 'success' : 'danger' ?> alert-dismissible fade show" role="alert">
               <?= $message ?>
+              <?php if ($status === 'success'): ?>
+                <br>
+                <strong>Your Staff ID: <?= htmlspecialchars($new_staff_id) ?></strong>
+                <br><small>Redirecting to account creation in 2 seconds...</small>
+              <?php endif; ?>
               <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
             </div>
           <?php endif; ?>
@@ -143,6 +190,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 <i class="bi bi-person-plus"></i> Register Staff & Continue to Sign Up
               </button>
             </div>
+
+            <div class="mt-4 text-center">
+              <small class="text-muted">
+                Already have an account? <a href="login.php" class="text-primary text-decoration-none">LOGIN</a>
+              </small>
+            </div>
           </form>
 
         </div>
@@ -170,7 +223,18 @@ document.addEventListener('DOMContentLoaded', function () {
         field.classList.remove('is-invalid');
       }
     });
+    
+    // Enable button if all required fields are filled
     nextBtn.disabled = !valid;
+    
+    // Change button appearance based on validity
+    if (valid) {
+      nextBtn.classList.remove('btn-secondary');
+      nextBtn.classList.add('btn-primary');
+    } else {
+      nextBtn.classList.remove('btn-primary');
+      nextBtn.classList.add('btn-secondary');
+    }
   }
 
   required.forEach(field => {
