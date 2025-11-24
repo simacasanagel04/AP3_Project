@@ -181,7 +181,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Login | AKSyon Medical Center</title>
+
+    <!-- FAVICON -->
+    <link rel="icon" href="https://res.cloudinary.com/dibojpqg2/image/upload/v1763945513/AKSyon_favicon_1_foov82.png" type="image/png">
+    <link rel="shortcut icon" href="https://res.cloudinary.com/dibojpqg2/image/upload/v1763945513/AKSyon_favicon_1_foov82.png" type="image/png">
+    <link rel="apple-touch-icon" href="https://res.cloudinary.com/dibojpqg2/image/upload/v1763945513/AKSyon_favicon_1_foov82.png">
+
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css">
 </head>
 <body class="bg-light">
 
@@ -225,7 +232,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
                     <div class="mt-4">
                         <small class="text-muted">
-                            Don't have an account? <a href="patient_create.php">Register</a>
+                            Don't have an account? <a href="#" data-bs-toggle="modal" data-bs-target="#registerModal" class="text-primary text-decoration-none">Register</a>
                         </small>
                     </div>
 
@@ -234,6 +241,60 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         </div>
     </div>
 </div>
+
+<!-- REGISTER MODAL (Same as index.php) -->
+<div class="modal fade" id="registerModal" tabindex="-1" aria-labelledby="registerModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header bg-primary text-white">
+                <h5 class="modal-title" id="registerModalLabel"><i class="bi bi-person-plus-fill me-2"></i>Register As</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body p-4">
+                <p class="text-center text-muted mb-4">Choose your account type to get started</p>
+                <div class="row g-3">
+                    <!-- PATIENT CARD -->
+                    <div class="col-12">
+                        <a href="patient_create.php" class="text-decoration-none">
+                            <div class="register-card p-4 border rounded-3 text-center h-100 shadow-sm">
+                                <i class="bi bi-person-fill text-primary" style="font-size: 3rem;"></i>
+                                <h5 class="mt-3 mb-2 fw-bold">PATIENT</h5>
+                                <p class="text-muted small mb-0">Register to book appointments and access medical services</p>
+                            </div>
+                        </a>
+                    </div>
+
+                    <!-- DOCTOR CARD -->
+                    <div class="col-12">
+                        <a href="doctor_create.php" class="text-decoration-none">
+                            <div class="register-card p-4 border rounded-3 text-center h-100 shadow-sm">
+                                <i class="bi bi-clipboard2-pulse-fill text-success" style="font-size: 3rem;"></i>
+                                <h5 class="mt-3 mb-2 fw-bold">DOCTOR</h5>
+                                <p class="text-muted small mb-0">Register to manage patients and appointments</p>
+                            </div>
+                        </a>
+                    </div>
+
+                    <!-- STAFF CARD -->
+                    <div class="col-12">
+                        <a href="staff_create.php" class="text-decoration-none">
+                            <div class="register-card p-4 border rounded-3 text-center h-100 shadow-sm">
+                                <i class="bi bi-briefcase-fill text-warning" style="font-size: 3rem;"></i>
+                                <h5 class="mt-3 mb-2 fw-bold">STAFF</h5>
+                                <p class="text-muted small mb-0">Register to assist with clinic operations</p>
+                            </div>
+                        </a>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 
 <script>
 <?php if ($success_login): ?>

@@ -11,18 +11,20 @@ require_once '../classes/User.php';
 $db = (new Database())->connect();
 $patient = new Patient($db);
 $doctor = new Doctor($db);
+$staff = new Staff($db);
 $user = new User($db);
 
 $errors = [];
 
-// Check if patient or doctor registration
+// Check if patient, doctor, or staff registration
 $pending_pat_id = $_SESSION['pending_pat_id'] ?? null;
 $pending_doc_id = $_SESSION['pending_doc_id'] ?? null;
+$pending_staff_id = $_SESSION['pending_staff_id'] ?? null;
 $pending_email = $_SESSION['pending_email'] ?? '';
 $user_type = $_SESSION['pending_user_type'] ?? 'patient';
 
-// If neither patient nor doctor registered, redirect
-if (!$pending_pat_id && !$pending_doc_id) {
+// If none registered, redirect
+if (!$pending_pat_id && !$pending_doc_id && !$pending_staff_id) {
     header("Location: ../index.php");
     exit();
 }
@@ -59,6 +61,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
             if ($pending_doc_id) {
                 $userData['doc_id'] = $pending_doc_id;
+            } elseif ($pending_staff_id) {
+                $userData['staff_id'] = $pending_staff_id;
             } else {
                 $userData['pat_id'] = $pending_pat_id;
             }
@@ -74,6 +78,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     $_SESSION['user_type'] = 'doctor';
                     $_SESSION['doc_id'] = $pending_doc_id;
                     $redirect = 'doctor_dashb.php';
+                } elseif ($pending_staff_id) {
+                    $_SESSION['user_type'] = 'staff';
+                    $_SESSION['staff_id'] = $pending_staff_id;
+                    $redirect = 'staff_dashboard.php';
                 } else {
                     $_SESSION['user_type'] = 'patient';
                     $_SESSION['pat_id'] = $pending_pat_id;
@@ -83,7 +91,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $_SESSION['just_registered'] = true;
 
                 // Clear pending data
-                unset($_SESSION['pending_pat_id'], $_SESSION['pending_doc_id'], $_SESSION['pending_email'], $_SESSION['pending_user_type']);
+                unset($_SESSION['pending_pat_id'], $_SESSION['pending_doc_id'], $_SESSION['pending_staff_id'], $_SESSION['pending_email'], $_SESSION['pending_user_type']);
 
                 header("Location: $redirect");
                 exit();
@@ -101,7 +109,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Sign Up | AKSyon Medical Center</title>
+    <title>Sign Up | AKSyon</title>
+
+    <!-- FAVICON -->
+    <link rel="icon" href="https://res.cloudinary.com/dibojpqg2/image/upload/v1763945513/AKSyon_favicon_1_foov82.png" type="image/png">
+    <link rel="shortcut icon" href="https://res.cloudinary.com/dibojpqg2/image/upload/v1763945513/AKSyon_favicon_1_foov82.png" type="image/png">
+    <link rel="apple-touch-icon" href="https://res.cloudinary.com/dibojpqg2/image/upload/v1763945513/AKSyon_favicon_1_foov82.png">
+
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css">
     <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet">
@@ -150,7 +164,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                                     placeholder="Confirm password" required>
                             </div>
                             <div class="d-flex gap-2 justify-content-center">
-                                <a href="<?= $pending_doc_id ? 'doctor_create.php' : 'patient_create.php' ?>"
+                                <a href="<?= $pending_doc_id ? 'doctor_create.php' : ($pending_staff_id ? 'staff_create.php' : 'patient_create.php') ?>"
                                     class="btn btn-outline-secondary px-4">Back</a>
                                 <button type="submit" class="btn btn-primary px-4"
                                     style="background-color: #336d96; border: none;">SIGN UP</button>

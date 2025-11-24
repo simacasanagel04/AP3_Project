@@ -240,6 +240,11 @@ require_once '../includes/doctor_header.php';
                     </div>
                     
                     <div class="col-md-6">
+                        <label class="form-label text-muted"><i class="bi bi-hash"></i> Doctor ID</label>
+                        <p class="form-control-plaintext fw-bold"><?= htmlspecialchars($doc_id) ?></p>
+                    </div>
+                    
+                    <div class="col-md-6">
                         <label class="form-label text-muted"><i class="bi bi-person-fill"></i> Full Name</label>
                         <p class="form-control-plaintext fw-bold">Dr. <?= htmlspecialchars($fullName) ?></p>
                     </div>
@@ -461,6 +466,11 @@ document.getElementById('viewModal').addEventListener('show.bs.modal', function(
                             <div class="user-avatar mx-auto" style="width: 80px; height: 80px; font-size: 2.5rem;">
                                 <i class="bi bi-person-circle"></i>
                             </div>
+                        </div>
+                        
+                        <div class="col-md-6">
+                            <label class="form-label text-muted"><i class="bi bi-hash"></i> Doctor ID</label>
+                            <p class="form-control-plaintext fw-bold">${doctor.DOC_ID}</p>
                         </div>
                         
                         <div class="col-md-6">
