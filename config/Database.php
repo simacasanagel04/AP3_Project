@@ -1,38 +1,26 @@
 <?php
-echo "LOADING DATABASE FILE...<br>";
+// config/Database.php
+     class Database { 
+          private $host = "localhost";
+          private $dbname = "medical_booking";
+          private $username = "root";
+          private $password = "";
+          private $conn;
 
-class Database {
+          public function connect() {
+               if ($this->conn == null) {
+                    try {
+                         $this->conn = new PDO("mysql:host={$this->host};dbname={$this->dbname}",
+                                        $this->username, $this->password
+                         );
+                         $this->conn->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+                    }catch(PDOException $e) {
+                         echo "Connected failed: " . $e->getMessage();
+                    }
+               }
 
-    private $conn;
+               return $this->conn;
+          }
+     }
+ ?>
 
-    public function connect() {
-
-        // pull the Supabase DB URL from Heroku
-        $databaseUrl = getenv("DATABASE_URL");
-
-        if (!$databaseUrl) {
-            die("ERROR: DATABASE_URL is missing in Heroku config.");
-        }
-
-        // parse Heroku PostgreSQL URL
-        $url = parse_url($databaseUrl);
-
-        $host = $url["host"];
-        $username = $url["user"];
-        $password = $url["pass"];
-        $dbname = ltrim($url["path"], '/');
-        $port = $url["port"] ?? 5432;
-
-        try {
-            $dsn = "pgsql:host=$host;port=$port;dbname=$dbname";
-            $this->conn = new PDO($dsn, $username, $password);
-            $this->conn->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
-
-            return $this->conn;
-
-        } catch (PDOException $e) {
-            die("SUPABASE CONNECTION FAILED: " . $e->getMessage());
-        }
-    }
-}
-?>
