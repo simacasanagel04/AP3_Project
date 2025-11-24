@@ -9,26 +9,31 @@ class Database {
             return $this->conn;
         }
 
-        $databaseUrl = getenv("DATABASE_URL");
+        // 1️⃣ Check Heroku DATABASE_URL first
+        $databaseUrl = getenv('DATABASE_URL');
 
-        if (!$databaseUrl) {
-            die("DATABASE_URL is not set. Please add it in Heroku Config Vars.");
+        if ($databaseUrl) {
+            // Parse DATABASE_URL (Heroku format)
+            $url = parse_url($databaseUrl);
+            $host = $url['host'] ?? 'mysql.railway.internal';
+            $port = $url['port'] ?? 3306;
+            $dbname = ltrim($url['path'] ?? 'railway', '/');
+            $username = $url['user'] ?? 'root';
+            $password = $url['pass'] ?? 'BJscjrBkAzQTWQlFnMNuuWjHxYUirDeh';
+        } else {
+            // 2️⃣ Fallback to Railway environment variables
+            $host = getenv('MYSQLHOST') ?: 'mysql.railway.internal';
+            $port = getenv('MYSQLPORT') ?: 3306;
+            $dbname = getenv('MYSQLDATABASE') ?: 'railway';
+            $username = getenv('MYSQLUSER') ?: 'root';
+            $password = getenv('MYSQLPASSWORD') ?: 'BJscjrBkAzQTWQlFnMNuuWjHxYUirDeh';
         }
 
+        $dsn = "mysql:host={$host};port={$port};dbname={$dbname};charset=utf8mb4";
+
         try {
-            $url = parse_url($databaseUrl);
-
-            $host = $url['host'];
-            $username = $url['user'];
-            $password = $url['pass'];
-            $dbname = ltrim($url['path'], '/');
-            $port = isset($url['port']) ? $url['port'] : 3306;
-
-            $dsn = "mysql:host={$host};port={$port};dbname={$dbname};charset=utf8mb4";
-
             $this->conn = new PDO($dsn, $username, $password);
             $this->conn->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
-
         } catch (PDOException $e) {
             die("Database Connection Failed: " . $e->getMessage());
         }
