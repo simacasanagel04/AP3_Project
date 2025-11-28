@@ -9,12 +9,12 @@ class Database {
     public $conn;
 
     public function __construct() {
-        // Railway provides these environment variables automatically
-        $this->host = getenv('MYSQLHOST') ?: 'mysql.railway.internal';
-        $this->db_name = getenv('MYSQLDATABASE') ?: 'railway';
-        $this->username = getenv('MYSQLUSER') ?: 'root';
-        $this->password = getenv('MYSQLPASSWORD') ?: '';
-        $this->port = getenv('MYSQLPORT') ?: '3306';
+        // Use custom DB_ variables for cross-project connection
+        $this->host = getenv('DB_HOST') ?: getenv('MYSQLHOST') ?: 'localhost';
+        $this->port = getenv('DB_PORT') ?: getenv('MYSQLPORT') ?: '3306';
+        $this->db_name = getenv('DB_NAME') ?: getenv('MYSQLDATABASE') ?: 'railway';
+        $this->username = getenv('DB_USER') ?: getenv('MYSQLUSER') ?: 'root';
+        $this->password = getenv('DB_PASSWORD') ?: getenv('MYSQLPASSWORD') ?: '';
     }
 
     public function connect() {
@@ -25,43 +25,15 @@ class Database {
             
             $this->conn = new PDO($dsn, $this->username, $this->password);
             
-            // Set PDO error mode to exception
             $this->conn->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
-            
-            // Set default fetch mode to associative array
             $this->conn->setAttribute(PDO::ATTR_DEFAULT_FETCH_MODE, PDO::FETCH_ASSOC);
-            
-            // Disable emulated prepares for better security
             $this->conn->setAttribute(PDO::ATTR_EMULATE_PREPARES, false);
 
         } catch (PDOException $e) {
-            // Log error for debugging
             error_log("Database Connection Error: " . $e->getMessage());
-            
-            // Show user-friendly error in production
             die("Connection failed: " . $e->getMessage());
         }
 
         return $this->conn;
-    }
-
-    // Optional: Method to test connection
-    public function testConnection() {
-        try {
-            $conn = $this->connect();
-            if ($conn) {
-                return [
-                    'status' => 'success',
-                    'message' => 'Connected successfully',
-                    'database' => $this->db_name,
-                    'host' => $this->host
-                ];
-            }
-        } catch (Exception $e) {
-            return [
-                'status' => 'error',
-                'message' => $e->getMessage()
-            ];
-        }
     }
 }
