@@ -1,6 +1,13 @@
 {
   "require": {
+    "php": ">=8.4",
     "ext-pdo": "*",
-    "ext-pdo_mysql": "*"
+    "ext-pdo_mysql": "*",
+    "ext-mysqli": "*"
+  },
+  "config": {
+    "platform": {
+      "php": "8.4"
+    }
   }
 }

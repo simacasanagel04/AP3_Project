@@ -1,0 +1,11 @@
+[phases.setup]
+# Only install MySQL client (PHP extensions are handled by Railpack)
+aptPackages = ["default-mysql-client"]
+
+[phases.install]
+cmds = [
+  "composer install --no-dev --optimize-autoloader"
+]
+
+[start]
+cmd = "php -S 0.0.0.0:$PORT -t ."
