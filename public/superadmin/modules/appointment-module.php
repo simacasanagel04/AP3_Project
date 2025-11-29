@@ -1,4 +1,5 @@
 <?php 
+// public/superadmin/modules/appointment-module.php
 if (session_status() === PHP_SESSION_NONE) { 
   session_start(); 
 } 

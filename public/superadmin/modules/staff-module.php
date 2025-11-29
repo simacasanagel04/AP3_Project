@@ -1,5 +1,5 @@
 <?php
-// staff-module.php
+// public/superadmin/modules/staff-module.php
 require_once dirname(__DIR__, 3) . '/classes/Staff.php';
 require_once dirname(__DIR__, 3) . '/classes/User.php';
 

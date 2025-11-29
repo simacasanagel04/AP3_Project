@@ -2,7 +2,7 @@
 // /classes/Service.php
 class Service {
     private $conn;
-    private $table_name = "SERVICE";
+    private $table_name = "service";
 
     // Make properties public for staff_service.php to access directly
     public $serv_id;
