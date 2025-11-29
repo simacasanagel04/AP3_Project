@@ -3,7 +3,7 @@
 
 class MedicalRecord {
     private $conn;
-    private $table_name = "MEDICAL_RECORD";
+    private $table_name = "medical_record";
 
     private $medrec_id;
     private $diagnosis;
