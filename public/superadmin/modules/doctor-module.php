@@ -1,41 +1,35 @@
 <?php
 // ============================================
-// COMPREHENSIVE DEBUGGER - START
+// ON-SCREEN DEBUGGER - START
 // ============================================
 error_reporting(E_ALL);
 ini_set('display_errors', 1);
 ini_set('display_startup_errors', 1);
-ini_set('log_errors', 1);
-ini_set('error_log', __DIR__ . '/../../../debug_doctor_module.log');
 
-// Create debug log file if it doesn't exist
-$debugLogFile = __DIR__ . '/../../../debug_doctor_module.log';
-if (!file_exists($debugLogFile)) {
-    touch($debugLogFile);
-    chmod($debugLogFile, 0666);
-}
+// Debug output buffer
+$debugOutput = [];
 
 function debugLog($message, $data = null) {
-    global $debugLogFile;
-    $timestamp = date('Y-m-d H:i:s');
-    $logMessage = "[$timestamp] $message";
-    if ($data !== null) {
-        $logMessage .= "\n" . print_r($data, true);
-    }
-    $logMessage .= "\n" . str_repeat('-', 80) . "\n";
-    file_put_contents($debugLogFile, $logMessage, FILE_APPEND);
+    global $debugOutput;
+    $timestamp = date('H:i:s');
+    $entry = [
+        'time' => $timestamp,
+        'message' => $message,
+        'data' => $data
+    ];
+    $debugOutput[] = $entry;
 }
 
-debugLog("=== DOCTOR MODULE DEBUG SESSION STARTED ===");
+debugLog("=== DOCTOR MODULE DEBUG STARTED ===");
 debugLog("REQUEST METHOD", $_SERVER['REQUEST_METHOD']);
 debugLog("GET PARAMETERS", $_GET);
-debugLog("POST PARAMETERS (excluding sensitive data)", array_diff_key($_POST, ['password' => '']));
-debugLog("SESSION DATA", $_SESSION ?? []);
+debugLog("POST PARAMETERS", isset($_POST['add']) || isset($_POST['update']) || isset($_POST['delete']) ? 'Form submitted' : 'No form submission');
+debugLog("SESSION USER TYPE", $_SESSION['user_type'] ?? 'NOT SET');
 
 // Check database connection
 debugLog("Checking database connection...");
 if (!isset($db)) {
-    debugLog("ERROR: Database connection \$db is NOT SET");
+    debugLog("❌ ERROR: Database connection NOT SET");
     die('
         <div class="alert alert-danger">
             <h4><i class="bi bi-exclamation-triangle"></i> Access Error</h4>
@@ -49,21 +43,28 @@ if (!isset($db)) {
         </div>
     ');
 } else {
-    debugLog("Database connection exists", [
-        'type' => get_class($db),
-        'connection_status' => 'active'
-    ]);
+    debugLog("✅ Database connection EXISTS", get_class($db));
     
     // Test database connection
     try {
-        $testQuery = $db->query("SELECT 1");
-        debugLog("Database test query: SUCCESS");
+        $testQuery = $db->query("SELECT 1 as test");
+        $testResult = $testQuery->fetch();
+        debugLog("✅ Database test query SUCCESS", $testResult);
     } catch (Exception $e) {
-        debugLog("Database test query: FAILED", $e->getMessage());
+        debugLog("❌ Database test query FAILED", $e->getMessage());
+    }
+    
+    // Test doctor table
+    try {
+        $tableCheck = $db->query("SELECT COUNT(*) as count FROM doctor");
+        $tableResult = $tableCheck->fetch();
+        debugLog("✅ Doctor table accessible", "Total doctors in DB: " . $tableResult['count']);
+    } catch (Exception $e) {
+        debugLog("❌ Doctor table check FAILED", $e->getMessage());
     }
 }
 // ============================================
-// COMPREHENSIVE DEBUGGER - END
+// ON-SCREEN DEBUGGER - END
 // ============================================
 
 // ============================================
@@ -92,9 +93,9 @@ debugLog("Initializing Doctor and User classes...");
 try {
     $doctor = new Doctor($db);
     $user = new User($db);
-    debugLog("Classes initialized successfully");
+    debugLog("✅ Classes initialized successfully");
 } catch (Exception $e) {
-    debugLog("ERROR initializing classes", $e->getMessage());
+    debugLog("❌ ERROR initializing classes", $e->getMessage());
     die("Fatal error: " . $e->getMessage());
 }
 
@@ -104,9 +105,9 @@ $userMessage = '';
 $user_type = $_SESSION['user_type'] ?? 'superadmin';
 $search = $_GET['search_doctor'] ?? '';
 
-debugLog("State variables initialized", [
+debugLog("State variables", [
     'user_type' => $user_type,
-    'search_term' => $search
+    'search_term' => $search ? $search : 'EMPTY'
 ]);
 
 // --- Variables for Auto-Generated Credentials Modal ---
@@ -122,23 +123,20 @@ function generateRandomPassword($length = 10) {
 }
 
 // --- Fetch Specializations ---
-debugLog("Fetching specializations...");
+debugLog("Fetching specializations from database...");
 $specializations = [];
 try {
     $stmt_spec = $db->query("SELECT SPEC_ID, SPEC_NAME FROM specialization ORDER BY SPEC_NAME");
     $specializations = $stmt_spec->fetchAll(PDO::FETCH_ASSOC);
-    debugLog("Specializations loaded successfully", [
-        'count' => count($specializations),
-        'data' => $specializations
-    ]);
+    debugLog("✅ Specializations loaded", "Count: " . count($specializations));
 } catch (Exception $e) {
-    debugLog("FAILED to load specializations", $e->getMessage());
+    debugLog("❌ FAILED to load specializations", $e->getMessage());
     error_log("Failed to load specializations: " . $e->getMessage());
     $message = "Could not load specializations. Check database connection and 'specialization' table.";
 }
 
 if ($user_type !== 'superadmin') {
-    debugLog("Access denied - user is not superadmin", ['user_type' => $user_type]);
+    debugLog("❌ Access denied - user is not superadmin", $user_type);
     echo '<div class="alert alert-danger">Access denied. Only Super Admin can access this module.</div>';
     return;
 }
@@ -158,11 +156,11 @@ if (isset($_SESSION['user_message'])) {
 
 // Handle actions
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    debugLog("POST REQUEST DETECTED - Processing form submission");
+    debugLog("📝 POST REQUEST DETECTED");
 
     // --- 1. Handle ADD (Create) Doctor ---
     if (isset($_POST['add'])) {
-        debugLog("ADD DOCTOR action triggered");
+        debugLog("➕ ADD DOCTOR action triggered");
         $data = [
             'doc_first_name'  => trim($_POST['doc_first_name']),
             'doc_middle_init' => trim($_POST['doc_middle_init']),
@@ -171,16 +169,16 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             'doc_email'       => trim($_POST['doc_email']),
             'spec_id'         => $_POST['spec_id']
         ];
-        debugLog("Doctor data to be added", $data);
+        debugLog("Doctor data", $data);
 
         $result = $doctor->create($data);
-        debugLog("Doctor create result", ['result' => $result, 'type' => gettype($result)]);
+        debugLog("Create result", ['result' => $result, 'type' => gettype($result)]);
         
         if (is_numeric($result) && $result > 0) {
             $displayDoctorId = $result;
             $submittedEmail = $data['doc_email'];
             $message = "Doctor added successfully with ID: {$displayDoctorId}.";
-            debugLog("Doctor created successfully", ['doc_id' => $displayDoctorId]);
+            debugLog("✅ Doctor created successfully", $displayDoctorId);
 
             if (!empty($submittedEmail)) { 
                 $autoGeneratedPassword = generateRandomPassword(10);
@@ -192,7 +190,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     'linked_id' => $displayDoctorId,
                     'user_type' => 'doctor'
                 ];
-                debugLog("Creating user account", ['email' => $submittedEmail]);
+                debugLog("Creating user account for", $submittedEmail);
                 
                 $userCreationResult = $user->addLinkedAccount($userData);
                 debugLog("User creation result", $userCreationResult);
@@ -214,7 +212,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             }
 
         } else {
-            debugLog("Failed to add doctor", ['result' => $result]);
+            debugLog("❌ Failed to add doctor", $result);
             if (is_string($result) && strpos($result, 'DUPLICATE_CONTACT_NUMBER') !== false) {
                 $message = "Failed to add doctor. The contact number " . htmlspecialchars($data['doc_contact_num']) . "** is already registered. Contact numbers must be unique.";
             } else {
@@ -225,7 +223,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     
     // --- 2. Handle UPDATE Doctor ---
     elseif (isset($_POST['update'])) {
-        debugLog("UPDATE DOCTOR action triggered");
+        debugLog("✏️ UPDATE DOCTOR action triggered");
         $data = [
             'doc_id'          => $_POST['doc_id'],
             'doc_first_name'  => trim($_POST['doc_first_name']),
@@ -235,10 +233,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             'doc_email'       => trim($_POST['doc_email']),
             'spec_id'         => $_POST['spec_id']
         ];
-        debugLog("Doctor data to be updated", $data);
+        debugLog("Update data", $data);
 
         $result = $doctor->update($data);
-        debugLog("Doctor update result", ['result' => $result]);
+        debugLog("Update result", $result);
         
         if ($result !== false && $result > 0) {
             $_SESSION['success_message'] = "Doctor ID {$data['doc_id']} updated successfully.";
@@ -255,13 +253,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
     // --- 3. Handle DELETE Doctor ---
     elseif (isset($_POST['delete'])) {
-        debugLog("DELETE DOCTOR action triggered");
+        debugLog("🗑️ DELETE DOCTOR action triggered");
         $id = $_POST['delete'];
         debugLog("Deleting doctor ID", $id);
         
         $success = $doctor->delete($id);
         $user->deleteLinkedAccount($id, 'doctor');
-        debugLog("Delete result", ['success' => $success]);
+        debugLog("Delete result", $success);
         
         $_SESSION['success_message'] = $success 
             ? "Doctor ID {$id} deleted successfully." 
@@ -276,37 +274,56 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 }
 
 // Fetch doctor records
-debugLog("Fetching doctor records...", ['has_search' => !empty($search), 'search_term' => $search]);
+debugLog("📋 Fetching doctor records...");
+debugLog("Search mode", !empty($search) ? "SEARCH: '$search'" : "ALL RECORDS");
+
 try {
-    $records = !empty($search)
-        ? $doctor->searchWithAppointments($search)
-        : $doctor->all();
-    debugLog("Doctor records fetched", [
-        'count' => count($records),
-        'records' => $records
-    ]);
+    if (!empty($search)) {
+        debugLog("Calling searchWithAppointments()", $search);
+        $records = $doctor->searchWithAppointments($search);
+    } else {
+        debugLog("Calling all()");
+        $records = $doctor->all();
+    }
+    debugLog("✅ Records fetched", "Count: " . count($records));
+    if (count($records) > 0) {
+        debugLog("First record sample", $records[0]);
+    }
 } catch (Exception $e) {
-    debugLog("ERROR fetching doctor records", $e->getMessage());
+    debugLog("❌ ERROR fetching doctor records", $e->getMessage());
     $records = [];
     $message = "Error loading doctor records: " . $e->getMessage();
 }
 
-debugLog("=== RENDERING HTML OUTPUT ===");
-?>
-<h1 class="fw-bold mb-4">Doctor Management</h1>
+debugLog("=== RENDERING HTML ===");
 
-<!-- Debug Info Panel (Remove in production) -->
-<div class="alert alert-info alert-dismissible fade show" role="alert">
-    <h5><i class="bi bi-info-circle"></i> Debug Information</h5>
-    <small>
-        <strong>Records Found:</strong> <?= count($records) ?><br>
-        <strong>Search Term:</strong> <?= htmlspecialchars($search) ?: 'None' ?><br>
-        <strong>Specializations Loaded:</strong> <?= count($specializations) ?><br>
-        <strong>Debug Log Location:</strong> <?= $debugLogFile ?><br>
-        <strong>Check the log file for detailed debugging information.</strong>
-    </small>
-    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-</div>
+// Render Debug Panel
+function renderDebugPanel() {
+    global $debugOutput;
+    ?>
+    <div class="card mb-4 border-danger">
+        <div class="card-header bg-danger text-white">
+            <h5 class="mb-0"><i class="bi bi-bug"></i> 🔍 DEBUG PANEL (Remove in Production)</h5>
+        </div>
+        <div class="card-body" style="max-height: 400px; overflow-y: auto; font-family: monospace; font-size: 12px; background: #f8f9fa;">
+            <?php foreach ($debugOutput as $entry): ?>
+                <div class="mb-2 p-2 border-bottom">
+                    <strong style="color: #0066cc;">[<?= $entry['time'] ?>]</strong>
+                    <span style="color: #006600;"><?= htmlspecialchars($entry['message']) ?></span>
+                    <?php if ($entry['data'] !== null): ?>
+                        <pre style="margin: 5px 0 0 20px; padding: 10px; background: #fff; border-left: 3px solid #0066cc;"><?= htmlspecialchars(print_r($entry['data'], true)) ?></pre>
+                    <?php endif; ?>
+                </div>
+            <?php endforeach; ?>
+        </div>
+    </div>
+    <?php
+}
+?>
+
+<?php renderDebugPanel(); ?>
+
+<h1 class="fw-bold mb-4">Doctor Management</h1>
 
 <?php if ($message): ?>
 <div class="alert <?= strpos($message, '❌') !== false || strpos($message, '⚠️') !== false ? 'alert-danger' : 'alert-success' ?> alert-dismissible fade show">
@@ -516,6 +533,3 @@ document.addEventListener("DOMContentLoaded", function() {
 });
 <?php endif; ?>
 </script>
-<?php
-debugLog("=== DOCTOR MODULE DEBUG SESSION ENDED ===");
-?>
