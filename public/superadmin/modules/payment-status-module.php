@@ -74,7 +74,7 @@ $records = $paymentStatus->all();
 <div class="row">
     <div class="col-md-4">
         <div class="card shadow-sm mb-4">
-            <div class="card-header bg-primary text-white">
+            <div class="card-header bg-outline-primary text-black">
                 Add New Payment Status
             </div>
             <div class="card-body">
@@ -83,7 +83,7 @@ $records = $paymentStatus->all();
                         <label for="pymt_stat_name" class="form-label">Status Name</label>
                         <input type="text" class="form-control" name="pymt_stat_name" id="pymt_stat_name" placeholder="e.g., Paid" required>
                     </div>
-                    <button type="submit" name="add_status" class="btn btn-primary w-100">Add Status</button>
+                    <button type="submit" name="add_status" class="btn btn-outline-primary w-100">Add Status</button>
                 </form>
             </div>
         </div>

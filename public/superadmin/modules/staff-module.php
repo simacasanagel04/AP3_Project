@@ -203,7 +203,7 @@ if (!empty($search)) {
                 <?php else: foreach ($records as $r): ?>
                 <tr>
                     <form method="POST">
-                        <td class="text-center"><?= $r['staff_id'] ?? '-' ?></td>
+                        <td class="text-center fw-semibold"><?= $r['staff_id'] ?? '-' ?></td>
                         <td>
                         <input name="staff_first_name" value="<?= htmlspecialchars($r['first_name'] ?? '') ?>" class="form-control form-control-sm" required>
                         <input name="staff_middle_init" value="<?= htmlspecialchars($r['middle_init'] ?? '') ?>" class="form-control form-control-sm">

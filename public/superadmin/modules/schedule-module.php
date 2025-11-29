@@ -40,13 +40,58 @@ try {
     $message = "❌ Error fetching doctors: " . $e->getMessage();
 }
 
-// Fetch doctors with today's schedule
-$todaysDoctors = [];
+// --- TODAY'S SCHEDULE ---
+$todayDate = date('Y-m-d'); // e.g., 2025-11-28
+$todayDay  = date('l');     // e.g., Friday
 try {
-    $todaysDoctors = $schedule->getDoctorsWithTodaySchedule();
+    $sql = "SELECT 
+                d.DOC_ID, 
+                CONCAT(d.DOC_FIRST_NAME, ' ', d.DOC_LAST_NAME) AS doctor_name, 
+                s.SCHED_START_TIME, 
+                s.SCHED_END_TIME, 
+                s.SCHED_DAYS
+            FROM doctor d
+            JOIN schedule s ON d.DOC_ID = s.DOC_ID
+            WHERE s.SCHED_DAYS = :todayDate
+               OR s.SCHED_DAYS = :todayDay
+               OR s.SCHED_DAYS LIKE :todayDayStart
+               OR s.SCHED_DAYS LIKE :todayDayMiddle
+               OR s.SCHED_DAYS LIKE :todayDayEnd
+            ORDER BY d.DOC_LAST_NAME ASC";
+
+    $stmt = $db->prepare($sql);
+    $stmt->execute([
+        ':todayDate'      => $todayDate,
+        ':todayDay'       => $todayDay,
+        ':todayDayStart'  => $todayDay . ',%',
+        ':todayDayMiddle' => '%,' . $todayDay . ',%',
+        ':todayDayEnd'    => '%,' . $todayDay
+    ]);
+
+    $todaysDoctors = $stmt->fetchAll(PDO::FETCH_ASSOC);
 } catch (Exception $e) {
+    $todaysDoctors = [];
     $message = "❌ Error fetching today's doctors: " . $e->getMessage();
 }
+
+// --- DOCTORS WITHOUT SCHEDULES ---
+try {
+    $sqlNoSchedule = "SELECT 
+                          d.DOC_ID, 
+                          CONCAT(d.DOC_FIRST_NAME, ' ', d.DOC_LAST_NAME) AS doctor_name
+                      FROM doctor d
+                      LEFT JOIN schedule s ON d.DOC_ID = s.DOC_ID
+                      WHERE s.DOC_ID IS NULL
+                      ORDER BY d.DOC_LAST_NAME ASC";
+
+    $stmtNoSchedule = $db->prepare($sqlNoSchedule);
+    $stmtNoSchedule->execute();
+    $doctorsWithoutSchedule = $stmtNoSchedule->fetchAll(PDO::FETCH_ASSOC);
+} catch (Exception $e) {
+    $doctorsWithoutSchedule = [];
+    $message = "❌ Error fetching doctors without schedules: " . $e->getMessage();
+}
+
 
 // CRUD Handlers
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
@@ -66,15 +111,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     'SCHED_END_TIME' => $end_time
                 ];
                 if ($schedule->create($data)) {
-                    $message = "✅ Schedule added successfully!";
+                    $message = "Schedule added successfully!";
                 } else {
-                    $message = "❌ Failed to add schedule.";
+                    $message = "Failed to add schedule.";
                 }
             } catch (Exception $e) {
                 $message = "❌ Error: " . $e->getMessage();
             }
         } else {
-            $message = "❌ Invalid input. Please check all fields.";
+            $message = "Invalid input. Please check all fields.";
         }
     }
 
@@ -96,15 +141,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     'SCHED_END_TIME' => $end_time
                 ];
                 if ($schedule->update($data)) {
-                    $message = "✅ Schedule ID {$sched_id} updated successfully!";
+                    $message = "Schedule ID {$sched_id} updated successfully!";
                 } else {
-                    $message = "✅ Schedule ID {$sched_id} updated (or no changes detected).";
+                    $message = "Schedule ID {$sched_id} updated (or no changes detected).";
                 }
             } catch (Exception $e) {
-                $message = "❌ Error: " . $e->getMessage();
+                $message = "Error: " . $e->getMessage();
             }
         } else {
-            $message = "❌ Invalid input for update.";
+            $message = "Invalid input for update.";
         }
     }
 
@@ -115,15 +160,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         if ($sched_id) {
             try {
                 if ($schedule->delete($sched_id)) {
-                    $message = "✅ Schedule ID {$sched_id} deleted successfully.";
+                    $message = "Schedule ID {$sched_id} deleted successfully.";
                 } else {
-                    $message = "❌ Failed to delete schedule ID {$sched_id}.";
+                    $message = "Failed to delete schedule ID {$sched_id}.";
                 }
             } catch (Exception $e) {
-                $message = "❌ Error: " . $e->getMessage();
+                $message = "Error: " . $e->getMessage();
             }
         } else {
-            $message = "❌ Invalid Schedule ID for deletion.";
+            $message = "Invalid Schedule ID for deletion.";
         }
     }
 }
@@ -142,26 +187,61 @@ if (!is_array($schedules)) {
 <div class="alert <?= strpos($message, '❌') !== false ? 'alert-danger' : 'alert-info' ?>"><?= $message ?></div>
 <?php endif; ?>
 
-<!-- Today's Doctors Section -->
-<div class="mb-4">
-    <button class="btn btn-info" data-bs-toggle="collapse" data-bs-target="#todaysDoctorsSection">View Doctors with Today's Schedule</button>
-    <div id="todaysDoctorsSection" class="collapse mt-3">
-        <div class="card card-body shadow-sm">
-            <h5>Doctors Scheduled Today (<?= date('F j, Y') ?>)</h5>
-            <?php if (empty($todaysDoctors)): ?>
-                <p class="text-muted">No doctors have schedules for today.</p>
-            <?php else: ?>
-                <ul class="list-group">
-                    <?php foreach ($todaysDoctors as $doctor): ?>
-                        <li class="list-group-item">
-                            <strong><?= htmlspecialchars($doctor['doctor_name']) ?></strong> (ID: <?= htmlspecialchars($doctor['DOC_ID']) ?>)
-                        </li>
-                    <?php endforeach; ?>
-                </ul>
-            <?php endif; ?>
+<div class="mb-4 d-flex gap-3">
+    <!-- Today's Schedule -->
+    <div class="flex-fill">
+        <button class="btn btn-outline-primary w-100" data-bs-toggle="collapse" data-bs-target="#todaysDoctorsSection">
+            View Doctors with Today's Schedule
+        </button>
+        <div id="todaysDoctorsSection" class="collapse mt-3">
+            <div class="card card-body shadow-sm">
+                <h5>Doctors Scheduled Today (<?= date('F j, Y') ?>)</h5>
+                <?php if (empty($todaysDoctors)): ?>
+                    <p class="text-muted">No doctors have schedules for today.</p>
+                <?php else: ?>
+                    <ul class="list-group">
+                        <?php foreach ($todaysDoctors as $doctor): ?>
+                            <li class="list-group-item">
+                                <strong><?= htmlspecialchars($doctor['doctor_name']) ?></strong> (ID: <?= htmlspecialchars($doctor['DOC_ID']) ?>)
+                                <br>
+                                <small class="text-muted">
+                                    <i class="bi bi-clock"></i>
+                                    <?= date('g:i A', strtotime($doctor['SCHED_START_TIME'])) ?> - <?= date('g:i A', strtotime($doctor['SCHED_END_TIME'])) ?>
+                                    <span class="text-muted"> (<?= htmlspecialchars($doctor['SCHED_DAYS']) ?>)</span>
+                                </small>
+                            </li>
+                        <?php endforeach; ?>
+                    </ul>
+                <?php endif; ?>
+            </div>
+        </div>
+    </div>
+
+    <!-- Doctors Without Schedule -->
+    <div class="flex-fill">
+        <button class="btn btn-outline-primary w-100" data-bs-toggle="collapse" data-bs-target="#noScheduleDoctorsSection">
+            View Doctors Without Schedule
+        </button>
+        <div id="noScheduleDoctorsSection" class="collapse mt-3">
+            <div class="card card-body shadow-sm">
+                <h5>Doctors Without Schedule</h5>
+                <?php if (empty($doctorsWithoutSchedule)): ?>
+                    <p class="text-muted">All doctors have schedules assigned.</p>
+                <?php else: ?>
+                    <ul class="list-group">
+                        <?php foreach ($doctorsWithoutSchedule as $doctor): ?>
+                            <li class="list-group-item">
+                                <strong><?= htmlspecialchars($doctor['doctor_name']) ?></strong> (ID: <?= htmlspecialchars($doctor['DOC_ID']) ?>)
+                            </li>
+                        <?php endforeach; ?>
+                    </ul>
+                <?php endif; ?>
+            </div>
         </div>
     </div>
 </div>
+
+
 
 <div class="d-flex justify-content-end align-items-center mb-3">
     <button class="btn btn-success" data-bs-toggle="collapse" data-bs-target="#addFormSchedule">Add New Schedule</button>
@@ -181,7 +261,7 @@ if (!is_array($schedules)) {
             </div>
             <div class="col-md-3">
                 <label class="form-label small">Date *</label>
-                <input type="date" name="sched_days" required class="form-control">
+                <input type="text" name="sched_days" placeholder="Enter a day or date" class="form-control">
             </div>
             <div class="col-md-3">
                 <label class="form-label small">Start Time *</label>
@@ -235,7 +315,7 @@ if (!is_array($schedules)) {
                                 </select>
                             </td>
                             <td>
-                                <input type="date" name="sched_days" value="<?= htmlspecialchars($s['SCHED_DAYS']) ?>" class="form-control form-control-sm" required>
+                                <input type="text" name="sched_days" value="<?= htmlspecialchars($s['SCHED_DAYS']) ?>" class="form-control form-control-sm" required>
                             </td>
                             <td>
                                 <input type="time" name="start_time" value="<?= htmlspecialchars($s['SCHED_START_TIME']) ?>" class="form-control form-control-sm" required>

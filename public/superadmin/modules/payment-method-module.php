@@ -89,7 +89,7 @@ $records = !empty($search)
     <h5 class="mb-0">All Payment Methods (<?= count($records) ?>)</h5>
     <div class="table-responsive mt-3">
         <table class="table table-bordered table-striped table-hover align-middle">
-            <thead class="table-dark">
+            <thead class="table-light">
                 <tr>
                     <th style="width: 60px;">ID</th>
                     <th>Method Name</th>
