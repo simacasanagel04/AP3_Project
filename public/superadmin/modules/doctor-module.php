@@ -280,6 +280,21 @@ debugLog("Search mode", !empty($search) ? "SEARCH: '$search'" : "ALL RECORDS");
 try {
     if (!empty($search)) {
         debugLog("Calling searchWithAppointments()", $search);
+        
+        // TEST: Try direct SQL query to see what's in the database
+        try {
+            $testSql = "SELECT DOC_ID, DOC_FIRST_NAME, DOC_LAST_NAME FROM doctor WHERE DOC_FIRST_NAME LIKE :search OR DOC_LAST_NAME LIKE :search";
+            $testStmt = $db->prepare($testSql);
+            $testStmt->execute([':search' => '%' . $search . '%']);
+            $testResults = $testStmt->fetchAll(PDO::FETCH_ASSOC);
+            debugLog("🔬 DIRECT SQL TEST", "Found: " . count($testResults) . " doctors");
+            if (count($testResults) > 0) {
+                debugLog("Direct SQL Results", $testResults);
+            }
+        } catch (Exception $testEx) {
+            debugLog("❌ Direct SQL test failed", $testEx->getMessage());
+        }
+        
         $records = $doctor->searchWithAppointments($search);
     } else {
         debugLog("Calling all()");
