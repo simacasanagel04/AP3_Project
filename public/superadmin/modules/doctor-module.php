@@ -185,55 +185,56 @@ $records = !empty($search)
 <?php if ($message): ?>
 <div class="alert <?= strpos($message, '❌') !== false || strpos($message, '⚠️') !== false ? 'alert-danger' : 'alert-success' ?> alert-dismissible fade show">
     <?= $message ?>
-    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
 </div>
 <?php endif; ?>
 
 <?php if ($userMessage): ?>
 <div class="alert <?= strpos($userMessage, '❌') !== false ? 'alert-danger' : 'alert-success' ?> alert-dismissible fade show">
     <?= $userMessage ?>
-    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
 </div>
 <?php endif; ?>
 
 <div class="d-flex justify-content-between align-items-center mb-4 p-3 bg-white rounded-3 shadow-sm border">
     <form class="d-flex w-50" method="GET">
         <input type="hidden" name="module" value="doctor">
-        <input class="form-control me-2 rounded-pill border-primary" type="search" name="search_doctor" placeholder="Search by name, contact, or specialization..." value="<?= htmlspecialchars($search) ?>">
+        <label for="search_doctor" class="visually-hidden">Search doctors</label>
+        <input id="search_doctor" class="form-control me-2 rounded-pill border-primary" type="search" name="search_doctor" placeholder="Search by name, contact, or specialization..." value="<?= htmlspecialchars($search) ?>" aria-label="Search by name, contact, or specialization">
         <button class="btn btn-outline-primary" type="submit">Search</button>
         <?php if ($search): ?>
             <a href="?module=doctor" class="btn btn-outline-secondary ms-2 rounded-pill">Reset</a>
         <?php endif; ?>
     </form>
-    <button class="btn btn-success" data-bs-toggle="collapse" data-bs-target="#addFormDoctor">Add New Doctor</button>
+    <button class="btn btn-success" data-bs-toggle="collapse" data-bs-target="#addFormDoctor" aria-expanded="false" aria-controls="addFormDoctor">Add New Doctor</button>
 </div>
 
 <div id="addFormDoctor" class="collapse mb-4">
     <div class="card card-body shadow-sm border rounded bg-light">
         <form method="POST" class="row g-3" onsubmit="return validateDoctorForm(this)">
             <div class="col-md-4">
-                <label class="form-label fw-semibold">First Name *</label>
-                <input type="text" name="doc_first_name" class="form-control" placeholder="First Name" required>
+                <label for="doc_first_name" class="form-label fw-semibold">First Name *</label>
+                <input id="doc_first_name" type="text" name="doc_first_name" class="form-control" placeholder="First Name" required>
             </div>
             <div class="col-md-4">
-                <label class="form-label fw-semibold">Middle Initial</label>
-                <input type="text" name="doc_middle_init" class="form-control" placeholder="M.I." maxlength="1">
+                <label for="doc_middle_init" class="form-label fw-semibold">Middle Initial</label>
+                <input id="doc_middle_init" type="text" name="doc_middle_init" class="form-control" placeholder="M.I." maxlength="1">
             </div>
             <div class="col-md-4">
-                <label class="form-label fw-semibold">Last Name *</label>
-                <input type="text" name="doc_last_name" class="form-control" placeholder="Last Name" required>
+                <label for="doc_last_name" class="form-label fw-semibold">Last Name *</label>
+                <input id="doc_last_name" type="text" name="doc_last_name" class="form-control" placeholder="Last Name" required>
             </div>
             <div class="col-md-4">
-                <label class="form-label fw-semibold">Contact Number *</label>
-                <input type="text" name="doc_contact_num" class="form-control" placeholder="09xxxxxxxxx" pattern="^09\d{9}$" required>
+                <label for="doc_contact_num" class="form-label fw-semibold">Contact Number *</label>
+                <input id="doc_contact_num" type="text" name="doc_contact_num" class="form-control" placeholder="09xxxxxxxxx" pattern="^09\d{9}$" required>
             </div>
             <div class="col-md-4">
-                <label class="form-label fw-semibold">Email *</label>
-                <input type="email" name="doc_email" class="form-control" placeholder="doctor@example.com" required>
+                <label for="doc_email" class="form-label fw-semibold">Email *</label>
+                <input id="doc_email" type="email" name="doc_email" class="form-control" placeholder="doctor@example.com" required>
             </div>
             <div class="col-md-4">
-                <label class="form-label fw-semibold">Specialization *</label>
-                <select name="spec_id" class="form-select" required>
+                <label for="spec_id" class="form-label fw-semibold">Specialization *</label>
+                <select id="spec_id" name="spec_id" class="form-select" required>
                     <option value="">-- Select Specialization --</option>
                     <?php foreach ($specializations as $spec): ?>
                         <option value="<?= htmlspecialchars($spec['spec_id']) ?>">
@@ -256,18 +257,18 @@ $records = !empty($search)
             <i class="bi bi-info-circle"></i> No doctors found<?= $search ? ' matching **"' . htmlspecialchars($search) . '"**' : '' ?>.
         </div>
     <?php else: ?>
-    <div class="table-responsive" style="overflow-x: auto;">
-        <table class="table table-bordered table-striped align-middle mt-3" style="min-width: 1200px;"> 
+    <div class="table-responsive">
+        <table class="table table-bordered table-striped align-middle mt-3"> 
             <thead class="table-light">
                 <tr>
-                    <th>ID</th>
-                    <th>Name</th>
-                    <th>Contact</th>
-                    <th>Email</th>
-                    <th>Specialization</th>
-                    <th>Created</th>
-                    <th>Updated</th>
-                    <th>Actions</th>
+                    <th scope="col">ID</th>
+                    <th scope="col">Name</th>
+                    <th scope="col">Contact</th>
+                    <th scope="col">Email</th>
+                    <th scope="col">Specialization</th>
+                    <th scope="col">Created</th>
+                    <th scope="col">Updated</th>
+                    <th scope="col">Actions</th>
                 </tr>
             </thead>
             <tbody>
@@ -277,18 +278,24 @@ $records = !empty($search)
                             <input type="hidden" name="doc_id" value="<?= $r['doc_id'] ?>">
                             <td class="fw-semibold"><?= $r['doc_id'] ?></td>
                             <td>
-                                <input name="doc_first_name" value="<?= htmlspecialchars($r['doc_first_name']) ?>" class="form-control form-control-sm mb-1" placeholder="First" required>
-                                <input name="doc_middle_init" value="<?= htmlspecialchars($r['doc_middle_init']) ?>" class="form-control form-control-sm mb-1" placeholder="M.I." maxlength="1">
-                                <input name="doc_last_name" value="<?= htmlspecialchars($r['doc_last_name']) ?>" class="form-control form-control-sm" placeholder="Last" required>
+                                <label for="doc_first_name_<?= $r['doc_id'] ?>" class="visually-hidden">First Name</label>
+                                <input id="doc_first_name_<?= $r['doc_id'] ?>" name="doc_first_name" value="<?= htmlspecialchars($r['doc_first_name']) ?>" class="form-control form-control-sm mb-1" placeholder="First" required>
+                                <label for="doc_middle_init_<?= $r['doc_id'] ?>" class="visually-hidden">Middle Initial</label>
+                                <input id="doc_middle_init_<?= $r['doc_id'] ?>" name="doc_middle_init" value="<?= htmlspecialchars($r['doc_middle_init']) ?>" class="form-control form-control-sm mb-1" placeholder="M.I." maxlength="1">
+                                <label for="doc_last_name_<?= $r['doc_id'] ?>" class="visually-hidden">Last Name</label>
+                                <input id="doc_last_name_<?= $r['doc_id'] ?>" name="doc_last_name" value="<?= htmlspecialchars($r['doc_last_name']) ?>" class="form-control form-control-sm" placeholder="Last" required>
                             </td>
                             <td>
-                                <input name="doc_contact_num" value="<?= htmlspecialchars($r['doc_contact_num']) ?>" class="form-control form-control-sm" pattern="^09\d{9}$" required>
+                                <label for="doc_contact_num_<?= $r['doc_id'] ?>" class="visually-hidden">Contact Number</label>
+                                <input id="doc_contact_num_<?= $r['doc_id'] ?>" name="doc_contact_num" value="<?= htmlspecialchars($r['doc_contact_num']) ?>" class="form-control form-control-sm" pattern="^09\d{9}$" required>
                             </td>
                             <td>
-                                <input name="doc_email" value="<?= htmlspecialchars($r['doc_email']) ?>" class="form-control form-control-sm" type="email" required>
+                                <label for="doc_email_<?= $r['doc_id'] ?>" class="visually-hidden">Email</label>
+                                <input id="doc_email_<?= $r['doc_id'] ?>" name="doc_email" value="<?= htmlspecialchars($r['doc_email']) ?>" class="form-control form-control-sm" type="email" required>
                             </td>
                             <td>
-                                <select name="spec_id" class="form-select form-select-sm" required>
+                                <label for="spec_id_<?= $r['doc_id'] ?>" class="visually-hidden">Specialization</label>
+                                <select id="spec_id_<?= $r['doc_id'] ?>" name="spec_id" class="form-select form-select-sm" required>
                                     <?php foreach ($specializations as $spec): ?>
                                         <option value="<?= htmlspecialchars($spec['spec_id']) ?>" <?= ($r['spec_id'] == $spec['spec_id']) ? 'selected' : '' ?>>
                                             <?= htmlspecialchars($spec['spec_name']) ?>
@@ -317,28 +324,28 @@ $records = !empty($search)
 </div>
 
 <!-- Modal for displaying auto-generated credentials (Copied from staff-module.php and adjusted) -->
-<div class="modal fade" id="autoUserDoctorModal" tabindex="-1">
+<div class="modal fade" id="autoUserDoctorModal" tabindex="-1" aria-labelledby="autoUserDoctorModalLabel" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered"><div class="modal-content">
         <div class="modal-header bg-success text-white">
-            <h5 class="modal-title">New Doctor User Account Created!</h5>
-            <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            <h5 class="modal-title" id="autoUserDoctorModalLabel">New Doctor User Account Created!</h5>
+            <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
         </div>
         <div class="modal-body">
             <p class="lead">A new doctor record and linked user account were successfully created.</p>
             <p class="text-danger"><strong>⚠️ Important:</strong> Please save these credentials securely. The password will not be shown again.</p>
             <div class="mb-3">
-                <label class="form-label fw-bold">Doctor ID</label>
-                <input type="text" class="form-control" value="<?= htmlspecialchars($displayDoctorId ?? '') ?>" readonly>
+                <label for="modal_doctor_id" class="form-label fw-bold">Doctor ID</label>
+                <input id="modal_doctor_id" type="text" class="form-control" value="<?= htmlspecialchars($displayDoctorId ?? '') ?>" readonly>
             </div>
             <div class="mb-3">
-                <label class="form-label fw-bold">Username (Email)</label>
-                <input type="text" class="form-control" value="<?= htmlspecialchars($submittedEmail ?? '') ?>" readonly>
+                <label for="modal_doctor_email" class="form-label fw-bold">Username (Email)</label>
+                <input id="modal_doctor_email" type="text" class="form-control" value="<?= htmlspecialchars($submittedEmail ?? '') ?>" readonly>
             </div>
             <div class="mb-3">
-                <label class="form-label fw-bold">Temporary Password</label>
+                <label for="tempPasswordDoctor" class="form-label fw-bold">Temporary Password</label>
                 <div class="input-group">
-                    <input type="text" id="tempPassword" class="form-control" value="<?= htmlspecialchars($autoGeneratedPassword) ?>" readonly>
-                    <button class="btn btn-outline-secondary" type="button" onclick="copyPassword()">Copy</button>
+                    <input type="text" id="tempPasswordDoctor" class="form-control" value="<?= htmlspecialchars($autoGeneratedPassword) ?>" readonly>
+                    <button class="btn btn-outline-secondary" type="button" onclick="copyPassword()" aria-label="Copy password">Copy</button>
                 </div>
             </div>
         </div>
@@ -370,7 +377,7 @@ function validateDoctorForm(f) {
 }
 
 function copyPassword() {
-    const passwordInput = document.getElementById('tempPassword');
+    const passwordInput = document.getElementById('tempPasswordDoctor');
     if (passwordInput) {
         passwordInput.select();
         document.execCommand('copy');

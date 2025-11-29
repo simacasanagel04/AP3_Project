@@ -186,7 +186,10 @@ $maintenance = getUpcomingMaintenance();
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<title>Super Admin Dashboard</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta http-equiv="X-UA-Compatible" content="IE=edge">
+<title>Super Admin Dashboard - AKSyon Medical Center</title>
+<meta name="description" content="Super Admin Dashboard for AKSyon Medical Center">
 
 <!-- FAVICON -->
 <link rel="icon" href="https://res.cloudinary.com/dibojpqg2/image/upload/v1763945513/AKSyon_favicon_1_foov82.png" type="image/png">
@@ -223,13 +226,13 @@ $maintenance = getUpcomingMaintenance();
 
 <div class="main-content">
 <header class="admin-app-header">
-    <button class="menu-toggle btn btn-lg text-primary" id="menuToggle" aria-label="Toggle Navigation">
+    <button class="menu-toggle btn btn-lg text-primary" id="menuToggle" aria-label="Toggle Navigation Menu">
         <i class="bi bi-list"></i>
     </button>
     <h5 class="fw-bold mb-0 ms-3 d-none d-md-block">Super Admin Dashboard</h5>
     <div class="header-user-info ms-auto position-relative">
         <span class="d-none d-sm-inline me-2">Welcome, Superadmin!</span>
-        <button class="btn p-0 border-0" id="userDropdownToggle">
+        <button class="btn p-0 border-0" id="userDropdownToggle" aria-label="User menu" aria-haspopup="true" aria-expanded="false">
             <i class="bi bi-person-circle fs-4"></i>
         </button>
         <div class="user-dropdown-menu dropdown-menu" id="userDropdownMenu">
@@ -250,7 +253,10 @@ $maintenance = getUpcomingMaintenance();
                 <?php foreach ($summary as $item): ?>
                 <div class="col-xl-3 col-lg-4 col-md-6">
                     <div class="card text-center shadow-sm card-hover h-100"
-                         onclick="window.location='?module=<?= htmlspecialchars($item['module']) ?>&action=view_all'">
+                         onclick="window.location='?module=<?= htmlspecialchars($item['module']) ?>&action=view_all'"
+                         role="button"
+                         tabindex="0"
+                         aria-label="View <?= htmlspecialchars($item['name']) ?>">
                         <div class="card-body">
                             <h6 class="card-title text-muted mb-2"><?= htmlspecialchars($item['name']) ?></h6>
                             <p class="display-6 <?= $item['count'] === 'N/A' ? 'text-danger' : 'text-primary' ?> mb-0">
@@ -271,7 +277,7 @@ $maintenance = getUpcomingMaintenance();
                             <h5 class="card-title mb-3">
                                 <i class="bi bi-calendar-check text-primary me-2"></i>Appointments
                             </h5>
-                            <canvas id="appointmentsChart"></canvas>
+                            <canvas id="appointmentsChart" role="img" aria-label="Appointments chart showing last 30 days"></canvas>
                         </div>
                     </div>
                 </div>
@@ -283,7 +289,7 @@ $maintenance = getUpcomingMaintenance();
                             <h5 class="card-title mb-3">
                                 <i class="bi bi-people text-success me-2"></i>Patients
                             </h5>
-                            <canvas id="patientsChart"></canvas>
+                            <canvas id="patientsChart" role="img" aria-label="Patients chart showing last 30 days"></canvas>
                         </div>
                     </div>
                 </div>
@@ -324,7 +330,7 @@ $maintenance = getUpcomingMaintenance();
                             <span class="text-muted small">
                                 <i class="bi bi-person-plus me-1"></i>New Patients Today
                             </span>
-                            <button class="btn btn-sm btn-outline-secondary" onclick="window.location='?module=patient'">
+                            <button class="btn btn-sm btn-outline-secondary" onclick="window.location='?module=patient'" aria-label="View patients">
                                 <i class="bi bi-info-circle"></i>
                             </button>
                         </div>
@@ -335,7 +341,7 @@ $maintenance = getUpcomingMaintenance();
                             <span class="text-muted small">
                                 <i class="bi bi-check-circle me-1"></i>Completed Appointments
                             </span>
-                            <button class="btn btn-sm btn-outline-secondary" onclick="window.location='?module=appointment'">
+                            <button class="btn btn-sm btn-outline-secondary" onclick="window.location='?module=appointment'" aria-label="View appointments">
                                 <i class="bi bi-info-circle"></i>
                             </button>
                         </div>
@@ -351,13 +357,13 @@ $maintenance = getUpcomingMaintenance();
                         <i class="bi bi-lightning-fill text-warning me-2"></i>QUICK ACTIONS
                     </h5>
                     <div class="d-grid gap-2">
-                        <button class="btn btn-outline-primary" onclick="window.location='?module=user&action=add'">
+                        <button class="btn btn-outline-primary" onclick="window.location='?module=user&action=add'" aria-label="Add new user">
                             <i class="bi bi-person-plus me-2"></i>Add New User
                         </button>
-                        <button class="btn btn-outline-primary" onclick="window.location='?module=appointment'">
+                        <button class="btn btn-outline-primary" onclick="window.location='?module=appointment'" aria-label="Create appointment">
                             <i class="bi bi-calendar-plus me-2"></i>Create Appointment
                         </button>
-                        <button class="btn btn-outline-secondary" onclick="window.location='?module=medical-record'">
+                        <button class="btn btn-outline-secondary" onclick="window.location='?module=medical-record'" aria-label="Add medical record">
                             <i class="bi bi-file-medical me-2"></i>Add New Medical Record
                         </button>
                     </div>
