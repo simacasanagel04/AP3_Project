@@ -167,34 +167,34 @@ class MedicalRecord {
    public function readAllWithDetails($medrec_id = null, $appt_id = null) {
         $query = "
             SELECT
-                MR.MED_REC_ID,
-                MR.MED_REC_VISIT_DATE,
-                MR.MED_REC_DIAGNOSIS,
-                MR.MED_REC_PRESCRIPTION,
-                MR.MED_REC_CREATED_AT,
-                A.APPT_ID,
-                CONCAT(P.PAT_FIRST_NAME, ' ', P.PAT_LAST_NAME) AS PATIENT_NAME,
-                CONCAT('Dr. ', D.DOC_FIRST_NAME, ' ', D.DOC_LAST_NAME) AS DOCTOR_NAME
+                mr.MED_REC_ID,
+                mr.MED_REC_VISIT_DATE,
+                mr.MED_REC_DIAGNOSIS,
+                mr.MED_REC_PRESCRIPTION,
+                mr.MED_REC_CREATED_AT,
+                a.APPT_ID,
+                CONCAT(p.PAT_FIRST_NAME, ' ', p.PAT_LAST_NAME) AS PATIENT_NAME,
+                CONCAT('Dr. ', d.DOC_FIRST_NAME, ' ', d.DOC_LAST_NAME) AS DOCTOR_NAME
             FROM
-                MEDICAL_RECORD MR
+                medical_record mr
             JOIN
-                APPOINTMENT A ON MR.APPT_ID = A.APPT_ID
+                appointment a ON mr.APPT_ID = a.APPT_ID
             JOIN
-                PATIENT P ON A.PAT_ID = P.PAT_ID
+                patient p ON a.PAT_ID = p.PAT_ID
             JOIN
-                DOCTOR D ON A.DOC_ID = D.DOC_ID
+                doctor d ON a.DOC_ID = d.DOC_ID
         ";
 
         $where_clauses = [];
         $bind_params = [];
 
         if (!empty($medrec_id)) {
-            $where_clauses[] = "MR.MED_REC_ID = :medrec_id";
+            $where_clauses[] = "mr.MED_REC_ID = :medrec_id";
             $bind_params[':medrec_id'] = $medrec_id;
         }
 
         if (!empty($appt_id)) {
-            $where_clauses[] = "MR.APPT_ID = :appt_id";
+            $where_clauses[] = "mr.APPT_ID = :appt_id";
             $bind_params[':appt_id'] = $appt_id;
         }
 
@@ -202,7 +202,7 @@ class MedicalRecord {
             $query .= " WHERE " . implode(' AND ', $where_clauses);
         }
         
-        $query .= " ORDER BY MR.MED_REC_VISIT_DATE DESC, MR.MED_REC_ID DESC";
+        $query .= " ORDER BY mr.MED_REC_VISIT_DATE DESC, mr.MED_REC_ID DESC";
 
         $stmt = $this->conn->prepare($query);
         
@@ -256,24 +256,24 @@ class MedicalRecord {
         $keyword = '%' . $keyword . '%';
         $query = "
             SELECT
-                MR.MED_REC_ID,
-                MR.MED_REC_VISIT_DATE,
-                MR.MED_REC_DIAGNOSIS,
-                MR.MED_REC_PRESCRIPTION,
-                MR.APPT_ID,
-                CONCAT(P.PAT_FIRST_NAME, ' ', P.PAT_LAST_NAME) AS PATIENT_NAME,
-                CONCAT('Dr. ', D.DOC_FIRST_NAME, ' ', D.DOC_LAST_NAME) AS DOCTOR_NAME
-            FROM MEDICAL_RECORD MR
-            JOIN APPOINTMENT A ON MR.APPT_ID = A.APPT_ID
-            JOIN PATIENT P ON A.PAT_ID = P.PAT_ID
-            JOIN DOCTOR D ON A.DOC_ID = D.DOC_ID
+                mr.MED_REC_ID,
+                mr.MED_REC_VISIT_DATE,
+                mr.MED_REC_DIAGNOSIS,
+                mr.MED_REC_PRESCRIPTION,
+                mr.APPT_ID,
+                CONCAT(p.PAT_FIRST_NAME, ' ', p.PAT_LAST_NAME) AS PATIENT_NAME,
+                CONCAT('Dr. ', d.DOC_FIRST_NAME, ' ', d.DOC_LAST_NAME) AS DOCTOR_NAME
+            FROM medical_record mr
+            JOIN appointment a ON mr.APPT_ID = a.APPT_ID
+            JOIN patient p ON a.PAT_ID = p.PAT_ID
+            JOIN doctor d ON a.DOC_ID = d.DOC_ID
             WHERE 
-                MR.APPT_ID LIKE :keyword OR
-                CONCAT(P.PAT_FIRST_NAME, ' ', P.PAT_LAST_NAME) LIKE :keyword OR
-                CONCAT(D.DOC_FIRST_NAME, ' ', D.DOC_LAST_NAME) LIKE :keyword OR
-                MR.MED_REC_DIAGNOSIS LIKE :keyword OR
-                MR.MED_REC_PRESCRIPTION LIKE :keyword
-            ORDER BY MR.MED_REC_VISIT_DATE DESC
+                mr.APPT_ID LIKE :keyword OR
+                CONCAT(p.PAT_FIRST_NAME, ' ', p.PAT_LAST_NAME) LIKE :keyword OR
+                CONCAT(d.DOC_FIRST_NAME, ' ', d.DOC_LAST_NAME) LIKE :keyword OR
+                mr.MED_REC_DIAGNOSIS LIKE :keyword OR
+                mr.MED_REC_PRESCRIPTION LIKE :keyword
+            ORDER BY mr.MED_REC_VISIT_DATE DESC
             LIMIT 100
         ";
 

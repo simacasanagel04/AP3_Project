@@ -18,12 +18,12 @@ header('Content-Type: text/html; charset=utf-8');
             <div class="col-md-10">
                 <div class="card shadow">
                     <div class="card-header bg-primary text-white">
-                        <h4 class="mb-0">🔌 Database Connection Test</h4>
+                        <h4 class="mb-0">Database Connection Test</h4>
                     </div>
                     <div class="card-body">
                         
                         <!-- DEBUGGING: Show all environment variable sources -->
-                        <h5 class="text-danger">🐛 Debug: Environment Variables</h5>
+                        <h5 class="text-danger">Debug: Environment Variables</h5>
                         <div class="table-responsive mb-4">
                             <table class="table table-sm table-bordered">
                                 <thead class="table-dark">
@@ -54,9 +54,9 @@ header('Content-Type: text/html; charset=utf-8');
 
                         <h5>PHP Extensions:</h5>
                         <ul class='list-group mb-4'>
-                            <li class='list-group-item'><strong>PDO:</strong> <?= extension_loaded('pdo') ? '✅ Loaded' : '❌ Not Loaded' ?></li>
-                            <li class='list-group-item'><strong>PDO_MYSQL:</strong> <?= extension_loaded('pdo_mysql') ? '✅ Loaded' : '❌ Not Loaded' ?></li>
-                            <li class='list-group-item'><strong>MySQLi:</strong> <?= extension_loaded('mysqli') ? '✅ Loaded' : '❌ Not Loaded' ?></li>
+                            <li class='list-group-item'><strong>PDO:</strong> <?= extension_loaded('pdo') ? 'Loaded' : 'Not Loaded' ?></li>
+                            <li class='list-group-item'><strong>PDO_MYSQL:</strong> <?= extension_loaded('pdo_mysql') ? 'Loaded' : 'Not Loaded' ?></li>
+                            <li class='list-group-item'><strong>MySQLi:</strong> <?= extension_loaded('mysqli') ? 'Loaded' : 'Not Loaded' ?></li>
                         </ul>
 
                         <hr>
@@ -69,7 +69,7 @@ header('Content-Type: text/html; charset=utf-8');
 
                             if ($conn) {
                                 echo "<div class='alert alert-success'>";
-                                echo "<h5>✅ Connection Successful!</h5>";
+                                echo "<h5>Connection Successful!</h5>";
                                 
                                 // Get database info
                                 $stmt = $conn->query("SELECT DATABASE() as db, VERSION() as version");
@@ -97,7 +97,7 @@ header('Content-Type: text/html; charset=utf-8');
 
                         } catch (Exception $e) {
                             echo "<div class='alert alert-danger'>";
-                            echo "<h5>❌ Connection Failed</h5>";
+                            echo "<h5>Connection Failed</h5>";
                             echo "<p><strong>Error:</strong> " . htmlspecialchars($e->getMessage()) . "</p>";
                             echo "</div>";
                         }
