@@ -175,6 +175,41 @@ body {
     line-height: 1.5;
 }
 
+/* Enhanced Dashboard Cards */
+.card-hover {
+    transition: transform 0.2s, box-shadow 0.2s;
+    cursor: pointer;
+}
+
+.card-hover:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15) !important;
+}
+
+/* Chart containers */
+canvas {
+    max-height: 250px;
+}
+
+/* Daily Stats Cards */
+.card-title {
+    font-weight: 600;
+}
+
+/* Pending Tasks */
+.list-group-item {
+    border-left: none;
+    border-right: none;
+}
+
+.list-group-item:first-child {
+    border-top: none;
+}
+
+.list-group-item:last-child {
+    border-bottom: none;
+}
+
 /* --- RESPONSIVE (≤ 768px) --- */
 @media (max-width: 768px) {
     .sidebar {
