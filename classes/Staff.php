@@ -3,7 +3,7 @@ require_once __DIR__ . '/../config/Database.php';
 
 class Staff {
     private $conn;
-    private $table = "STAFF"; // Table name is STAFF (all caps) based on ERD
+    private $table = "staff"; 
 
     // Add public properties for easy access
     public $STAFF_ID;

@@ -28,6 +28,9 @@ class Database {
             $this->conn->exec("SET time_zone = '+08:00'");
 
         } catch (PDOException $e) {
+            // Set proper headers for error response
+            header('Content-Type: text/html; charset=UTF-8');
+            header('X-Content-Type-Options: nosniff');
             die("Connection failed: " . $e->getMessage());
         }
 

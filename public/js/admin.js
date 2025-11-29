@@ -49,8 +49,10 @@ function initHamburger() {
 
     const toggleSidebar = () => {
         // Close user dropdown whenever sidebar is toggled (good UX)
-        document.getElementById('userDropdownMenu')?.classList.remove('show');
-        document.getElementById('userDropdownToggle')?.setAttribute('aria-expanded', 'false');
+        const userDropdownMenu = document.getElementById('userDropdownMenu');
+        const userDropdownToggle = document.getElementById('userDropdownToggle');
+        if (userDropdownMenu) userDropdownMenu.classList.remove('show');
+        if (userDropdownToggle) userDropdownToggle.setAttribute('aria-expanded', 'false');
 
         sidebar.classList.toggle('active');
         overlay.classList.toggle('active');
