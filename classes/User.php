@@ -37,9 +37,9 @@ class User {
                     u.PAT_ID, 
                     u.STAFF_ID, 
                     u.DOC_ID,
-                    CONCAT(p.PAT_FIRST_NAME, ' ', p.PAT_LAST_NAME) AS patient_name,
-                    CONCAT(s.STAFF_FIRST_NAME, ' ', s.STAFF_LAST_NAME) AS staff_name,
-                    CONCAT(d.DOC_FIRST_NAME, ' ', d.DOC_LAST_NAME) AS doctor_name,
+                    CONCAT(COALESCE(p.PAT_FIRST_NAME, ''), ' ', COALESCE(p.PAT_LAST_NAME, '')) AS patient_name,
+                    CONCAT(COALESCE(s.STAFF_FIRST_NAME, ''), ' ', COALESCE(s.STAFF_LAST_NAME, '')) AS staff_name,
+                    CONCAT(COALESCE(d.DOC_FIRST_NAME, ''), ' ', COALESCE(d.DOC_LAST_NAME, '')) AS doctor_name,
                     DATE_FORMAT(u.USER_CREATED_AT, '%M %d, %Y %h:%i %p') as formatted_created_at 
                 FROM {$this->table} u 
                 LEFT JOIN {$this->table_patient} p ON u.PAT_ID = p.PAT_ID 
@@ -49,7 +49,7 @@ class User {
 
     // Check if a username already exists
     public function emailExists($email) {
-        $sql = "SELECT USER_ID FROM {$this->table} WHERE USER_NAME = ? COLLATE cp850_general_ci LIMIT 1";
+        $sql = "SELECT USER_ID FROM {$this->table} WHERE USER_NAME = ? LIMIT 1";
         $stmt = $this->conn->prepare($sql);
         $stmt->execute([$email]);
         return $stmt->rowCount() > 0;
@@ -57,7 +57,7 @@ class User {
 
     // Find user by username
     public function findByUsername($username) {
-        $sql = "SELECT * FROM {$this->table} WHERE USER_NAME = ? COLLATE cp850_general_ci LIMIT 1";
+        $sql = "SELECT * FROM {$this->table} WHERE USER_NAME = ? LIMIT 1";
         $stmt = $this->conn->prepare($sql);
         $stmt->execute([$username]);
         return $stmt->fetch(PDO::FETCH_ASSOC);
@@ -76,15 +76,13 @@ class User {
             return $results;
         } catch (PDOException $e) {
             error_log("Error fetching all users: " . $e->getMessage());
-            return [];
+            throw $e; // Rethrow to be caught by module
         }
     }
 
     // Read users filtered by type (doctor, patient, staff, superadmin)
     public function allByType($type) {
         $whereClause = "";
-        // This switch statement is the fix. We only check for the presence of the key,
-        // and always exclude superadmins.
         switch ($type) {
             case 'doctor':
                 $whereClause = "u.DOC_ID IS NOT NULL AND u.USER_IS_SUPERADMIN = 0";
@@ -107,26 +105,25 @@ class User {
             $sql = $this->getBaseUserQuery() . " WHERE " . $whereClause . " ORDER BY u.USER_ID DESC";
             $stmt = $this->conn->query($sql);
             $results = $stmt->fetchAll(PDO::FETCH_ASSOC);
-            // The loop below correctly assigns the final user_type for display based on priority
             foreach ($results as &$user) {
                 $user['user_type'] = $this->getUserType($user);
             }
             return $results;
         } catch (PDOException $e) {
             error_log("Error fetching users by type: " . $e->getMessage());
-            return [];
+            throw $e; // Rethrow to be caught by module
         }
     }
 
-    // Search users by username or linked name - FIXED FOR CP850
+    // Search users by username or linked name
     public function search($searchTerm) {
         try {
             $searchParam = '%' . trim($searchTerm) . '%';
             $sql = $this->getBaseUserQuery() . " 
-                    WHERE u.USER_NAME COLLATE cp850_general_ci LIKE :search 
-                       OR CONCAT(p.PAT_FIRST_NAME, ' ', p.PAT_LAST_NAME) COLLATE cp850_general_ci LIKE :search 
-                       OR CONCAT(s.STAFF_FIRST_NAME, ' ', s.STAFF_LAST_NAME) COLLATE cp850_general_ci LIKE :search 
-                       OR CONCAT(d.DOC_FIRST_NAME, ' ', d.DOC_LAST_NAME) COLLATE cp850_general_ci LIKE :search 
+                    WHERE u.USER_NAME LIKE :search 
+                       OR CONCAT(COALESCE(p.PAT_FIRST_NAME, ''), ' ', COALESCE(p.PAT_LAST_NAME, '')) LIKE :search 
+                       OR CONCAT(COALESCE(s.STAFF_FIRST_NAME, ''), ' ', COALESCE(s.STAFF_LAST_NAME, '')) LIKE :search 
+                       OR CONCAT(COALESCE(d.DOC_FIRST_NAME, ''), ' ', COALESCE(d.DOC_LAST_NAME, '')) LIKE :search 
                     ORDER BY u.USER_ID DESC";
             $stmt = $this->conn->prepare($sql);
             $stmt->execute([':search' => $searchParam]);
@@ -137,7 +134,7 @@ class User {
             return $results;
         } catch (PDOException $e) {
             error_log("Error searching users: " . $e->getMessage());
-            return [];
+            throw $e; // Rethrow to be caught by module
         }
     }
 
