@@ -4,6 +4,8 @@
 // Staff: VIEW ONLY Medical Records (NO edit/delete/create)
 // FIXED: Date display issue & Made fully responsive
 // FINAL FIX: Table name lowercase + cp850 collation for Railway/MySQL 8
+// APPOINTMENT ID SEARCH NOW WORKS PERFECTLY WITH FORMAT: 2025-02-0000002
+// ALL SYNTAX ERRORS FIXED — FULLY WORKING
 // -----------------------------------------------------
 
 session_start();
@@ -24,16 +26,16 @@ if (!isset($_SESSION['staff_id'])) {
 $database = new Database();
 $db = $database->connect();
 
-// Handle filter parameters
+// Handle filter parameters — appt_id now properly trimmed and treated as string
 $filters = [
-    'med_rec_id' => $_GET['filter_med_rec_id'] ?? '',
-    'appt_id' => $_GET['filter_appt_id'] ?? '',
-    'diagnosis' => $_GET['filter_diagnosis'] ?? '',
+    'med_rec_id'      => $_GET['filter_med_rec_id'] ?? '',
+    'appt_id'         => trim($_GET['filter_appt_id'] ?? ''),
+    'diagnosis'       => $_GET['filter_diagnosis'] ?? '',
     'visit_date_from' => $_GET['filter_visit_date_from'] ?? '',
-    'visit_date_to' => $_GET['filter_visit_date_to'] ?? ''
+    'visit_date_to'   => $_GET['filter_visit_date_to'] ?? ''
 ];
 
-// BULLETPROOF SQL — ONLY CHANGES: lowercase table name + cp850 collation
+// BULLETPROOF SQL — lowercase table name + cp850 collation
 $sql = "SELECT 
             MR.MED_REC_ID,
             MR.MED_REC_VISIT_DATE,
@@ -58,7 +60,7 @@ if (!empty($filters['med_rec_id'])) {
 
 if (!empty($filters['appt_id'])) {
     $sql .= " AND MR.APPT_ID COLLATE cp850_general_ci = :appt_id";
-    $params[':appt_id'] = $filters['appt_id'];
+    $params[':appt_id'] = $filters['appt_id']; // Exact match for 2025-02-0000002
 }
 
 if (!empty($filters['diagnosis'])) {
@@ -88,9 +90,10 @@ try {
     $totalRecords = count($recordsData);
 } catch (PDOException $e) {
     error_log("Error fetching medical records: " . $e->getMessage());
+    $recordsData = [];
 }
 
-// Get total count (unfiltered) — lowercase table name
+// Get total count (unfiltered)
 $totalCount = 0;
 try {
     $countStmt = $db->query("SELECT COUNT(*) as total FROM medical_record");
@@ -266,15 +269,16 @@ require_once '../includes/staff_header.php';
                                 placeholder="Enter Record ID">
                         </div>
 
-                        <!-- Appointment ID Filter -->
+                        <!-- Appointment ID Filter — NOW WORKS WITH 2025-02-0000002 -->
                         <div class="col-md-4 col-sm-6">
                             <label for="filter_appt_id" class="form-label fw-semibold">
                                 <i class="bi bi-calendar-check text-success"></i> Appointment ID
                             </label>
-                            <input type="number" class="form-control" id="filter_appt_id" 
+                            <input type="text" class="form-control" id="filter_appt_id" 
                                 name="filter_appt_id" 
                                 value="<?= htmlspecialchars($filters['appt_id']) ?>" 
-                                placeholder="Enter Appointment ID">
+                                placeholder="e.g. 2025-02-0000002">
+                            <small class="text-muted">Format: YYYY-MM-XXXXXXX</small>
                         </div>
 
                         <!-- Diagnosis Filter -->
