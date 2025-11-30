@@ -41,92 +41,33 @@ require_once '../includes/staff_header.php';
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet">
     
     <style>
-        body {
-            background-color: #f8f9fa;
-            min-height: 100vh;
-            display: flex;
-            flex-direction: column;
-        }
-        
-        main {
-            flex: 1;
-        }
-        
-        .profile-card {
-            border-radius: 15px;
-            border: none;
-            box-shadow: 0 0 20px rgba(0,0,0,0.1);
-        }
-        
-        .profile-header {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
-            border-radius: 15px 15px 0 0;
-            padding: 2rem;
-        }
-        
-        .profile-avatar {
-            width: 100px;
-            height: 100px;
-            border-radius: 50%;
-            background: white;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 3rem;
-            color: #667eea;
-            margin: 0 auto 1rem;
-            box-shadow: 0 4px 8px rgba(0,0,0,0.2);
-        }
-        
-        .info-label {
-            font-weight: 600;
-            color: #6c757d;
-            width: 180px;
-        }
-        
-        .info-value {
-            color: #212529;
-        }
-        
-        footer {
-            background: #e5e2e2;
-            color: #333;
-            padding: 20px 0;
-            margin-top: auto;
-        }
-        
+        body { background-color: #f8f9fa; }
+        .profile-header { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); }
+        .profile-avatar { width: 100px; height: 100px; font-size: 3rem; color: #667eea; box-shadow: 0 4px 8px rgba(0,0,0,0.2); }
+        .info-label { width: 180px; }
+        footer { background: #e5e2e2; border-top: 1px solid #ddd; }
         @media (max-width: 768px) {
-            .profile-header {
-                padding: 1.5rem;
-            }
-            
-            .info-label {
-                width: 100%;
-                margin-bottom: 0.25rem;
-            }
-            
-            .info-row {
-                flex-direction: column;
-                margin-bottom: 1rem;
-            }
-            
-            .btn-lg {
-                width: 100%;
-                margin-bottom: 0.5rem;
-            }
+            .info-label { width: 100%; }
         }
     </style>
 </head>
 
-<body>
-    <main class="container mt-4 mb-5">
+<body class="d-flex flex-column min-vh-100">
+    <main class="container mt-4 mb-5 flex-fill">
+        <?php if (isset($_SESSION['success'])): ?>
+            <div class="alert alert-success alert-dismissible fade show text-center">
+                <i class="bi bi-check-circle-fill"></i> <?php echo $_SESSION['success']; ?>
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            </div>
+            <?php unset($_SESSION['success']); ?>
+        <?php endif; ?>
+        
         <div class="row justify-content-center">
             <div class="col-lg-10">
-                <div class="card profile-card">
+                <div class="card rounded-4 border-0 shadow">
                     <!-- Profile Header -->
-                    <div class="profile-header text-center">
-                        <div class="profile-avatar">
+                    <div class="profile-header text-white text-center rounded-top-4 p-4">
+                        <div class="profile-avatar bg-white rounded-circle d-flex align-items-center justify-content-center mx-auto mb-3">
                             <i class="bi bi-person-fill"></i>
                         </div>
                         <h2 class="fw-bold mb-2">
@@ -146,73 +87,73 @@ require_once '../includes/staff_header.php';
                         
                         <div class="row">
                             <div class="col-md-6 mb-4">
-                                <div class="d-flex info-row">
-                                    <span class="info-label">
+                                <div class="d-flex flex-column flex-sm-row mb-3">
+                                    <span class="info-label fw-semibold text-secondary">
                                         <i class="bi bi-hash text-primary"></i> Staff ID:
                                     </span>
-                                    <span class="info-value">
+                                    <span class="text-dark">
                                         <span class="badge bg-primary"><?php echo htmlspecialchars($staff['STAFF_ID']); ?></span>
                                     </span>
                                 </div>
                                 
-                                <div class="d-flex info-row">
-                                    <span class="info-label">
+                                <div class="d-flex flex-column flex-sm-row mb-3">
+                                    <span class="info-label fw-semibold text-secondary">
                                         <i class="bi bi-person text-primary"></i> First Name:
                                     </span>
-                                    <span class="info-value"><?php echo htmlspecialchars($staff['STAFF_FIRST_NAME']); ?></span>
+                                    <span class="text-dark"><?php echo htmlspecialchars($staff['STAFF_FIRST_NAME']); ?></span>
                                 </div>
                                 
-                                <div class="d-flex info-row">
-                                    <span class="info-label">
+                                <div class="d-flex flex-column flex-sm-row mb-3">
+                                    <span class="info-label fw-semibold text-secondary">
                                         <i class="bi bi-person text-primary"></i> Last Name:
                                     </span>
-                                    <span class="info-value"><?php echo htmlspecialchars($staff['STAFF_LAST_NAME']); ?></span>
+                                    <span class="text-dark"><?php echo htmlspecialchars($staff['STAFF_LAST_NAME']); ?></span>
                                 </div>
                                 
-                                <div class="d-flex info-row">
-                                    <span class="info-label">
+                                <div class="d-flex flex-column flex-sm-row mb-3">
+                                    <span class="info-label fw-semibold text-secondary">
                                         <i class="bi bi-alphabet text-primary"></i> Middle Initial:
                                     </span>
-                                    <span class="info-value"><?php echo htmlspecialchars($staff['STAFF_MIDDLE_INIT'] ?? 'N/A'); ?></span>
+                                    <span class="text-dark"><?php echo htmlspecialchars($staff['STAFF_MIDDLE_INIT'] ?? 'N/A'); ?></span>
                                 </div>
                                 
-                                <div class="d-flex info-row">
-                                    <span class="info-label">
+                                <div class="d-flex flex-column flex-sm-row mb-3">
+                                    <span class="info-label fw-semibold text-secondary">
                                         <i class="bi bi-calendar-plus text-primary"></i> Date Registered:
                                     </span>
-                                    <span class="info-value"><?php echo date('F j, Y', strtotime($staff['STAFF_CREATED_AT'])); ?></span>
+                                    <span class="text-dark"><?php echo date('F j, Y', strtotime($staff['STAFF_CREATED_AT'])); ?></span>
                                 </div>
                             </div>
                             
                             <div class="col-md-6 mb-4">
-                                <div class="d-flex info-row">
-                                    <span class="info-label">
+                                <div class="d-flex flex-column flex-sm-row mb-3">
+                                    <span class="info-label fw-semibold text-secondary">
                                         <i class="bi bi-envelope text-success"></i> Email:
                                     </span>
-                                    <span class="info-value"><?php echo htmlspecialchars($staff['STAFF_EMAIL']); ?></span>
+                                    <span class="text-dark"><?php echo htmlspecialchars($staff['STAFF_EMAIL']); ?></span>
                                 </div>
                                 
-                                <div class="d-flex info-row">
-                                    <span class="info-label">
+                                <div class="d-flex flex-column flex-sm-row mb-3">
+                                    <span class="info-label fw-semibold text-secondary">
                                         <i class="bi bi-telephone text-success"></i> Contact Number:
                                     </span>
-                                    <span class="info-value"><?php echo htmlspecialchars($staff['STAFF_CONTACT_NUM'] ?? 'N/A'); ?></span>
+                                    <span class="text-dark"><?php echo htmlspecialchars($staff['STAFF_CONTACT_NUM'] ?? 'N/A'); ?></span>
                                 </div>
                                 
-                                <div class="d-flex info-row">
-                                    <span class="info-label">
+                                <div class="d-flex flex-column flex-sm-row mb-3">
+                                    <span class="info-label fw-semibold text-secondary">
                                         <i class="bi bi-clock-history text-success"></i> Last Updated:
                                     </span>
-                                    <span class="info-value">
+                                    <span class="text-dark">
                                         <?php echo $staff['STAFF_UPDATED_AT'] ? date('F j, Y g:i A', strtotime($staff['STAFF_UPDATED_AT'])) : '<span class="text-muted">Never</span>'; ?>
                                     </span>
                                 </div>
                                 
-                                <div class="d-flex info-row">
-                                    <span class="info-label">
+                                <div class="d-flex flex-column flex-sm-row mb-3">
+                                    <span class="info-label fw-semibold text-secondary">
                                         <i class="bi bi-check-circle text-success"></i> Status:
                                     </span>
-                                    <span class="info-value">
+                                    <span class="text-dark">
                                         <span class="badge bg-success">
                                             <i class="bi bi-check-circle-fill me-1"></i>Active
                                         </span>
@@ -239,7 +180,7 @@ require_once '../includes/staff_header.php';
     </main>
 
     <!-- Footer -->
-    <footer>
+    <footer class="py-3 mt-auto">
         <div class="container">
             <div class="row align-items-center">
                 <div class="col-md-8 text-center text-md-start mb-2 mb-md-0">
