@@ -103,7 +103,7 @@ class Staff {
 
             if ($search) {
                 $query .= " WHERE 
-                    STAFF_ID LIKE :search OR
+                    CAST(STAFF_ID AS CHAR) LIKE :search OR
                     STAFF_FIRST_NAME LIKE :search OR
                     STAFF_MIDDLE_INIT LIKE :search OR
                     STAFF_LAST_NAME LIKE :search OR
