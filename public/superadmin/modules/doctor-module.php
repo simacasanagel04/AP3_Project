@@ -10,7 +10,7 @@ if (!isset($db)) {
             <p>Please access it through the Super Admin Dashboard:</p>
             <p class="mb-0">
                 <a href="../superadmin_dashboard.php?module=doctor" class="btn btn-primary">
-                    Go to Dashboard → Doctors
+                    Go to Dashboard Doctors
                 </a>
             </p>
         </div>
@@ -136,9 +136,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             ? "Doctor ID {$data['doc_id']} updated successfully."
             : "No changes made for Doctor ID {$data['doc_id']}.";
 
-        // Clean redirect back to the same page
-        $baseUrl = strtok($_SERVER["REQUEST_URI"], '?');
-        header("Location: $baseUrl?module=doctor" . ($search ? "&search_doctor=" . urlencode($search) : ""));
+        // FIXED: Correct redirect to superadmin_dashboard.php (this was the white screen cause)
+        $redirect = "superadmin_dashboard.php?module=doctor";
+        if (!empty($search)) {
+            $redirect .= "&search_doctor=" . urlencode($search);
+        }
+        header("Location: $redirect");
         exit();
     }
 
@@ -152,8 +155,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             ? "Doctor ID {$id} deleted successfully."
             : "Failed to delete Doctor ID {$id}.";
 
-        $baseUrl = strtok($_SERVER["REQUEST_URI"], '?');
-        header("Location: $baseUrl?module=doctor" . ($search ? "&search_doctor=" . urlencode($search) : ""));
+        // FIXED: Same correct redirect
+        $redirect = "superadmin_dashboard.php?module=doctor";
+        if (!empty($search)) {
+            $redirect .= "&search_doctor=" . urlencode($search);
+        }
+        header("Location: $redirect");
         exit();
     }
 }
@@ -329,7 +336,7 @@ try {
                 <div class="mb-3">
                     <label class="form-label fw-bold">Doctor ID</label>
                     <input type="text" class="form-control" value="<?= htmlspecialchars($displayDoctorId) ?>" readonly>
-                </div>
+                </div pí>
                 <div class="mb-3">
                     <label class="form-label fw-bold">Username (Email)</label>
                     <input type="text" class="form-control" value="<?= htmlspecialchars($submittedEmail) ?>" readonly>
