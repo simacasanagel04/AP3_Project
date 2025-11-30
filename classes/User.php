@@ -120,13 +120,13 @@ class User {
         try {
             $searchParam = '%' . trim($searchTerm) . '%';
             $sql = $this->getBaseUserQuery() . " 
-                    WHERE u.USER_NAME LIKE :search 
-                       OR CONCAT(COALESCE(p.PAT_FIRST_NAME, ''), ' ', COALESCE(p.PAT_LAST_NAME, '')) LIKE :search 
-                       OR CONCAT(COALESCE(s.STAFF_FIRST_NAME, ''), ' ', COALESCE(s.STAFF_LAST_NAME, '')) LIKE :search 
-                       OR CONCAT(COALESCE(d.DOC_FIRST_NAME, ''), ' ', COALESCE(d.DOC_LAST_NAME, '')) LIKE :search 
+                    WHERE u.USER_NAME LIKE ? 
+                    OR CONCAT(COALESCE(p.PAT_FIRST_NAME, ''), ' ', COALESCE(p.PAT_LAST_NAME, '')) LIKE ? 
+                    OR CONCAT(COALESCE(s.STAFF_FIRST_NAME, ''), ' ', COALESCE(s.STAFF_LAST_NAME, '')) LIKE ? 
+                    OR CONCAT(COALESCE(d.DOC_FIRST_NAME, ''), ' ', COALESCE(d.DOC_LAST_NAME, '')) LIKE ? 
                     ORDER BY u.USER_ID DESC";
             $stmt = $this->conn->prepare($sql);
-            $stmt->execute([':search' => $searchParam]);
+            $stmt->execute([$searchParam, $searchParam, $searchParam, $searchParam]);
             $results = $stmt->fetchAll(PDO::FETCH_ASSOC);
             foreach ($results as &$user) {
                 $user['user_type'] = $this->getUserType($user);
