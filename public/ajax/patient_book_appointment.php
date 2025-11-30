@@ -3,8 +3,6 @@
  * ============================================================================
  * FILE: public/ajax/patient_book_appointment.php
  * PURPOSE: Handle patient appointment booking with payment
- * 
- * COLLATION FIX: Explicitly convert both sides to same collation for LIKE
  * ============================================================================
  */
 
@@ -49,15 +47,13 @@ try {
     $db->beginTransaction();
     
     // ========================================================================
-    // STEP 1: GENERATE APPOINTMENT ID (COLLATION FIX APPLIED)
+    // STEP 1: GENERATE APPOINTMENT ID
     // ========================================================================
     $year = date('Y', strtotime($input['appt_date']));
     $month = date('m', strtotime($input['appt_date']));
     
-    // CRITICAL FIX: Use COLLATE on the column directly instead of CAST
     $sqlGetLastId = "SELECT APPT_ID FROM appointment 
-                     WHERE APPT_ID COLLATE utf8mb4_0900_ai_ci 
-                           LIKE :prefix COLLATE utf8mb4_0900_ai_ci
+                     WHERE APPT_ID LIKE :prefix
                      ORDER BY APPT_ID DESC 
                      LIMIT 1";
     
