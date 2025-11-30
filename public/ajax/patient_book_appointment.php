@@ -5,8 +5,8 @@
  * PURPOSE: Handle patient appointment booking with payment
  * 
  * COLLATION FIX APPLIED:
- * - Fixed stored procedure call that uses LIKE operation
- * - Added COLLATE utf8mb4_general_ci to prevent collation mismatch
+ * - Removed forced COLLATE clause that caused mismatch with MySQL 8.0 tables
+ * - Let database use its native utf8mb4_0900_ai_ci collation
  * ============================================================================
  */
 
@@ -55,17 +55,14 @@ try {
     $db->beginTransaction();
     
     // ========================================================================
-    // STEP 1: GENERATE APPOINTMENT ID USING STORED PROCEDURE (WITH COLLATION FIX)
+    // STEP 1: GENERATE APPOINTMENT ID (COLLATION FIX APPLIED)
     // ========================================================================
-    // The stored procedure uses LIKE operation which caused collation mismatch
-    // We need to manually generate the ID here with proper COLLATE clause
-    
     $year = date('Y', strtotime($input['appt_date']));
     $month = date('m', strtotime($input['appt_date']));
     
-    // Query to find the last appointment ID for this month (WITH COLLATION FIX)
+    // FIXED: Removed COLLATE clause - let database use its own collation
     $sqlGetLastId = "SELECT APPT_ID FROM appointment 
-                     WHERE APPT_ID LIKE :prefix COLLATE utf8mb4_general_ci 
+                     WHERE APPT_ID LIKE :prefix 
                      ORDER BY APPT_ID DESC 
                      LIMIT 1";
     
