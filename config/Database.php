@@ -27,22 +27,29 @@ class Database {
             $options = [
                 PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
                 PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,
-                PDO::ATTR_EMULATE_PREPARES => false
+                PDO::ATTR_EMULATE_PREPARES => false,
+                PDO::ATTR_PERSISTENT => false // Prevent connection pooling issues
             ];
             
             $this->conn = new PDO($dsn, $this->username, $this->password, $options);
             
-            // Set connection to use cp850 to match database columns
-            $this->conn->exec("SET NAMES 'cp850' COLLATE 'cp850_general_ci'");
+            // Set character set and collation for cp850
+            $this->conn->exec("SET NAMES 'cp850'");
+            $this->conn->exec("SET CHARACTER SET cp850");
+            $this->conn->exec("SET collation_connection = 'cp850_general_ci'");
             
             // Set timezone
             $this->conn->exec("SET time_zone = '+08:00'");
             date_default_timezone_set('Asia/Manila');
 
         } catch (PDOException $e) {
+            // Log error for debugging
+            error_log("Database Connection Error: " . $e->getMessage());
+            
+            // Display user-friendly error
             header('Content-Type: text/html; charset=UTF-8');
             header('X-Content-Type-Options: nosniff');
-            die("Connection failed: " . $e->getMessage());
+            die("⚠️ Database Connection Failed. Please check your Railway MySQL service.<br><small>Error: " . htmlspecialchars($e->getMessage()) . "</small>");
         }
 
         return $this->conn;

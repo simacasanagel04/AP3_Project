@@ -197,57 +197,6 @@ $maintenance = getUpcomingMaintenance();
 <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
 <link rel="stylesheet" href="../css/admin-style.css">
-
-<!-- RESPONSIVE FIXES ONLY (added) -->
-<style>
-    /* Ensure header is flexible and user icon is always visible */
-    .admin-app-header {
-        display: flex !important;
-        align-items: center;
-        justify-content: space-between;
-        flex-wrap: nowrap;
-        min-height: 60px;
-        padding: 0.5rem 1rem;
-    }
-
-    /* Make sure user dropdown works properly */
-    .header-user-info {
-        display: flex;
-        align-items: center;
-        gap: 0.5rem;
-        position: relative;
-    }
-
-    .header-user-info .btn {
-        display: flex !important;
-        align-items: center;
-        justify-content: center;
-        width: 40px;
-        height: 40px;
-        padding: 0 !important;
-    }
-
-    /* Always show user icon and make it tappable */
-    #userDropdownToggle {
-        background: transparent;
-        border: none;
-        font-size: 1.75rem;
-        color: #0d6efd;
-    }
-
-    /* Dropdown menu positioning fix for mobile */
-    @media (max-width: 576px) {
-        .header-user-info .dropdown-menu {
-            right: 0;
-            left: auto !important;
-            transform: translateX(0) !important;
-            min-width: 160px;
-        }
-        .d-none.d-sm-inline {
-            display: none !important;
-        }
-    }
-</style>
 </head>
 <body>
 
@@ -274,21 +223,18 @@ $maintenance = getUpcomingMaintenance();
 
 <div class="main-content">
 <header class="admin-app-header">
-    <div class="d-flex align-items-center">
-        <button class="menu-toggle btn btn-lg text-primary" id="menuToggle" aria-label="Toggle Navigation">
-            <i class="bi bi-list"></i>
+    <button class="menu-toggle btn btn-lg text-primary" id="menuToggle" aria-label="Toggle Navigation">
+        <i class="bi bi-list"></i>
+    </button>
+    <h5 class="fw-bold mb-0 ms-3 d-none d-md-block">Super Admin Dashboard</h5>
+    <div class="header-user-info ms-auto position-relative">
+        <span class="d-none d-sm-inline me-2">Welcome, Superadmin!</span>
+        <button class="btn p-0 border-0" id="userDropdownToggle">
+            <i class="bi bi-person-circle fs-4"></i>
         </button>
-        <h5 class="fw-bold mb-0 ms-3 d-none d-md-block">Super Admin Dashboard</h5>
-    </div>
-
-    <div class="header-user-info position-relative">
-        <span class="d-none d-sm-inline me-2 text-muted">Welcome, Superadmin!</span>
-        <button class="btn p-0 border-0" id="userDropdownToggle" data-bs-toggle="dropdown" aria-expanded="false">
-            <i class="bi bi-person-circle"></i>
-        </button>
-        <ul class="dropdown-menu dropdown-menu-end" id="userDropdownMenu">
-            <li><a class="dropdown-item text-danger" href="../logout.php"><i class="bi bi-box-arrow-right me-2"></i>Log Out</a></li>
-        </ul>
+        <div class="user-dropdown-menu dropdown-menu" id="userDropdownMenu">
+            <a class="dropdown-item text-danger" href="../logout.php"><i class="bi bi-box-arrow-right me-2"></i>Log Out</a>
+        </div>
     </div>
 </header>
 
@@ -323,7 +269,7 @@ $maintenance = getUpcomingMaintenance();
                     <div class="card shadow-sm h-100">
                         <div class="card-body">
                             <h5 class="card-title mb-3">
-                                Appointments
+                                <i class="bi bi-calendar-check text-primary me-2"></i>Appointments
                             </h5>
                             <canvas id="appointmentsChart"></canvas>
                         </div>
@@ -335,7 +281,7 @@ $maintenance = getUpcomingMaintenance();
                     <div class="card shadow-sm h-100">
                         <div class="card-body">
                             <h5 class="card-title mb-3">
-                                Patients
+                                <i class="bi bi-people text-success me-2"></i>Patients
                             </h5>
                             <canvas id="patientsChart"></canvas>
                         </div>
@@ -347,7 +293,7 @@ $maintenance = getUpcomingMaintenance();
             <div class="card shadow-sm">
                 <div class="card-body">
                     <h5 class="card-title mb-3">
-                        PENDING TASKS
+                        <i class="bi bi-list-task text-warning me-2"></i>PENDING TASKS
                     </h5>
                     <?php if (empty($pendingTasks)): ?>
                         <p class="text-muted mb-0">No pending tasks. Great job!</p>
@@ -355,7 +301,7 @@ $maintenance = getUpcomingMaintenance();
                         <ul class="list-group list-group-flush">
                             <?php foreach ($pendingTasks as $task): ?>
                             <li class="list-group-item d-flex justify-content-between align-items-center">
-                                <span><?= htmlspecialchars($task['text']) ?></span>
+                                <span><i class="bi bi-circle-fill text-warning me-2" style="font-size: 0.5rem;"></i><?= htmlspecialchars($task['text']) ?></span>
                                 <a href="<?= htmlspecialchars($task['link']) ?>" class="btn btn-sm btn-primary">Review</a>
                             </li>
                             <?php endforeach; ?>
@@ -371,15 +317,15 @@ $maintenance = getUpcomingMaintenance();
             <div class="card shadow-sm mb-3">
                 <div class="card-body">
                     <h5 class="card-title mb-3">
-                        DAILY STATS
+                        <i class="bi bi-graph-up text-info me-2"></i>DAILY STATS
                     </h5>
                     <div class="mb-3">
                         <div class="d-flex justify-content-between align-items-center mb-2">
                             <span class="text-muted small">
-                                New Patients Today
+                                <i class="bi bi-person-plus me-1"></i>New Patients Today
                             </span>
                             <button class="btn btn-sm btn-outline-secondary" onclick="window.location='?module=patient'">
-                                View
+                                <i class="bi bi-info-circle"></i>
                             </button>
                         </div>
                         <h4 class="text-primary mb-0"><?= $dailyStats['new_patients'] ?></h4>
@@ -387,10 +333,10 @@ $maintenance = getUpcomingMaintenance();
                     <div class="mb-3">
                         <div class="d-flex justify-content-between align-items-center mb-2">
                             <span class="text-muted small">
-                                Completed Appointments
+                                <i class="bi bi-check-circle me-1"></i>Completed Appointments
                             </span>
                             <button class="btn btn-sm btn-outline-secondary" onclick="window.location='?module=appointment'">
-                                View
+                                <i class="bi bi-info-circle"></i>
                             </button>
                         </div>
                         <h4 class="text-success mb-0"><?= $dailyStats['completed_appointments'] ?></h4>
@@ -402,17 +348,17 @@ $maintenance = getUpcomingMaintenance();
             <div class="card shadow-sm mb-3">
                 <div class="card-body">
                     <h5 class="card-title mb-3">
-                        QUICK ACTIONS
+                        <i class="bi bi-lightning-fill text-warning me-2"></i>QUICK ACTIONS
                     </h5>
                     <div class="d-grid gap-2">
                         <button class="btn btn-outline-primary" onclick="window.location='?module=user&action=add'">
-                            Add New User
+                            <i class="bi bi-person-plus me-2"></i>Add New User
                         </button>
                         <button class="btn btn-outline-primary" onclick="window.location='?module=appointment'">
-                            Create Appointment
+                            <i class="bi bi-calendar-plus me-2"></i>Create Appointment
                         </button>
                         <button class="btn btn-outline-secondary" onclick="window.location='?module=medical-record'">
-                            Add New Medical Record
+                            <i class="bi bi-file-medical me-2"></i>Add New Medical Record
                         </button>
                     </div>
                 </div>
@@ -422,9 +368,10 @@ $maintenance = getUpcomingMaintenance();
             <div class="card shadow-sm">
                 <div class="card-body">
                     <h5 class="card-title mb-3">
-                        REMINDERS
+                        <i class="bi bi-bell text-primary me-2"></i>REMINDERS
                     </h5>
                     <div class="alert alert-info small mb-0">
+                        <i class="bi bi-info-circle me-1"></i>
                         <strong><?= $maintenance['date'] ?>:</strong> <?= $maintenance['description'] ?>
                     </div>
                 </div>

@@ -1,7 +1,11 @@
 /**
- * Saves and restores the scroll position of the fixed sidebar 
- * across page reloads (e.g., after selecting a new module).
+ * ============================================================================
+ * FILE: public/js/admin.js
+ * PURPOSE: Handles sidebar navigation, user dropdown, and scroll persistence
+ * FIXES: Mobile logout button visibility & clickability
+ * ============================================================================
  */
+
 document.addEventListener('DOMContentLoaded', function() {
     const sidebar = document.getElementById('sidebar');
 
@@ -80,10 +84,12 @@ function initUserDropdown() {
 
     if (!userDropdownToggle || !userDropdownMenu) return;
 
+    // Toggle dropdown on button click
     userDropdownToggle.addEventListener('click', function(event) {
         event.stopPropagation(); // Prevent document click from closing it immediately
+        const isVisible = userDropdownMenu.classList.contains('show');
         userDropdownMenu.classList.toggle('show');
-        userDropdownToggle.setAttribute('aria-expanded', userDropdownMenu.classList.contains('show'));
+        userDropdownToggle.setAttribute('aria-expanded', !isVisible);
     });
 
     // Close the dropdown if the user clicks outside of it
@@ -95,5 +101,10 @@ function initUserDropdown() {
                 userDropdownToggle.setAttribute('aria-expanded', 'false');
             }
         }
+    });
+    
+    // Prevent dropdown from closing when clicking inside it
+    userDropdownMenu.addEventListener('click', function(event) {
+        event.stopPropagation();
     });
 }
