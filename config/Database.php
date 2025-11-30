@@ -24,6 +24,7 @@ class Database {
             ];
             
             $this->conn = new PDO($dsn, $this->username, $this->password, $options);
+            $this->conn->exec("SET SESSION collation_connection = 'utf8mb4_general_ci'");
             
             // TRIPLE INSURANCE: Force it again after connection
             $this->conn->exec("SET NAMES 'utf8mb4' COLLATE 'utf8mb4_general_ci'");
