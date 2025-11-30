@@ -40,7 +40,7 @@
                 </p>
                 <div class="d-flex flex-wrap gap-3">
                     <!-- <a href="public/patient_book_appt.php" class="btn btn-primary btn-lg px-4">MAKE APPOINTMENT</a> -->
-                    <a href="#" class="btn btn-outline-primary btn-lg px-4">HOW IT WORKS</a>
+                    <a href="#working-procedure" class="btn btn-outline-primary btn-lg px-4">HOW IT WORKS</a>
                 </div>
             </div>
             <div class="col-lg-6">
@@ -96,7 +96,7 @@
 </section>
 
 <!-- WORKING PROCEDURE -->
-<section class="working-procedure py-5">
+<section id="working-procedure" class="working-procedure py-5">
     <div class="container">
         <div class="text-center mb-5">
             <div class="heartbeat-line mx-auto"></div>
