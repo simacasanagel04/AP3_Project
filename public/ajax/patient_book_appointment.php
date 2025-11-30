@@ -5,8 +5,8 @@
  * PURPOSE: Handle patient appointment booking with payment
  * 
  * COLLATION FIX APPLIED:
- * - Removed forced COLLATE clause that caused mismatch with MySQL 8.0 tables
- * - Let database use its native utf8mb4_0900_ai_ci collation
+ * - Explicitly uses COLLATE utf8mb4_general_ci in LIKE comparison
+ * - Prevents collation mismatch between connection and column collations
  * ============================================================================
  */
 
@@ -60,9 +60,10 @@ try {
     $year = date('Y', strtotime($input['appt_date']));
     $month = date('m', strtotime($input['appt_date']));
     
-    // FIXED: Removed COLLATE clause - let database use its own collation
+    // CRITICAL FIX: Cast both sides to same collation to prevent mismatch
+    // This ensures the LIKE comparison uses utf8mb4_general_ci for both operands
     $sqlGetLastId = "SELECT APPT_ID FROM appointment 
-                     WHERE APPT_ID LIKE :prefix 
+                     WHERE APPT_ID COLLATE utf8mb4_general_ci LIKE :prefix COLLATE utf8mb4_general_ci
                      ORDER BY APPT_ID DESC 
                      LIMIT 1";
     
