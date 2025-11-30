@@ -1,40 +1,14 @@
 <?php 
-// public/patient_book_appt.php
-// for user patient
-// WITH COMPREHENSIVE DEBUGGING
+/**
+ * ============================================================================
+ * FILE: public/patient_book_appt.php
+ * PURPOSE: Patient appointment booking and management interface
+ * USER ROLE: Patient
+ * ============================================================================
+ */
 
-// ========================================
-// ENABLE ERROR REPORTING FOR DEBUGGING
-// ========================================
-error_reporting(E_ALL);
-ini_set('display_errors', 1);
-ini_set('log_errors', 1);
-ini_set('error_log', __DIR__ . '/../logs/patient_debug.log');
-
-// ========================================
-// DEBUG FUNCTION
-// ========================================
-function debug_log($message, $data = null) {
-    $timestamp = date('Y-m-d H:i:s');
-    $log_message = "[$timestamp] $message";
-    
-    if ($data !== null) {
-        $log_message .= "\n" . print_r($data, true);
-    }
-    
-    error_log($log_message);
-    
-    // Also log to console if in development
-    if (isset($_SESSION['user_type'])) {
-        echo "<!-- DEBUG: $log_message -->\n";
-    }
-}
-
-debug_log("===== PATIENT_BOOK_APPT.PHP STARTED =====");
-
+// Include patient authentication and header
 include '../includes/patient_header.php';
-
-debug_log("Header included, Session data:", $_SESSION);
 
 // Include required classes
 require_once __DIR__ . '/../classes/Appointment.php';
@@ -44,58 +18,30 @@ require_once __DIR__ . '/../classes/Payment_Method.php';
 require_once __DIR__ . '/../classes/Payment.php';
 require_once __DIR__ . '/../classes/Payment_Status.php';
 
-debug_log("All classes loaded successfully");
+// ============================================================================
+// INITIALIZE CLASSES
+// ============================================================================
+$appointment = new Appointment($db);
+$service = new Service($db);
+$specialization = new Specialization($db);
+$paymentMethod = new Payment_Method($db);
+$payment = new Payment($db);
+$paymentStatus = new Payment_Status($db);
 
-// Initialize classes
-try {
-    $appointment = new Appointment($db);
-    debug_log("Appointment class initialized");
-    
-    $service = new Service($db);
-    debug_log("Service class initialized");
-    
-    $specialization = new Specialization($db);
-    debug_log("Specialization class initialized");
-    
-    $paymentMethod = new Payment_Method($db);
-    debug_log("Payment_Method class initialized");
-    
-    $payment = new Payment($db);
-    debug_log("Payment class initialized");
-    
-    $paymentStatus = new Payment_Status($db);
-    debug_log("Payment_Status class initialized");
-} catch (Exception $e) {
-    debug_log("ERROR initializing classes: " . $e->getMessage());
-    die("Error initializing system classes. Check logs.");
-}
+// ============================================================================
+// FETCH DATA FOR PAGE
+// ============================================================================
+$allSpecializations = $specialization->all();
+$allPaymentMethods = $paymentMethod->all();
+$patientAppointments = $appointment->getByPatientId($pat_id);
 
-// Fetch all data
-try {
-    $allSpecializations = $specialization->all();
-    debug_log("Fetched specializations", ['count' => count($allSpecializations)]);
-    
-    $allPaymentMethods = $paymentMethod->all();
-    debug_log("Fetched payment methods", ['count' => count($allPaymentMethods)]);
-    
-    $patientAppointments = $appointment->getByPatientId($pat_id);
-    debug_log("Fetched patient appointments", [
-        'pat_id' => $pat_id,
-        'count' => count($patientAppointments)
-    ]);
-} catch (Exception $e) {
-    debug_log("ERROR fetching data: " . $e->getMessage());
-    $allSpecializations = [];
-    $allPaymentMethods = [];
-    $patientAppointments = [];
-}
-
-// Get appointments with payment info
+// ============================================================================
+// GET APPOINTMENTS WITH PAYMENT INFORMATION
+// ============================================================================
 $appointmentsWithPayment = [];
 foreach ($patientAppointments as $appt) {
     try {
-        debug_log("Fetching payment info for appointment", ['app_id' => $appt['app_id']]);
-        
+        // Query to get payment details for each appointment
         $paymentQuery = "
             SELECT 
                 p.PAYMT_AMOUNT_PAID,
@@ -113,28 +59,19 @@ foreach ($patientAppointments as $appt) {
         $paymentStmt->execute();
         
         $paymentInfo = $paymentStmt->fetch(PDO::FETCH_ASSOC);
-        
-        debug_log("Payment info fetched", [
-            'app_id' => $appt['app_id'],
-            'payment_found' => $paymentInfo !== false
-        ]);
-        
         $appt['payment_info'] = $paymentInfo;
+        
     } catch (PDOException $e) {
-        debug_log("ERROR: Payment query error", [
-            'app_id' => $appt['app_id'],
-            'error' => $e->getMessage(),
-            'code' => $e->getCode()
-        ]);
+        error_log("Payment query error for appointment {$appt['app_id']}: " . $e->getMessage());
         $appt['payment_info'] = null;
     }
     
     $appointmentsWithPayment[] = $appt;
 }
 
-debug_log("Appointments with payment processed", ['total' => count($appointmentsWithPayment)]);
-
-// Count appointments
+// ============================================================================
+// CALCULATE APPOINTMENT STATISTICS
+// ============================================================================
 $todayCount = 0;
 $totalCount = count($appointmentsWithPayment);
 $today = date('Y-m-d');
@@ -144,146 +81,7 @@ foreach ($appointmentsWithPayment as $appt) {
         $todayCount++;
     }
 }
-
-debug_log("Appointment counts calculated", [
-    'today' => $todayCount,
-    'total' => $totalCount,
-    'date_today' => $today
-]);
 ?>
-
-<!-- ========================================
-     DEBUGGING CONSOLE PANEL
-     ======================================== -->
-<style>
-.debug-console {
-    position: fixed;
-    bottom: 0;
-    left: 0;
-    right: 0;
-    background: #1a1a1a;
-    color: #00ff00;
-    font-family: 'Courier New', monospace;
-    font-size: 11px;
-    max-height: 300px;
-    overflow-y: auto;
-    padding: 10px;
-    z-index: 9999;
-    border-top: 3px solid #00ff00;
-    box-shadow: 0 -5px 20px rgba(0,0,0,0.5);
-}
-.debug-console.minimized {
-    max-height: 40px;
-    overflow: hidden;
-}
-.debug-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    padding-bottom: 5px;
-    border-bottom: 1px solid #00ff00;
-    margin-bottom: 5px;
-}
-.debug-toggle {
-    background: #00ff00;
-    color: #000;
-    border: none;
-    padding: 3px 10px;
-    cursor: pointer;
-    font-weight: bold;
-}
-.debug-entry {
-    padding: 3px 0;
-    border-bottom: 1px solid #333;
-}
-.debug-entry.error {
-    color: #ff4444;
-}
-.debug-entry.success {
-    color: #44ff44;
-}
-.debug-entry.info {
-    color: #4444ff;
-}
-.debug-timestamp {
-    color: #888;
-    margin-right: 10px;
-}
-</style>
-
-<div class="debug-console" id="debugConsole">
-    <div class="debug-header">
-        <span><strong>🐛 DEBUG CONSOLE</strong> | Session: <?= $_SESSION['user_id'] ?? 'N/A' ?> | Patient ID: <?= $pat_id ?? 'N/A' ?></span>
-        <button class="debug-toggle" onclick="toggleDebugConsole()">MINIMIZE</button>
-    </div>
-    <div id="debugLog">
-        <div class="debug-entry success">
-            <span class="debug-timestamp"><?= date('H:i:s') ?></span>
-            <span>✓ Page loaded successfully</span>
-        </div>
-        <div class="debug-entry info">
-            <span class="debug-timestamp"><?= date('H:i:s') ?></span>
-            <span>Database: <?= isset($db) ? 'CONNECTED' : 'NOT CONNECTED' ?></span>
-        </div>
-        <div class="debug-entry info">
-            <span class="debug-timestamp"><?= date('H:i:s') ?></span>
-            <span>Specializations loaded: <?= count($allSpecializations) ?></span>
-        </div>
-        <div class="debug-entry info">
-            <span class="debug-timestamp"><?= date('H:i:s') ?></span>
-            <span>Payment methods loaded: <?= count($allPaymentMethods) ?></span>
-        </div>
-        <div class="debug-entry info">
-            <span class="debug-timestamp"><?= date('H:i:s') ?></span>
-            <span>Patient appointments: <?= count($patientAppointments) ?></span>
-        </div>
-    </div>
-</div>
-
-<script>
-function toggleDebugConsole() {
-    const console = document.getElementById('debugConsole');
-    console.classList.toggle('minimized');
-    const btn = console.querySelector('.debug-toggle');
-    btn.textContent = console.classList.contains('minimized') ? 'MAXIMIZE' : 'MINIMIZE';
-}
-
-function addDebugEntry(message, type = 'info') {
-    const debugLog = document.getElementById('debugLog');
-    const timestamp = new Date().toLocaleTimeString();
-    const entry = document.createElement('div');
-    entry.className = `debug-entry ${type}`;
-    entry.innerHTML = `
-        <span class="debug-timestamp">${timestamp}</span>
-        <span>${message}</span>
-    `;
-    debugLog.appendChild(entry);
-    debugLog.scrollTop = debugLog.scrollHeight;
-}
-
-// Log all console messages to debug panel
-const originalLog = console.log;
-const originalError = console.error;
-const originalWarn = console.warn;
-
-console.log = function(...args) {
-    addDebugEntry('📝 ' + args.join(' '), 'info');
-    originalLog.apply(console, args);
-};
-
-console.error = function(...args) {
-    addDebugEntry('❌ ' + args.join(' '), 'error');
-    originalError.apply(console, args);
-};
-
-console.warn = function(...args) {
-    addDebugEntry('⚠️ ' + args.join(' '), 'info');
-    originalWarn.apply(console, args);
-};
-
-// Log page events
-addDebugEntry('✓ Debug console initialized', 'success');
-</script>
 
 <!-- DASHBOARD HEADER -->
 <div class="dashboard-header">
@@ -323,14 +121,18 @@ addDebugEntry('✓ Debug console initialized', 'success');
     <button class="tab-btn active" id="historyTab">Booked Appointments History</button>
 </div>
 
-<!-- BOOK FORM -->
+<!-- ============================================================================
+     BOOK APPOINTMENT FORM
+     ============================================================================ -->
 <div id="bookSection" class="info-card" style="display: none;">
     <p class="mb-3"><strong>Note:</strong> Each service has a duration (default duration is 30 mins)</p>
 
     <form id="apptForm">
+        <!-- Hidden fields -->
         <input type="hidden" id="patientId" value="<?= $pat_id ?>">
         <input type="hidden" id="selectedDoctorId" value="">
 
+        <!-- Department Selection -->
         <div class="mb-3">
             <label class="form-label"><strong>SELECT DEPARTMENT</strong></label>
             <select class="form-select" id="department" required title="Select a department">
@@ -341,6 +143,7 @@ addDebugEntry('✓ Debug console initialized', 'success');
             </select>
         </div>
 
+        <!-- Service Selection -->
         <div class="mb-3">
             <label class="form-label"><strong>SELECT SERVICE</strong></label>
             <select class="form-select" id="service" required disabled title="Select a service">
@@ -348,17 +151,20 @@ addDebugEntry('✓ Debug console initialized', 'success');
             </select>
         </div>
 
+        <!-- Service Price Display -->
         <div class="mb-3">
             <label class="form-label"><strong>SERVICE PRICE</strong></label>
             <div class="form-control bg-light fw-semibold text-primary" id="servicePrice">₱0.00</div>
         </div>
 
+        <!-- Date Selection -->
         <div class="mb-3">
             <label class="form-label"><strong>SELECT DATE</strong></label>
             <input type="date" class="form-control" id="date" required disabled title="Select appointment date" placeholder="YYYY-MM-DD">
             <small class="text-muted" id="dateNote">Select a department first to see available dates</small>
         </div>
 
+        <!-- Time Selection -->
         <div class="mb-3">
             <label class="form-label"><strong>SELECT TIME</strong></label>
             <select class="form-select" id="time" required disabled title="Select appointment time">
@@ -366,6 +172,7 @@ addDebugEntry('✓ Debug console initialized', 'success');
             </select>
         </div>
 
+        <!-- Form Actions -->
         <div class="d-flex gap-2 justify-content-end">
             <button type="button" class="btn btn-secondary" id="clearBtn">CLEAR</button>
             <button type="submit" class="btn btn-primary">CONTINUE</button>
@@ -373,7 +180,9 @@ addDebugEntry('✓ Debug console initialized', 'success');
     </form>
 </div>
 
-<!-- HISTORY TABLE -->
+<!-- ============================================================================
+     APPOINTMENTS HISTORY TABLE
+     ============================================================================ -->
 <div id="historySection" class="info-card">
     <h4 class="mb-3">BOOKED APPOINTMENTS HISTORY</h4>
     
@@ -408,6 +217,7 @@ addDebugEntry('✓ Debug console initialized', 'success');
         </div>
     </div>
 
+    <!-- Appointments Table -->
     <div class="table-responsive">
         <table class="table table-bordered table-hover align-middle" id="appointmentsTable">
             <thead class="table-light">
@@ -432,11 +242,13 @@ addDebugEntry('✓ Debug console initialized', 'success');
                     </tr>
                 <?php else: ?>
                     <?php foreach ($appointmentsWithPayment as $appt): 
+                        // Determine status display
                         $statusText = $appt['app_status'] == 1 ? 'Scheduled' : 
                                      ($appt['app_status'] == 2 ? 'Completed' : 'Cancelled');
                         $statusClass = $appt['app_status'] == 1 ? 'bg-warning' : 
                                       ($appt['app_status'] == 2 ? 'bg-success' : 'bg-danger');
                         
+                        // Format payment information
                         $payInfo = $appt['payment_info'];
                         $payAmount = $payInfo && $payInfo['PAYMT_AMOUNT_PAID'] ? '₱' . number_format($payInfo['PAYMT_AMOUNT_PAID'], 2) : 'N/A';
                         $payMethod = $payInfo && $payInfo['PYMT_METH_NAME'] ? $payInfo['PYMT_METH_NAME'] : 'N/A';
@@ -465,17 +277,21 @@ addDebugEntry('✓ Debug console initialized', 'success');
     </div>
 </div>
 
-<!-- PAYMENT SECTION -->
+<!-- ============================================================================
+     PAYMENT SECTION
+     ============================================================================ -->
 <div id="paymentSection" class="payment-section border border-2 border-primary rounded-3 p-4 bg-light bg-gradient" style="display: none;">
     <div class="bg-primary bg-gradient text-white p-3 rounded-3 text-center mb-4">
         <h5 class="mb-0 fw-semibold">Complete Your Payment</h5>
     </div>
 
+    <!-- Payment Summary -->
     <div class="bg-white border border-2 p-3 rounded-3 d-flex justify-content-between align-items-center fw-semibold mb-4 shadow-sm">
         <span id="summaryService" class="fs-6 text-dark">Service Name</span>
         <strong id="summaryPrice" class="fs-6 text-primary">₱0.00</strong>
     </div>
 
+    <!-- Payment Method Selection -->
     <div class="mb-4">
         <label class="form-label fw-bold text-uppercase">Select Payment Method</label>
         <select class="fs-6 form-select border-2" id="paymentMethodSelect" required title="Select payment method">
@@ -486,17 +302,21 @@ addDebugEntry('✓ Debug console initialized', 'success');
         </select>
     </div>
 
+    <!-- Payment Actions -->
     <div class="d-flex gap-3 justify-content-center">
         <button type="button" class="btn btn-outline-secondary px-4 fw-semibold" id="cancelPaymentBtn">CANCEL</button>
         <button type="button" class="btn btn-primary px-4 fw-semibold text-uppercase" id="proceedPaymentBtn" disabled>PROCEED TO PAYMENT</button>
     </div>
 </div>
 
-<!-- PAYMENT MODAL -->
+<!-- ============================================================================
+     PAYMENT MODAL
+     ============================================================================ -->
 <div class="modal fade" id="paymentModal" tabindex="-1" data-bs-backdrop="static" data-bs-keyboard="false">
     <div class="modal-dialog modal-dialog-centered">
         <div class="modal-content border-0 shadow-lg rounded-4">
-            <!-- Header with gradient -->
+            
+            <!-- Modal Header -->
             <div class="modal-header bg-primary bg-gradient text-white p-4 border-0">
                 <div>
                     <h5 class="modal-title fw-semibold mb-1" id="paymentModalTitle">Payment Method</h5>
@@ -505,9 +325,9 @@ addDebugEntry('✓ Debug console initialized', 'success');
                 <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
 
-            <!-- Body -->
+            <!-- Modal Body -->
             <div class="modal-body p-4">
-                <!-- Payment Icon Section -->
+                <!-- Amount Display -->
                 <div class="text-center mb-4">
                     <p class="text-muted mb-1">Amount to Pay:</p>
                     <h3 class="fw-bold" id="paymentAmount">₱0.00</h3>
@@ -515,11 +335,11 @@ addDebugEntry('✓ Debug console initialized', 'success');
 
                 <hr class="my-4">
 
-                <!-- Payment Form Container -->
+                <!-- Payment Form Container (dynamically populated) -->
                 <div id="paymentFormContainer"></div>
             </div>
 
-            <!-- Footer -->
+            <!-- Modal Footer -->
             <div class="modal-footer bg-light p-4 border-top">
                 <button type="button" class="btn btn-outline-secondary px-5" data-bs-dismiss="modal">CANCEL</button>
                 <button type="button" class="btn btn-success px-5 fw-semibold" id="confirmPaymentBtn">CONFIRM & BOOK</button>
@@ -530,76 +350,11 @@ addDebugEntry('✓ Debug console initialized', 'success');
 
 </div> <!-- END .main-content -->
 
+<!-- ============================================================================
+     SCRIPTS
+     ============================================================================ -->
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 <script src="js/patient_dashboard.js"></script>
 
-<script>
-// ========================================
-// ENHANCED DEBUGGING FOR AJAX CALLS
-// ========================================
-addDebugEntry('🚀 Initializing AJAX interceptor', 'info');
-
-// Intercept all fetch requests
-const originalFetch = window.fetch;
-window.fetch = function(...args) {
-    const url = args[0];
-    const options = args[1] || {};
-    
-    addDebugEntry(`📡 FETCH REQUEST: ${url}`, 'info');
-    addDebugEntry(`   Method: ${options.method || 'GET'}`, 'info');
-    
-    if (options.body) {
-        try {
-            const bodyData = JSON.parse(options.body);
-            addDebugEntry(`   Body: ${JSON.stringify(bodyData)}`, 'info');
-        } catch (e) {
-            addDebugEntry(`   Body: ${options.body}`, 'info');
-        }
-    }
-    
-    return originalFetch.apply(this, args)
-        .then(response => {
-            addDebugEntry(`✓ FETCH RESPONSE: ${url}`, response.ok ? 'success' : 'error');
-            addDebugEntry(`   Status: ${response.status} ${response.statusText}`, response.ok ? 'success' : 'error');
-            
-            // Clone response to read it without consuming
-            const clonedResponse = response.clone();
-            clonedResponse.text().then(text => {
-                try {
-                    const json = JSON.parse(text);
-                    addDebugEntry(`   Response Data: ${JSON.stringify(json).substring(0, 200)}...`, json.success ? 'success' : 'error');
-                } catch (e) {
-                    addDebugEntry(`   Response Text: ${text.substring(0, 200)}...`, 'info');
-                }
-            });
-            
-            return response;
-        })
-        .catch(error => {
-            addDebugEntry(`❌ FETCH ERROR: ${url}`, 'error');
-            addDebugEntry(`   Error: ${error.message}`, 'error');
-            throw error;
-        });
-};
-
-// Log form submissions
-document.addEventListener('submit', function(e) {
-    addDebugEntry(`📝 FORM SUBMITTED: ${e.target.id || 'unnamed form'}`, 'info');
-});
-
-// Log button clicks
-document.addEventListener('click', function(e) {
-    if (e.target.tagName === 'BUTTON') {
-        addDebugEntry(`🖱️ BUTTON CLICKED: ${e.target.id || e.target.textContent.trim()}`, 'info');
-    }
-});
-
-addDebugEntry('✓ Debug interceptors installed', 'success');
-</script>
-
 </body>
 </html>
-
-<?php
-debug_log("===== PATIENT_BOOK_APPT.PHP COMPLETED =====");
-?>
