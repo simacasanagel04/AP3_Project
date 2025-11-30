@@ -6,6 +6,10 @@
 // -----------------------------------------------------
 
 session_start();
+
+// Set proper charset for cp850 collation
+header('Content-Type: text/html; charset=cp850');
+
 require_once '../config/Database.php';
 require_once '../classes/Medical_Record.php';
 
