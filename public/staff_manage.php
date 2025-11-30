@@ -1,6 +1,11 @@
 <?php
 // public/staff_manage.php
 
+// Enable error reporting for debugging
+error_reporting(E_ALL);
+ini_set('display_errors', 1);
+ini_set('log_errors', 1);
+
 session_start(); 
 require_once '../config/Database.php';
 require_once '../classes/Staff.php';
@@ -11,10 +16,20 @@ if (!isset($_SESSION['staff_id'])) {
     exit();
 }
 
-
-$database = new Database();
-$db = $database->connect();
-$staff = new Staff($db);
+// Connect to database with error handling
+try {
+    $database = new Database();
+    $db = $database->connect();
+    
+    if (!$db instanceof PDO) {
+        throw new Exception('Database connection failed');
+    }
+    
+    $staff = new Staff($db);
+    
+} catch (Exception $e) {
+    die("Database Error: " . htmlspecialchars($e->getMessage()));
+}
 
 // Handle form actions BEFORE any output
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
@@ -27,7 +42,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             'phone' => $_POST['STAFF_CONTACT_NUM'],
             'email' => $_POST['STAFF_EMAIL']
         ];
-        $staff->create($data, 'super_admin');
+        $result = $staff->create($data, 'super_admin');
+        error_log("Staff create result: " . print_r($result, true));
         header("Location: staff_manage.php");
         exit;
     } elseif ($_POST['action'] === 'update') {
@@ -40,15 +56,26 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             'phone' => $_POST['STAFF_CONTACT_NUM'],
             'email' => $_POST['STAFF_EMAIL']
         ];
-        $staff->update($data, 'super_admin');
+        $result = $staff->update($data, 'super_admin');
+        error_log("Staff update result: " . print_r($result, true));
         header("Location: staff_manage.php");
         exit;
     }
 }
 
-// Initialize search variable with proper sanitization
+// Get search parameter and sanitize
 $search = isset($_GET['search']) ? trim($_GET['search']) : '';
+
+// Log the search attempt
+error_log("Staff search initiated - Term: '" . $search . "'");
+
+// Fetch staff list
 $staffList = $staff->readAll($search);
+
+// Log results
+error_log("Staff search results - Count: " . count($staffList));
+
+// Get edit data if editing
 $editData = isset($_GET['edit']) ? $staff->readOne($_GET['edit']) : null;
 
 require_once '../includes/staff_header.php';
