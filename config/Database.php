@@ -25,6 +25,9 @@ class Database {
             
             $this->conn = new PDO($dsn, $this->username, $this->password, $options);
             
+            // CRITICAL FIX: Force connection to use utf8mb4_general_ci
+            $this->conn->exec("SET NAMES utf8mb4 COLLATE utf8mb4_general_ci");
+            $this->conn->exec("SET collation_connection = utf8mb4_general_ci");
             $this->conn->exec("SET time_zone = '+08:00'");
             date_default_timezone_set('Asia/Manila');
 
