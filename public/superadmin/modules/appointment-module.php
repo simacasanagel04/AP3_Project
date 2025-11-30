@@ -188,22 +188,33 @@ date('Y-m-d') ?>">
 class="form-control"> 
       </div> 
       <div class="col-md-6"> 
-        <label class="form-label fw-semibold">Patient 
-*</label> 
-        <select name="PAT_ID" required class="form-select"> 
-          <option value="" disabled selected>Select 
-Patient</option> 
-          <?php foreach ($patients as $p): 
-            $id = $p['pat_id'] ?? $p['PAT_ID']; 
-            $name = ($p['pat_last_name'] ?? 
-$p['PAT_LAST_NAME']) . ', ' . ($p['pat_first_name'] ?? 
-$p['PAT_FIRST_NAME']); 
-          ?> 
-            <option value="<?= htmlspecialchars($id) ?>"><?= 
-htmlspecialchars($name) ?></option> 
-          <?php endforeach; ?> 
-        </select> 
-      </div> 
+  <label class="form-label fw-semibold">Patient *</label> 
+  <select name="PAT_ID" required class="form-select"> 
+    <option value="" disabled selected>Select Patient</option> 
+    <?php 
+      
+      usort($patients, function($a, $b) {
+        $lastNameA = $a['pat_last_name'] ?? $a['PAT_LAST_NAME'];
+        $lastNameB = $b['pat_last_name'] ?? $b['PAT_LAST_NAME'];
+        $firstNameA = $a['pat_first_name'] ?? $a['PAT_FIRST_NAME'];
+        $firstNameB = $b['pat_first_name'] ?? $b['PAT_FIRST_NAME'];
+        
+        
+        $result = strcasecmp($lastNameA, $lastNameB);
+        
+        return $result !== 0 ? $result : strcasecmp($firstNameA, $firstNameB);
+      });
+      
+      
+      foreach ($patients as $p): 
+        $id = $p['pat_id'] ?? $p['PAT_ID']; 
+        $name = ($p['pat_last_name'] ?? $p['PAT_LAST_NAME']) . ', ' . 
+                ($p['pat_first_name'] ?? $p['PAT_FIRST_NAME']); 
+    ?> 
+      <option value="<?= htmlspecialchars($id) ?>"><?= htmlspecialchars($name) ?></option> 
+    <?php endforeach; ?> 
+  </select> 
+</div>
  
       <div class="col-md-6"> 
         <label class="form-label fw-semibold">Service 
