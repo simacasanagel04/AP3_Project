@@ -4,7 +4,7 @@
  * FILE: classes/Appointment.php
  * PURPOSE: Appointment management class
  * 
- * COLLATION FIX: All LIKE comparisons cast both sides to utf8mb4_general_ci
+ * COLLATION FIX: All LIKE comparisons use utf8mb4_0900_ai_ci
  * ============================================================================
  */
 
@@ -85,11 +85,11 @@ class Appointment {
     private function generateNewApptId() {
         $year = date('Y');
         
-        // CRITICAL FIX: Cast both operands to utf8mb4_general_ci to match collations
+        // CRITICAL FIX: Use COLLATE utf8mb4_0900_ai_ci
         $sql = "SELECT APPT_ID 
                 FROM appointment 
-                WHERE CAST(APPT_ID AS CHAR CHARACTER SET utf8mb4) COLLATE utf8mb4_general_ci 
-                      LIKE CAST(:prefix AS CHAR CHARACTER SET utf8mb4) COLLATE utf8mb4_general_ci
+                WHERE APPT_ID COLLATE utf8mb4_0900_ai_ci 
+                      LIKE :prefix COLLATE utf8mb4_0900_ai_ci
                 ORDER BY APPT_ID DESC 
                 LIMIT 1";
         
@@ -130,9 +130,9 @@ class Appointment {
         LEFT JOIN status st ON a.STAT_ID = st.STAT_ID";
 
         if (!empty($search) && trim($search) !== '') {
-            // CRITICAL FIX: Cast both operands to utf8mb4_general_ci
-            $query .= " WHERE CAST(a.APPT_ID AS CHAR CHARACTER SET utf8mb4) COLLATE utf8mb4_general_ci 
-                              LIKE CAST(:search AS CHAR CHARACTER SET utf8mb4) COLLATE utf8mb4_general_ci";
+            // CRITICAL FIX: Use COLLATE utf8mb4_0900_ai_ci
+            $query .= " WHERE a.APPT_ID COLLATE utf8mb4_0900_ai_ci 
+                              LIKE :search COLLATE utf8mb4_0900_ai_ci";
         }
 
         $query .= " ORDER BY a.APPT_CREATED_AT DESC";
@@ -209,9 +209,9 @@ class Appointment {
         WHERE a.PAT_ID = :pat_id";
 
         if (!empty($search)) {
-            // CRITICAL FIX: Cast both operands to utf8mb4_general_ci
-            $query .= " AND CAST(a.APPT_ID AS CHAR CHARACTER SET utf8mb4) COLLATE utf8mb4_general_ci 
-                            LIKE CAST(:search AS CHAR CHARACTER SET utf8mb4) COLLATE utf8mb4_general_ci";
+            // CRITICAL FIX: Use COLLATE utf8mb4_0900_ai_ci
+            $query .= " AND a.APPT_ID COLLATE utf8mb4_0900_ai_ci 
+                            LIKE :search COLLATE utf8mb4_0900_ai_ci";
         }
 
         $query .= " ORDER BY a.APPT_CREATED_AT DESC";
@@ -245,11 +245,15 @@ class Appointment {
                         a.APPT_TIME as app_time,
                         a.STAT_ID as app_status,
                         a.APPT_CREATED_AT,
+                        a.DOC_ID as doc_id,
+                        a.SERV_ID as serv_id,
                         d.DOC_FIRST_NAME,
                         d.DOC_LAST_NAME,
                         d.DOC_MIDDLE_INIT,
+                        d.SPEC_ID as spec_id,
                         s.SPEC_NAME as doc_specialization,
                         srv.SERV_NAME as service_name,
+                        srv.SERV_PRICE as service_price,
                         CONCAT(d.DOC_LAST_NAME, ', ', d.DOC_FIRST_NAME, ' ', COALESCE(d.DOC_MIDDLE_INIT, '')) as doctor_name,
                         DATE_FORMAT(a.APPT_DATE, '%M %d, %Y') as formatted_app_date,
                         DATE_FORMAT(a.APPT_TIME, '%h:%i %p') as formatted_app_time
@@ -282,6 +286,7 @@ class Appointment {
                         a.*,
                         d.DOC_FIRST_NAME,
                         d.DOC_LAST_NAME,
+                        d.SPEC_ID,
                         s.SPEC_NAME as doc_specialization,
                         srv.SERV_NAME as service_name,
                         p.PAT_FIRST_NAME,
