@@ -1,4 +1,12 @@
 <?php
+/**
+ * ============================================================================
+ * FILE: config/Database.php
+ * PURPOSE: Database connection class
+ * 
+ * COLLATION FIX: Allows natural cp850 connection, queries handle collation
+ * ============================================================================
+ */
 
 class Database {
     // Hardcoded connection for Railway
@@ -14,27 +22,21 @@ class Database {
         $this->conn = null;
 
         try {
-            // CRITICAL FIX: Add collation directly to DSN
             $dsn = "mysql:host={$this->host};port={$this->port};dbname={$this->db_name};charset=utf8mb4";
             
-            // Add init_command to force collation at connection level
             $options = [
                 PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
                 PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,
-                PDO::ATTR_EMULATE_PREPARES => false,
-                PDO::MYSQL_ATTR_INIT_COMMAND => "SET NAMES utf8mb4 COLLATE utf8mb4_general_ci, collation_connection = utf8mb4_general_ci"
+                PDO::ATTR_EMULATE_PREPARES => false
             ];
             
             $this->conn = new PDO($dsn, $this->username, $this->password, $options);
             
-            // Double-check: Force collation again after connection
-            $this->conn->exec("SET collation_connection = 'utf8mb4_general_ci'");
-            $this->conn->exec("SET collation_database = 'utf8mb4_general_ci'");
+            // Set timezone only - let connection use its natural collation
             $this->conn->exec("SET time_zone = '+08:00'");
             date_default_timezone_set('Asia/Manila');
 
         } catch (PDOException $e) {
-            // Set proper headers for error response
             header('Content-Type: text/html; charset=UTF-8');
             header('X-Content-Type-Options: nosniff');
             die("Connection failed: " . $e->getMessage());

@@ -4,16 +4,13 @@
  * FILE: public/ajax/patient_book_appointment.php
  * PURPOSE: Handle patient appointment booking with payment
  * 
- * COLLATION FIX APPLIED:
- * - Explicitly uses COLLATE utf8mb4_general_ci in LIKE comparison
- * - Prevents collation mismatch between connection and column collations
+ * COLLATION FIX: LIKE comparison casts both operands to utf8mb4_general_ci
  * ============================================================================
  */
 
 session_start();
 require_once __DIR__ . '/../../config/Database.php';
 
-// Set JSON header for API response
 header('Content-Type: application/json');
 
 // ============================================================================
@@ -29,7 +26,6 @@ if (!isset($_SESSION['user_id']) || !isset($_SESSION['pat_id'])) {
 // ============================================================================
 $input = json_decode(file_get_contents('php://input'), true);
 
-// Validate required fields exist
 $required = ['pat_id', 'doc_id', 'serv_id', 'appt_date', 'appt_time', 'pymt_meth_id', 'pymt_amount'];
 foreach ($required as $field) {
     if (!isset($input[$field]) || empty($input[$field])) {
@@ -38,7 +34,6 @@ foreach ($required as $field) {
     }
 }
 
-// Verify patient ID matches session (security check)
 if ($input['pat_id'] != $_SESSION['pat_id']) {
     echo json_encode(['success' => false, 'message' => 'Invalid patient ID']);
     exit;
@@ -51,7 +46,6 @@ try {
     $database = new Database();
     $db = $database->connect();
     
-    // Start transaction for data integrity
     $db->beginTransaction();
     
     // ========================================================================
@@ -60,10 +54,10 @@ try {
     $year = date('Y', strtotime($input['appt_date']));
     $month = date('m', strtotime($input['appt_date']));
     
-    // CRITICAL FIX: Cast both sides to same collation to prevent mismatch
-    // This ensures the LIKE comparison uses utf8mb4_general_ci for both operands
+    // CRITICAL FIX: Cast both sides to utf8mb4_general_ci to prevent mismatch
     $sqlGetLastId = "SELECT APPT_ID FROM appointment 
-                     WHERE APPT_ID COLLATE utf8mb4_general_ci LIKE :prefix COLLATE utf8mb4_general_ci
+                     WHERE CAST(APPT_ID AS CHAR CHARACTER SET utf8mb4) COLLATE utf8mb4_general_ci 
+                           LIKE CAST(:prefix AS CHAR CHARACTER SET utf8mb4) COLLATE utf8mb4_general_ci
                      ORDER BY APPT_ID DESC 
                      LIMIT 1";
     
@@ -71,17 +65,13 @@ try {
     $stmtGetLastId->execute([':prefix' => $year . '-' . $month . '-%']);
     $lastId = $stmtGetLastId->fetchColumn();
     
-    // Generate next sequence number
     if ($lastId) {
-        // Extract sequence number from last ID (format: YYYY-MM-0000001)
-        $lastSequence = (int)substr($lastId, 8); // Get the last 7 digits
+        $lastSequence = (int)substr($lastId, 8);
         $nextSequence = $lastSequence + 1;
     } else {
-        // First appointment of this month
         $nextSequence = 1;
     }
     
-    // Format: YYYY-MM-0000001
     $apptId = $year . '-' . $month . '-' . str_pad($nextSequence, 7, '0', STR_PAD_LEFT);
     
     if (!$apptId) {
@@ -128,14 +118,12 @@ try {
     }
     
     // ========================================================================
-    // STEP 4: COMMIT TRANSACTION (All operations successful)
+    // STEP 4: COMMIT TRANSACTION
     // ========================================================================
     $db->commit();
     
-    // Log success for debugging
     error_log("✓ Appointment booked successfully: $apptId for patient {$input['pat_id']}");
     
-    // Return success response
     echo json_encode([
         'success' => true,
         'message' => 'Appointment booked successfully',
@@ -150,12 +138,10 @@ try {
         $db->rollBack();
     }
     
-    // Log error for debugging
     error_log("✗ Booking error: " . $e->getMessage());
     error_log("   Patient ID: " . ($input['pat_id'] ?? 'N/A'));
     error_log("   Date: " . ($input['appt_date'] ?? 'N/A'));
     
-    // Return error response
     echo json_encode([
         'success' => false,
         'message' => 'Failed to book appointment: ' . $e->getMessage()
