@@ -76,9 +76,9 @@ class Appointment {
 
     private function generateNewApptId() {
         $year = date('Y');
-        // FIX: Add COLLATE to force consistent collation
+        // FIXED: Removed COLLATE - let database use its own collation
         $sql = "SELECT APPT_ID FROM appointment 
-                WHERE APPT_ID LIKE :prefix COLLATE utf8mb4_general_ci 
+                WHERE APPT_ID LIKE :prefix 
                 ORDER BY APPT_ID DESC LIMIT 1";
         $stmt = $this->conn->prepare($sql);
         $stmt->bindValue(':prefix', $year . '-%');
@@ -88,7 +88,7 @@ class Appointment {
         $nextSequence = $lastId ? ((int)substr($lastId, 8)) + 1 : 1;
         $month = date('m');
         return $year . '-' . $month . '-' . str_pad($nextSequence, 7, '0', STR_PAD_LEFT);
-}
+    }
 
     /** READ ALL (with optional search) - FIXED WITH CORRECT UPPERCASE COLUMNS */
     public function readAll($search = null) {
@@ -117,8 +117,8 @@ class Appointment {
         LEFT JOIN status st ON a.STAT_ID = st.STAT_ID";
 
         if (!empty($search) && trim($search) !== '') {
-            // FIX: Add COLLATE to force consistent collation
-            $query .= " WHERE a.APPT_ID LIKE :search COLLATE utf8mb4_general_ci";
+            // FIXED: Removed COLLATE - let database use its own collation
+            $query .= " WHERE a.APPT_ID LIKE :search";
         }
 
         $query .= " ORDER BY a.APPT_CREATED_AT DESC";
@@ -195,8 +195,8 @@ class Appointment {
         WHERE a.PAT_ID = :pat_id";
 
         if (!empty($search)) {
-            // FIX: Add COLLATE to force consistent collation
-            $query .= " AND a.APPT_ID LIKE :search COLLATE utf8mb4_general_ci";
+            // FIXED: Removed COLLATE - let database use its own collation
+            $query .= " AND a.APPT_ID LIKE :search";
         }
 
         $query .= " ORDER BY a.APPT_CREATED_AT DESC";
