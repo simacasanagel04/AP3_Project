@@ -49,7 +49,7 @@ class User {
 
     // Check if a username already exists
     public function emailExists($email) {
-        $sql = "SELECT USER_ID FROM {$this->table} WHERE USER_NAME = ? LIMIT 1";
+        $sql = "SELECT USER_ID FROM {$this->table} WHERE USER_NAME = ? COLLATE cp850_general_ci LIMIT 1";
         $stmt = $this->conn->prepare($sql);
         $stmt->execute([$email]);
         return $stmt->rowCount() > 0;
@@ -57,7 +57,7 @@ class User {
 
     // Find user by username
     public function findByUsername($username) {
-        $sql = "SELECT * FROM {$this->table} WHERE USER_NAME = ? LIMIT 1";
+        $sql = "SELECT * FROM {$this->table} WHERE USER_NAME = ? COLLATE cp850_general_ci LIMIT 1";
         $stmt = $this->conn->prepare($sql);
         $stmt->execute([$username]);
         return $stmt->fetch(PDO::FETCH_ASSOC);
@@ -118,15 +118,15 @@ class User {
         }
     }
 
-    // Search users by username or linked name
+    // Search users by username or linked name - FIXED FOR CP850
     public function search($searchTerm) {
         try {
             $searchParam = '%' . trim($searchTerm) . '%';
             $sql = $this->getBaseUserQuery() . " 
-                    WHERE u.USER_NAME LIKE :search 
-                       OR CONCAT(p.PAT_FIRST_NAME, ' ', p.PAT_LAST_NAME) LIKE :search 
-                       OR CONCAT(s.STAFF_FIRST_NAME, ' ', s.STAFF_LAST_NAME) LIKE :search 
-                       OR CONCAT(d.DOC_FIRST_NAME, ' ', d.DOC_LAST_NAME) LIKE :search 
+                    WHERE u.USER_NAME COLLATE cp850_general_ci LIKE :search 
+                       OR CONCAT(p.PAT_FIRST_NAME, ' ', p.PAT_LAST_NAME) COLLATE cp850_general_ci LIKE :search 
+                       OR CONCAT(s.STAFF_FIRST_NAME, ' ', s.STAFF_LAST_NAME) COLLATE cp850_general_ci LIKE :search 
+                       OR CONCAT(d.DOC_FIRST_NAME, ' ', d.DOC_LAST_NAME) COLLATE cp850_general_ci LIKE :search 
                     ORDER BY u.USER_ID DESC";
             $stmt = $this->conn->prepare($sql);
             $stmt->execute([':search' => $searchParam]);
