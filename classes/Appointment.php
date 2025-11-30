@@ -1,5 +1,13 @@
 <?php
-// classes/Appointment.php
+/**
+ * ============================================================================
+ * FILE: classes/Appointment.php
+ * PURPOSE: Appointment management class
+ * 
+ * COLLATION FIX: All LIKE comparisons cast both sides to utf8mb4_general_ci
+ * ============================================================================
+ */
+
 require_once __DIR__ . "/../config/Database.php";
 
 class Appointment {
@@ -76,10 +84,15 @@ class Appointment {
 
     private function generateNewApptId() {
         $year = date('Y');
-        // FIXED: Removed COLLATE - let database use its own collation
-        $sql = "SELECT APPT_ID FROM appointment 
-                WHERE APPT_ID LIKE :prefix 
-                ORDER BY APPT_ID DESC LIMIT 1";
+        
+        // CRITICAL FIX: Cast both operands to utf8mb4_general_ci to match collations
+        $sql = "SELECT APPT_ID 
+                FROM appointment 
+                WHERE CAST(APPT_ID AS CHAR CHARACTER SET utf8mb4) COLLATE utf8mb4_general_ci 
+                      LIKE CAST(:prefix AS CHAR CHARACTER SET utf8mb4) COLLATE utf8mb4_general_ci
+                ORDER BY APPT_ID DESC 
+                LIMIT 1";
+        
         $stmt = $this->conn->prepare($sql);
         $stmt->bindValue(':prefix', $year . '-%');
         $stmt->execute();
@@ -90,7 +103,7 @@ class Appointment {
         return $year . '-' . $month . '-' . str_pad($nextSequence, 7, '0', STR_PAD_LEFT);
     }
 
-    /** READ ALL (with optional search) - FIXED WITH CORRECT UPPERCASE COLUMNS */
+    /** READ ALL (with optional search) */
     public function readAll($search = null) {
         error_log("=== readAll() called with search: " . var_export($search, true) . " ===");
         
@@ -117,8 +130,9 @@ class Appointment {
         LEFT JOIN status st ON a.STAT_ID = st.STAT_ID";
 
         if (!empty($search) && trim($search) !== '') {
-            // FIXED: Removed COLLATE - let database use its own collation
-            $query .= " WHERE a.APPT_ID LIKE :search";
+            // CRITICAL FIX: Cast both operands to utf8mb4_general_ci
+            $query .= " WHERE CAST(a.APPT_ID AS CHAR CHARACTER SET utf8mb4) COLLATE utf8mb4_general_ci 
+                              LIKE CAST(:search AS CHAR CHARACTER SET utf8mb4) COLLATE utf8mb4_general_ci";
         }
 
         $query .= " ORDER BY a.APPT_CREATED_AT DESC";
@@ -195,8 +209,9 @@ class Appointment {
         WHERE a.PAT_ID = :pat_id";
 
         if (!empty($search)) {
-            // FIXED: Removed COLLATE - let database use its own collation
-            $query .= " AND a.APPT_ID LIKE :search";
+            // CRITICAL FIX: Cast both operands to utf8mb4_general_ci
+            $query .= " AND CAST(a.APPT_ID AS CHAR CHARACTER SET utf8mb4) COLLATE utf8mb4_general_ci 
+                            LIKE CAST(:search AS CHAR CHARACTER SET utf8mb4) COLLATE utf8mb4_general_ci";
         }
 
         $query .= " ORDER BY a.APPT_CREATED_AT DESC";
