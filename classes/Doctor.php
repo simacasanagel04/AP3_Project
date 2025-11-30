@@ -180,16 +180,25 @@ class Doctor {
                            DATE_FORMAT(d.DOC_UPDATED_AT, '%M %d, %Y %h:%i %p') as formatted_updated_at
                     FROM {$this->table_doctor} d
                     LEFT JOIN {$this->table_specialization} s ON d.SPEC_ID = s.SPEC_ID
-                    WHERE d.DOC_FIRST_NAME LIKE :search
-                       OR d.DOC_LAST_NAME LIKE :search
-                       OR d.DOC_ID LIKE :search
-                       OR d.DOC_CONTACT_NUM LIKE :search
-                       OR s.SPEC_NAME LIKE :search
+                    WHERE d.DOC_FIRST_NAME LIKE :search1
+                       OR d.DOC_LAST_NAME LIKE :search2
+                       OR d.DOC_ID LIKE :search3
+                       OR d.DOC_CONTACT_NUM LIKE :search4
+                       OR s.SPEC_NAME LIKE :search5
                     ORDER BY d.DOC_LAST_NAME, d.DOC_FIRST_NAME";
 
             $stmt = $this->conn->prepare($sql);
             $searchParam = '%' . trim($searchTerm) . '%';
-            $stmt->execute([':search' => $searchParam]);
+            
+            // Bind each parameter separately
+            $stmt->execute([
+                ':search1' => $searchParam,
+                ':search2' => $searchParam,
+                ':search3' => $searchParam,
+                ':search4' => $searchParam,
+                ':search5' => $searchParam
+            ]);
+            
             $results = $stmt->fetchAll(PDO::FETCH_ASSOC);
             
             return array_map([$this, 'convertKeysToLowercase'], $results);
