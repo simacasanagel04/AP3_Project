@@ -3,8 +3,6 @@
  * ============================================================================
  * FILE: classes/Appointment.php
  * PURPOSE: Appointment management class
- * 
- * COLLATION FIX: All LIKE comparisons use utf8mb4_0900_ai_ci
  * ============================================================================
  */
 
@@ -85,11 +83,9 @@ class Appointment {
     private function generateNewApptId() {
         $year = date('Y');
         
-        // CRITICAL FIX: Use COLLATE utf8mb4_0900_ai_ci
         $sql = "SELECT APPT_ID 
                 FROM appointment 
-                WHERE APPT_ID COLLATE utf8mb4_0900_ai_ci 
-                      LIKE :prefix COLLATE utf8mb4_0900_ai_ci
+                WHERE APPT_ID LIKE :prefix
                 ORDER BY APPT_ID DESC 
                 LIMIT 1";
         
@@ -130,9 +126,7 @@ class Appointment {
         LEFT JOIN status st ON a.STAT_ID = st.STAT_ID";
 
         if (!empty($search) && trim($search) !== '') {
-            // CRITICAL FIX: Use COLLATE utf8mb4_0900_ai_ci
-            $query .= " WHERE a.APPT_ID COLLATE utf8mb4_0900_ai_ci 
-                              LIKE :search COLLATE utf8mb4_0900_ai_ci";
+            $query .= " WHERE a.APPT_ID LIKE :search";
         }
 
         $query .= " ORDER BY a.APPT_CREATED_AT DESC";
@@ -209,9 +203,7 @@ class Appointment {
         WHERE a.PAT_ID = :pat_id";
 
         if (!empty($search)) {
-            // CRITICAL FIX: Use COLLATE utf8mb4_0900_ai_ci
-            $query .= " AND a.APPT_ID COLLATE utf8mb4_0900_ai_ci 
-                            LIKE :search COLLATE utf8mb4_0900_ai_ci";
+            $query .= " AND a.APPT_ID LIKE :search";
         }
 
         $query .= " ORDER BY a.APPT_CREATED_AT DESC";
