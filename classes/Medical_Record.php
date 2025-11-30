@@ -253,40 +253,45 @@ class MedicalRecord {
     }
 
     public function search($keyword) {
-        $keyword = '%' . $keyword . '%';
-        $query = "
-            SELECT
-                mr.MED_REC_ID,
-                mr.MED_REC_VISIT_DATE,
-                mr.MED_REC_DIAGNOSIS,
-                mr.MED_REC_PRESCRIPTION,
-                mr.APPT_ID,
-                CONCAT(p.PAT_FIRST_NAME, ' ', p.PAT_LAST_NAME) AS PATIENT_NAME,
-                CONCAT('Dr. ', d.DOC_FIRST_NAME, ' ', d.DOC_LAST_NAME) AS DOCTOR_NAME
-            FROM medical_record mr
-            JOIN appointment a ON mr.APPT_ID = a.APPT_ID
-            JOIN patient p ON a.PAT_ID = p.PAT_ID
-            JOIN doctor d ON a.DOC_ID = d.DOC_ID
-            WHERE 
-                mr.APPT_ID LIKE :keyword OR
-                CONCAT(p.PAT_FIRST_NAME, ' ', p.PAT_LAST_NAME) LIKE :keyword OR
-                CONCAT(d.DOC_FIRST_NAME, ' ', d.DOC_LAST_NAME) LIKE :keyword OR
-                mr.MED_REC_DIAGNOSIS LIKE :keyword OR
-                mr.MED_REC_PRESCRIPTION LIKE :keyword
-            ORDER BY mr.MED_REC_VISIT_DATE DESC
-            LIMIT 100
-        ";
+    $keyword = '%' . $keyword . '%';
+    $query = "
+        SELECT
+            mr.MED_REC_ID,
+            mr.MED_REC_VISIT_DATE,
+            mr.MED_REC_DIAGNOSIS,
+            mr.MED_REC_PRESCRIPTION,
+            mr.APPT_ID,
+            CONCAT(p.PAT_FIRST_NAME, ' ', p.PAT_LAST_NAME) AS PATIENT_NAME,
+            CONCAT('Dr. ', d.DOC_FIRST_NAME, ' ', d.DOC_LAST_NAME) AS DOCTOR_NAME
+        FROM medical_record mr
+        JOIN appointment a ON mr.APPT_ID = a.APPT_ID
+        JOIN patient p ON a.PAT_ID = p.PAT_ID
+        JOIN doctor d ON a.DOC_ID = d.DOC_ID
+        WHERE 
+            mr.APPT_ID LIKE :keyword1 OR
+            CONCAT(p.PAT_FIRST_NAME, ' ', p.PAT_LAST_NAME) LIKE :keyword2 OR
+            CONCAT(d.DOC_FIRST_NAME, ' ', d.DOC_LAST_NAME) LIKE :keyword3 OR
+            mr.MED_REC_DIAGNOSIS LIKE :keyword4 OR
+            mr.MED_REC_PRESCRIPTION LIKE :keyword5
+        ORDER BY mr.MED_REC_VISIT_DATE DESC
+        LIMIT 100
+    ";
 
-        try {
-            $stmt = $this->conn->prepare($query);
-            $stmt->bindParam(':keyword', $keyword, PDO::PARAM_STR);
-            $stmt->execute();
-            return $stmt->fetchAll(PDO::FETCH_ASSOC);
-        } catch (PDOException $e) {
-            error_log("Search Error: " . $e->getMessage());
-            return [];
-        }
+    try {
+        $stmt = $this->conn->prepare($query);
+        $stmt->execute([
+            ':keyword1' => $keyword,
+            ':keyword2' => $keyword,
+            ':keyword3' => $keyword,
+            ':keyword4' => $keyword,
+            ':keyword5' => $keyword
+        ]);
+        return $stmt->fetchAll(PDO::FETCH_ASSOC);
+    } catch (PDOException $e) {
+        error_log("Search Error: " . $e->getMessage());
+        return [];
     }
+}
 
     /**
      * Renders the medical record creation/update form using an internal template.

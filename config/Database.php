@@ -26,6 +26,7 @@ class Database {
             $this->conn = new PDO($dsn, $this->username, $this->password, $options);
             
             $this->conn->exec("SET time_zone = '+08:00'");
+            date_default_timezone_set('Asia/Manila');
 
         } catch (PDOException $e) {
             // Set proper headers for error response
