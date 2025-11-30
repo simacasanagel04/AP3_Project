@@ -18,7 +18,6 @@ if (!isset($_SESSION['staff_id'])) {
 // Database connection
 $database = new Database();
 $db = $database->connect();
-$record = new MedicalRecord($db);
 
 // Handle filter parameters
 $filters = [
@@ -75,22 +74,26 @@ if (!empty($filters['visit_date_to'])) {
 $sql .= " ORDER BY MR.MED_REC_VISIT_DATE DESC, MR.MED_REC_ID DESC";
 
 // Execute query
+$stmt = null;
+$totalRecords = 0;
+$recordsData = [];
+
 try {
     $stmt = $db->prepare($sql);
     $stmt->execute($params);
-    $totalRecords = $stmt->rowCount();
+    $recordsData = $stmt->fetchAll(PDO::FETCH_ASSOC);
+    $totalRecords = count($recordsData);
 } catch (PDOException $e) {
     error_log("Error fetching medical records: " . $e->getMessage());
-    $stmt = null;
-    $totalRecords = 0;
 }
 
 // Get total count (unfiltered)
+$totalCount = 0;
 try {
     $countStmt = $db->query("SELECT COUNT(*) as total FROM MEDICAL_RECORD");
     $totalCount = $countStmt->fetch(PDO::FETCH_ASSOC)['total'];
 } catch (PDOException $e) {
-    $totalCount = 0;
+    error_log("Error counting records: " . $e->getMessage());
 }
 
 // NOW include header after session check
@@ -355,8 +358,8 @@ require_once '../includes/staff_header.php';
                             </tr>
                         </thead>
                         <tbody>
-                            <?php if ($stmt && $stmt->rowCount() > 0): ?>
-                                <?php while ($row = $stmt->fetch(PDO::FETCH_ASSOC)): ?>
+                            <?php if (!empty($recordsData)): ?>
+                                <?php foreach ($recordsData as $row): ?>
                                     <tr>
                                         <td>
                                             <span class="badge bg-primary"><?= htmlspecialchars($row['MED_REC_ID']) ?></span>
@@ -388,7 +391,7 @@ require_once '../includes/staff_header.php';
                                             </small>
                                         </td>
                                     </tr>
-                                <?php endwhile; ?>
+                                <?php endforeach; ?>
                             <?php else: ?>
                                 <tr>
                                     <td colspan="8" class="text-center py-5">
@@ -411,15 +414,8 @@ require_once '../includes/staff_header.php';
                 
                 <!-- MOBILE CARD VIEW -->
                 <div class="mobile-card-view p-3">
-                    <?php 
-                    // Reset statement for mobile view
-                    if ($stmt && $stmt->rowCount() > 0) {
-                        $stmt->execute($params); // Re-execute to reset cursor
-                    }
-                    ?>
-                    
-                    <?php if ($stmt && $stmt->rowCount() > 0): ?>
-                        <?php while ($row = $stmt->fetch(PDO::FETCH_ASSOC)): ?>
+                    <?php if (!empty($recordsData)): ?>
+                        <?php foreach ($recordsData as $row): ?>
                             <div class="card mb-3 shadow-sm">
                                 <div class="card-body">
                                     <div class="d-flex justify-content-between align-items-start mb-2">
@@ -458,7 +454,7 @@ require_once '../includes/staff_header.php';
                                     </small>
                                 </div>
                             </div>
-                        <?php endwhile; ?>
+                        <?php endforeach; ?>
                     <?php else: ?>
                         <div class="text-center py-5">
                             <i class="bi bi-inbox text-muted" style="font-size: 3rem;"></i>
@@ -474,7 +470,7 @@ require_once '../includes/staff_header.php';
                 </div>
                 
             </div>
-            <?php if ($stmt && $stmt->rowCount() > 0): ?>
+            <?php if (!empty($recordsData)): ?>
                 <div class="card-footer bg-light">
                     <div class="d-flex flex-column flex-md-row justify-content-between align-items-center gap-2">
                         <small class="text-muted">

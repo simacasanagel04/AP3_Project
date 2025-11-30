@@ -27,7 +27,7 @@ $search = isset($_GET['search']) ? trim($_GET['search']) : "";
 
 // CREATE
 if (isset($_POST['create'])) {
-    $status_name = trim($_POST['status_name']);
+    $status_name = ucfirst(strtolower(trim($_POST['status_name'])));
 
     if (empty($status_name)) {
         $message = "<div class='alert alert-danger text-center'>Status name cannot be empty.</div>";
@@ -42,7 +42,7 @@ if (isset($_POST['create'])) {
 // UPDATE
 if (isset($_POST['update'])) {
     $stat_id = (int)$_POST['stat_id'];
-    $status_name = trim($_POST['status_name']);
+    $status_name = ucfirst(strtolower(trim($_POST['status_name'])));
 
     if (empty($status_name)) {
         $message = "<div class='alert alert-danger text-center'>Status name cannot be empty.</div>";

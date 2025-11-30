@@ -48,8 +48,10 @@ if ($_POST) {
                 // Update password
                 $newHashedPassword = password_hash($new, PASSWORD_DEFAULT);
                 if ($staffModel->updatePassword($_SESSION['staff_id'], $newHashedPassword)) {
-                    $success = "Password changed successfully!";
-                } else {
+                $_SESSION['success'] = "Password changed successfully!";
+                header("Location: staff_myprofile.php");
+                exit();
+            } else {
                     $error = "Failed to update password. Try again.";
                 }
             } else {
