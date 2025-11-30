@@ -32,7 +32,7 @@ $filters = [
     'visit_date_to' => $_GET['filter_visit_date_to'] ?? ''
 ];
 
-// Build SQL query with filters using proper JOIN
+// BULLETPROOF SQL – ONLY CHANGE: Force cp850 collation on the JOIN keys
 $sql = "SELECT 
             MR.MED_REC_ID,
             MR.MED_REC_VISIT_DATE,
@@ -43,7 +43,7 @@ $sql = "SELECT
             CONCAT(P.PAT_FIRST_NAME, ' ', P.PAT_LAST_NAME) AS PATIENT_NAME,
             CONCAT('Dr. ', D.DOC_FIRST_NAME, ' ', D.DOC_LAST_NAME) AS DOCTOR_NAME
         FROM MEDICAL_RECORD MR
-        LEFT JOIN APPOINTMENT A ON MR.APPT_ID = A.APPT_ID
+        LEFT JOIN APPOINTMENT A ON MR.APPT_ID COLLATE cp850_general_ci = A.APPT_ID COLLATE cp850_general_ci
         LEFT JOIN PATIENT P ON A.PAT_ID = P.PAT_ID
         LEFT JOIN DOCTOR D ON A.DOC_ID = D.DOC_ID
         WHERE 1=1";
@@ -56,7 +56,7 @@ if (!empty($filters['med_rec_id'])) {
 }
 
 if (!empty($filters['appt_id'])) {
-    $sql .= " AND MR.APPT_ID = :appt_id";
+    $sql .= " AND MR.APPT_ID COLLATE cp850_general_ci = :appt_id";
     $params[':appt_id'] = $filters['appt_id'];
 }
 
@@ -212,7 +212,7 @@ require_once '../includes/staff_header.php';
 
 <body>
     <main class="container mt-4 mt-md-5 mb-5">
-        <h2 class="text-center text-primary fw-bold mb-4">
+        <h2 class="text-center text979 text-primary fw-bold mb-4">
             <i class="bi bi-file-medical"></i> Medical Records Management
         </h2>
 
