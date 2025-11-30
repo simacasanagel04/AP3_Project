@@ -4,7 +4,7 @@
  * FILE: public/ajax/patient_book_appointment.php
  * PURPOSE: Handle patient appointment booking with payment
  * 
- * COLLATION FIX: LIKE comparison casts both operands to utf8mb4_general_ci
+ * COLLATION FIX: Explicitly convert both sides to same collation for LIKE
  * ============================================================================
  */
 
@@ -54,10 +54,10 @@ try {
     $year = date('Y', strtotime($input['appt_date']));
     $month = date('m', strtotime($input['appt_date']));
     
-    // CRITICAL FIX: Cast both sides to utf8mb4_general_ci to prevent mismatch
+    // CRITICAL FIX: Use COLLATE on the column directly instead of CAST
     $sqlGetLastId = "SELECT APPT_ID FROM appointment 
-                     WHERE CAST(APPT_ID AS CHAR CHARACTER SET utf8mb4) COLLATE utf8mb4_general_ci 
-                           LIKE CAST(:prefix AS CHAR CHARACTER SET utf8mb4) COLLATE utf8mb4_general_ci
+                     WHERE APPT_ID COLLATE utf8mb4_0900_ai_ci 
+                           LIKE :prefix COLLATE utf8mb4_0900_ai_ci
                      ORDER BY APPT_ID DESC 
                      LIMIT 1";
     
