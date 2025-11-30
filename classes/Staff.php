@@ -87,8 +87,8 @@ class Staff {
         }
     }
 
-    /** Read all staff (with optional search) - BULLETPROOF VERSION */
-     function readAll($search = null) {
+    /** Read all staff (with optional search) */
+    public function readAll($search = null) {
         try {
             // Base query with explicit column mapping
             $query = "SELECT 
@@ -100,30 +100,34 @@ class Staff {
                         STAFF_EMAIL AS email,
                         STAFF_CREATED_AT AS created_at,
                         STAFF_UPDATED_AT AS updated_at 
-                    FROM {$this->table}";
+                    FROM " . $this->table;
 
-            // Add search conditions if search term provided
-            if (!empty($search) && trim($search) !== '') {
+            // Check if search term exists and is not empty
+            $hasSearch = !empty($search) && trim($search) !== '';
+
+            // Add WHERE clause only if search exists
+            if ($hasSearch) {
                 $query .= " WHERE 
                     CONCAT(STAFF_ID, '') LIKE :search OR
                     STAFF_FIRST_NAME LIKE :search OR
                     COALESCE(STAFF_MIDDLE_INIT, '') LIKE :search OR
                     STAFF_LAST_NAME LIKE :search OR
                     STAFF_CONTACT_NUM LIKE :search OR
-                    STAFF_EMAIL LIKE :search";
+                    COALESCE(STAFF_EMAIL, '') LIKE :search";
             }
 
             $query .= " ORDER BY STAFF_ID DESC";
 
-            // Prepare and execute
+            // Prepare statement
             $stmt = $this->conn->prepare($query);
 
-            // Bind search parameter if needed
-            if (!empty($search) && trim($search) !== '') {
+            // Bind parameter ONLY if search exists
+            if ($hasSearch) {
                 $searchTerm = "%" . trim($search) . "%";
                 $stmt->bindValue(':search', $searchTerm, PDO::PARAM_STR);
             }
 
+            // Execute query
             $stmt->execute();
             $results = $stmt->fetchAll(PDO::FETCH_ASSOC);
             
