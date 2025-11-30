@@ -3,11 +3,12 @@
 // public/staff_medical_records.php
 // Staff: VIEW ONLY Medical Records (NO edit/delete/create)
 // FIXED: Date display issue & Made fully responsive
+// FINAL FIX: Table name lowercase + cp850 collation for Railway/MySQL 8
 // -----------------------------------------------------
 
 session_start();
 
-// Set proper charset for cp850 collation
+// Set proper charset for cp850 collation (Railway requirement)
 header('Content-Type: text/html; charset=cp850');
 
 require_once '../config/Database.php';
@@ -32,7 +33,7 @@ $filters = [
     'visit_date_to' => $_GET['filter_visit_date_to'] ?? ''
 ];
 
-// BULLETPROOF SQL – ONLY CHANGE: Force cp850 collation on the JOIN keys
+// BULLETPROOF SQL — ONLY CHANGES: lowercase table name + cp850 collation
 $sql = "SELECT 
             MR.MED_REC_ID,
             MR.MED_REC_VISIT_DATE,
@@ -42,10 +43,10 @@ $sql = "SELECT
             MR.APPT_ID,
             CONCAT(P.PAT_FIRST_NAME, ' ', P.PAT_LAST_NAME) AS PATIENT_NAME,
             CONCAT('Dr. ', D.DOC_FIRST_NAME, ' ', D.DOC_LAST_NAME) AS DOCTOR_NAME
-        FROM MEDICAL_RECORD MR
-        LEFT JOIN APPOINTMENT A ON MR.APPT_ID COLLATE cp850_general_ci = A.APPT_ID COLLATE cp850_general_ci
-        LEFT JOIN PATIENT P ON A.PAT_ID = P.PAT_ID
-        LEFT JOIN DOCTOR D ON A.DOC_ID = D.DOC_ID
+        FROM medical_record MR
+        LEFT JOIN appointment A ON MR.APPT_ID COLLATE cp850_general_ci = A.APPT_ID COLLATE cp850_general_ci
+        LEFT JOIN patient P ON A.PAT_ID = P.PAT_ID
+        LEFT JOIN doctor D ON A.DOC_ID = D.DOC_ID
         WHERE 1=1";
 
 $params = [];
@@ -78,10 +79,8 @@ if (!empty($filters['visit_date_to'])) {
 $sql .= " ORDER BY MR.MED_REC_VISIT_DATE DESC, MR.MED_REC_ID DESC";
 
 // Execute query
-$stmt = null;
-$totalRecords = 0;
 $recordsData = [];
-
+$totalRecords = 0;
 try {
     $stmt = $db->prepare($sql);
     $stmt->execute($params);
@@ -91,10 +90,10 @@ try {
     error_log("Error fetching medical records: " . $e->getMessage());
 }
 
-// Get total count (unfiltered)
+// Get total count (unfiltered) — lowercase table name
 $totalCount = 0;
 try {
-    $countStmt = $db->query("SELECT COUNT(*) as total FROM MEDICAL_RECORD");
+    $countStmt = $db->query("SELECT COUNT(*) as total FROM medical_record");
     $totalCount = $countStmt->fetch(PDO::FETCH_ASSOC)['total'];
 } catch (PDOException $e) {
     error_log("Error counting records: " . $e->getMessage());
@@ -212,7 +211,7 @@ require_once '../includes/staff_header.php';
 
 <body>
     <main class="container mt-4 mt-md-5 mb-5">
-        <h2 class="text-center text979 text-primary fw-bold mb-4">
+        <h2 class="text-center text-primary fw-bold mb-4">
             <i class="bi bi-file-medical"></i> Medical Records Management
         </h2>
 
