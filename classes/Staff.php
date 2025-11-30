@@ -87,46 +87,58 @@ class Staff {
         }
     }
 
-    /** Read all staff (with optional search) */
-public function readAll($search = null) {
-    try {
-        $query = "SELECT 
-                    STAFF_ID AS staff_id,
-                    STAFF_FIRST_NAME AS first_name,
-                    STAFF_LAST_NAME AS last_name,
-                    STAFF_MIDDLE_INIT AS middle_init,
-                    STAFF_CONTACT_NUM AS phone,
-                    STAFF_EMAIL AS email,
-                    STAFF_CREATED_AT AS created_at,
-                    STAFF_UPDATED_AT AS updated_at 
-                  FROM {$this->table}";
+    /** Read all staff (with optional search) - BULLETPROOF VERSION */
+     function readAll($search = null) {
+        try {
+            // Base query with explicit column mapping
+            $query = "SELECT 
+                        STAFF_ID AS staff_id,
+                        STAFF_FIRST_NAME AS first_name,
+                        STAFF_LAST_NAME AS last_name,
+                        STAFF_MIDDLE_INIT AS middle_init,
+                        STAFF_CONTACT_NUM AS phone,
+                        STAFF_EMAIL AS email,
+                        STAFF_CREATED_AT AS created_at,
+                        STAFF_UPDATED_AT AS updated_at 
+                    FROM {$this->table}";
 
-        if ($search) {
-            $query .= " WHERE 
-                CAST(STAFF_ID AS CHAR) LIKE :search OR
-                STAFF_FIRST_NAME LIKE :search OR
-                STAFF_MIDDLE_INIT LIKE :search OR
-                STAFF_LAST_NAME LIKE :search OR
-                STAFF_CONTACT_NUM LIKE :search OR
-                STAFF_EMAIL LIKE :search";
+            // Add search conditions if search term provided
+            if (!empty($search) && trim($search) !== '') {
+                $query .= " WHERE 
+                    CONCAT(STAFF_ID, '') LIKE :search OR
+                    STAFF_FIRST_NAME LIKE :search OR
+                    COALESCE(STAFF_MIDDLE_INIT, '') LIKE :search OR
+                    STAFF_LAST_NAME LIKE :search OR
+                    STAFF_CONTACT_NUM LIKE :search OR
+                    STAFF_EMAIL LIKE :search";
+            }
+
+            $query .= " ORDER BY STAFF_ID DESC";
+
+            // Prepare and execute
+            $stmt = $this->conn->prepare($query);
+
+            // Bind search parameter if needed
+            if (!empty($search) && trim($search) !== '') {
+                $searchTerm = "%" . trim($search) . "%";
+                $stmt->bindValue(':search', $searchTerm, PDO::PARAM_STR);
+            }
+
+            $stmt->execute();
+            $results = $stmt->fetchAll(PDO::FETCH_ASSOC);
+            
+            // Log for debugging
+            error_log("Staff readAll - Search: '" . ($search ?? 'NONE') . "', Results: " . count($results));
+            
+            return $results;
+            
+        } catch (PDOException $e) {
+            error_log("Staff readAll Error: " . $e->getMessage());
+            error_log("Query: " . ($query ?? 'N/A'));
+            error_log("Search term: " . ($search ?? 'N/A'));
+            return [];
         }
-
-        $query .= " ORDER BY STAFF_ID DESC";
-
-        $stmt = $this->conn->prepare($query);
-
-        if ($search) {
-            $searchTerm = "%{$search}%";
-            $stmt->bindParam(":search", $searchTerm, PDO::PARAM_STR);
-        }
-
-        $stmt->execute();
-        return $stmt->fetchAll(PDO::FETCH_ASSOC);
-    } catch (PDOException $e) {
-        error_log("readAll Error: " . $e->getMessage());
-        return [];
     }
-}
 
     /**
      * Update an existing Staff record.
