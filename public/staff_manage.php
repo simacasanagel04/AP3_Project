@@ -46,7 +46,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     }
 }
 
-$search = $_GET['search'] ?? '';
+// Initialize search variable with proper sanitization
+$search = isset($_GET['search']) ? trim($_GET['search']) : '';
 $staffList = $staff->readAll($search);
 $editData = isset($_GET['edit']) ? $staff->readOne($_GET['edit']) : null;
 
@@ -78,8 +79,9 @@ require_once '../includes/staff_header.php';
         <!-- Search Form -->
         <form class="mb-3 d-flex gap-2 flex-wrap" method="GET">
             <input type="text" name="search" class="form-control"
-                   placeholder="Search by ID, name, email, etc."
-                   value="<?= htmlspecialchars($search) ?>">
+                placeholder="Search by ID, name, email, contact, etc."
+                value="<?= htmlspecialchars($search) ?>"
+                autocomplete="off">
 
             <button class="btn btn-outline-primary" type="submit">
                 <i class="bi bi-search"></i> Search
