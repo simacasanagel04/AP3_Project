@@ -1,11 +1,6 @@
 <?php
 // public/staff_manage.php
 
-// Enable error reporting for debugging
-error_reporting(E_ALL);
-ini_set('display_errors', 1);
-ini_set('log_errors', 1);
-
 session_start(); 
 require_once '../config/Database.php';
 require_once '../classes/Staff.php';
@@ -16,20 +11,10 @@ if (!isset($_SESSION['staff_id'])) {
     exit();
 }
 
-// Connect to database with error handling
-try {
-    $database = new Database();
-    $db = $database->connect();
-    
-    if (!$db instanceof PDO) {
-        throw new Exception('Database connection failed');
-    }
-    
-    $staff = new Staff($db);
-    
-} catch (Exception $e) {
-    die("Database Error: " . htmlspecialchars($e->getMessage()));
-}
+
+$database = new Database();
+$db = $database->connect();
+$staff = new Staff($db);
 
 // Handle form actions BEFORE any output
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
@@ -42,8 +27,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             'phone' => $_POST['STAFF_CONTACT_NUM'],
             'email' => $_POST['STAFF_EMAIL']
         ];
-        $result = $staff->create($data, 'super_admin');
-        error_log("Staff create result: " . print_r($result, true));
+        $staff->create($data, 'super_admin');
         header("Location: staff_manage.php");
         exit;
     } elseif ($_POST['action'] === 'update') {
@@ -56,26 +40,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             'phone' => $_POST['STAFF_CONTACT_NUM'],
             'email' => $_POST['STAFF_EMAIL']
         ];
-        $result = $staff->update($data, 'super_admin');
-        error_log("Staff update result: " . print_r($result, true));
+        $staff->update($data, 'super_admin');
         header("Location: staff_manage.php");
         exit;
     }
 }
 
-// Get search parameter and sanitize
-$search = isset($_GET['search']) ? trim($_GET['search']) : '';
-
-// Log the search attempt
-error_log("Staff search initiated - Term: '" . $search . "'");
-
-// Fetch staff list
+$search = $_GET['search'] ?? '';
 $staffList = $staff->readAll($search);
-
-// Log results
-error_log("Staff search results - Count: " . count($staffList));
-
-// Get edit data if editing
 $editData = isset($_GET['edit']) ? $staff->readOne($_GET['edit']) : null;
 
 require_once '../includes/staff_header.php';
@@ -106,9 +78,8 @@ require_once '../includes/staff_header.php';
         <!-- Search Form -->
         <form class="mb-3 d-flex gap-2 flex-wrap" method="GET">
             <input type="text" name="search" class="form-control"
-                placeholder="Search by ID, name, email, contact, etc."
-                value="<?= htmlspecialchars($search) ?>"
-                autocomplete="off">
+                   placeholder="Search by ID, name, email, etc."
+                   value="<?= htmlspecialchars($search) ?>">
 
             <button class="btn btn-outline-primary" type="submit">
                 <i class="bi bi-search"></i> Search
@@ -197,7 +168,11 @@ require_once '../includes/staff_header.php';
                                 <?php foreach ($staffList as $row): ?>
                                     <tr>
                                         <td><?= htmlspecialchars($row['staff_id']) ?></td>
-                                        <td><?= htmlspecialchars($row['first_name'] . ' ' . $row['last_name']) ?></td>
+                                        <td><?= htmlspecialchars(
+                                            $row['first_name'] . 
+                                            (!empty($row['middle_init']) ? ' ' . $row['middle_init'] . '. ' : ' ') . 
+                                            $row['last_name']
+                                        ) ?></td>
                                         <td><?= htmlspecialchars($row['email']) ?></td>
                                         <td><?= htmlspecialchars($row['phone']) ?></td>
                                         <td><?= htmlspecialchars($row['created_at']) ?></td>
