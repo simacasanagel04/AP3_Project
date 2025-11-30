@@ -1,22 +1,35 @@
 <?php
-// public/ajax/patient_book_appointment.php
-// FIXED VERSION - Properly retrieves custom APPT_ID from trigger
+/**
+ * ============================================================================
+ * FILE: public/ajax/patient_book_appointment.php
+ * PURPOSE: Handle patient appointment booking with payment
+ * 
+ * COLLATION FIX APPLIED:
+ * - Fixed stored procedure call that uses LIKE operation
+ * - Added COLLATE utf8mb4_general_ci to prevent collation mismatch
+ * ============================================================================
+ */
 
 session_start();
 require_once __DIR__ . '/../../config/Database.php';
 
+// Set JSON header for API response
 header('Content-Type: application/json');
 
-// Check authentication
+// ============================================================================
+// AUTHENTICATION CHECK
+// ============================================================================
 if (!isset($_SESSION['user_id']) || !isset($_SESSION['pat_id'])) {
     echo json_encode(['success' => false, 'message' => 'User not authenticated']);
     exit;
 }
 
-// Get JSON input
+// ============================================================================
+// GET AND VALIDATE INPUT DATA
+// ============================================================================
 $input = json_decode(file_get_contents('php://input'), true);
 
-// Validate required fields
+// Validate required fields exist
 $required = ['pat_id', 'doc_id', 'serv_id', 'appt_date', 'appt_time', 'pymt_meth_id', 'pymt_amount'];
 foreach ($required as $field) {
     if (!isset($input[$field]) || empty($input[$field])) {
@@ -25,37 +38,61 @@ foreach ($required as $field) {
     }
 }
 
-// Verify patient ID matches session
+// Verify patient ID matches session (security check)
 if ($input['pat_id'] != $_SESSION['pat_id']) {
     echo json_encode(['success' => false, 'message' => 'Invalid patient ID']);
     exit;
 }
 
+// ============================================================================
+// DATABASE TRANSACTION - BOOK APPOINTMENT + CREATE PAYMENT
+// ============================================================================
 try {
     $database = new Database();
     $db = $database->connect();
     
-    // Start transaction
+    // Start transaction for data integrity
     $db->beginTransaction();
     
-    // ========================================
-    // FIX: Call stored procedure to get APPT_ID first
-    // ========================================
-    $sqlGetId = "CALL generate_appointment_id(:appt_date, @new_appt_id)";
-    $stmtGetId = $db->prepare($sqlGetId);
-    $stmtGetId->execute([':appt_date' => $input['appt_date']]);
+    // ========================================================================
+    // STEP 1: GENERATE APPOINTMENT ID USING STORED PROCEDURE (WITH COLLATION FIX)
+    // ========================================================================
+    // The stored procedure uses LIKE operation which caused collation mismatch
+    // We need to manually generate the ID here with proper COLLATE clause
     
-    // Retrieve the generated ID
-    $resultId = $db->query("SELECT @new_appt_id as appt_id")->fetch(PDO::FETCH_ASSOC);
-    $apptId = $resultId['appt_id'];
+    $year = date('Y', strtotime($input['appt_date']));
+    $month = date('m', strtotime($input['appt_date']));
+    
+    // Query to find the last appointment ID for this month (WITH COLLATION FIX)
+    $sqlGetLastId = "SELECT APPT_ID FROM appointment 
+                     WHERE APPT_ID LIKE :prefix COLLATE utf8mb4_general_ci 
+                     ORDER BY APPT_ID DESC 
+                     LIMIT 1";
+    
+    $stmtGetLastId = $db->prepare($sqlGetLastId);
+    $stmtGetLastId->execute([':prefix' => $year . '-' . $month . '-%']);
+    $lastId = $stmtGetLastId->fetchColumn();
+    
+    // Generate next sequence number
+    if ($lastId) {
+        // Extract sequence number from last ID (format: YYYY-MM-0000001)
+        $lastSequence = (int)substr($lastId, 8); // Get the last 7 digits
+        $nextSequence = $lastSequence + 1;
+    } else {
+        // First appointment of this month
+        $nextSequence = 1;
+    }
+    
+    // Format: YYYY-MM-0000001
+    $apptId = $year . '-' . $month . '-' . str_pad($nextSequence, 7, '0', STR_PAD_LEFT);
     
     if (!$apptId) {
         throw new Exception('Failed to generate appointment ID');
     }
     
-    // ========================================
-    // FIX: Insert appointment WITH the generated APPT_ID
-    // ========================================
+    // ========================================================================
+    // STEP 2: INSERT APPOINTMENT RECORD
+    // ========================================================================
     $sqlAppt = "INSERT INTO appointment 
                 (APPT_ID, APPT_DATE, APPT_TIME, APPT_CREATED_AT, PAT_ID, DOC_ID, SERV_ID, STAT_ID)
                 VALUES (:appt_id, :appt_date, :appt_time, NOW(), :pat_id, :doc_id, :serv_id, 1)";
@@ -74,9 +111,9 @@ try {
         throw new Exception('Failed to create appointment');
     }
     
-    // ========================================
-    // FIX: Now create payment with the correct APPT_ID
-    // ========================================
+    // ========================================================================
+    // STEP 3: CREATE PAYMENT RECORD (Status 2 = Pending)
+    // ========================================================================
     $sqlPayment = "INSERT INTO payment 
                    (PAYMT_AMOUNT_PAID, PAYMT_DATE, PYMT_CREATED_AT, PYMT_METH_ID, PYMT_STAT_ID, APPT_ID)
                    VALUES (:amount, NOW(), NOW(), :method, 2, :appt_id)";
@@ -92,9 +129,15 @@ try {
         throw new Exception('Failed to create payment record');
     }
     
-    // Commit transaction
+    // ========================================================================
+    // STEP 4: COMMIT TRANSACTION (All operations successful)
+    // ========================================================================
     $db->commit();
     
+    // Log success for debugging
+    error_log("✓ Appointment booked successfully: $apptId for patient {$input['pat_id']}");
+    
+    // Return success response
     echo json_encode([
         'success' => true,
         'message' => 'Appointment booked successfully',
@@ -102,11 +145,19 @@ try {
     ]);
     
 } catch (Exception $e) {
+    // ========================================================================
+    // ERROR HANDLING - ROLLBACK TRANSACTION
+    // ========================================================================
     if (isset($db) && $db->inTransaction()) {
         $db->rollBack();
     }
     
-    error_log("Booking error: " . $e->getMessage());
+    // Log error for debugging
+    error_log("✗ Booking error: " . $e->getMessage());
+    error_log("   Patient ID: " . ($input['pat_id'] ?? 'N/A'));
+    error_log("   Date: " . ($input['appt_date'] ?? 'N/A'));
+    
+    // Return error response
     echo json_encode([
         'success' => false,
         'message' => 'Failed to book appointment: ' . $e->getMessage()
