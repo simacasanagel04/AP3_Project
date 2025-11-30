@@ -4,40 +4,196 @@
  * FILE: public/patient_book_appt.php
  * PURPOSE: Patient appointment booking and management interface
  * USER ROLE: Patient
+ * 
+ * 🔍 DEBUG MODE ENABLED - Shows detailed error tracking
  * ============================================================================
  */
 
+// ============================================
+// DEBUG PANEL INITIALIZATION
+// ============================================
+$debugLog = [];
+function addDebug($message, $data = null, $type = 'info') {
+    global $debugLog;
+    $debugLog[] = [
+        'time' => date('H:i:s.u'),
+        'type' => $type,
+        'message' => $message,
+        'data' => $data
+    ];
+}
+
+addDebug("=== PAGE LOAD STARTED ===", null, 'header');
+
 // Include patient authentication and header
-include '../includes/patient_header.php';
+try {
+    include '../includes/patient_header.php';
+    addDebug("✅ Patient header included", null, 'success');
+} catch (Exception $e) {
+    addDebug("❌ Failed to include patient_header.php", $e->getMessage(), 'error');
+}
 
 // Include required classes
-require_once __DIR__ . '/../classes/Appointment.php';
-require_once __DIR__ . '/../classes/Service.php';
-require_once __DIR__ . '/../classes/Specialization.php';
-require_once __DIR__ . '/../classes/Payment_Method.php';
-require_once __DIR__ . '/../classes/Payment.php';
-require_once __DIR__ . '/../classes/Payment_Status.php';
+$requiredClasses = [
+    'Appointment' => __DIR__ . '/../classes/Appointment.php',
+    'Service' => __DIR__ . '/../classes/Service.php',
+    'Specialization' => __DIR__ . '/../classes/Specialization.php',
+    'Payment_Method' => __DIR__ . '/../classes/Payment_Method.php',
+    'Payment' => __DIR__ . '/../classes/Payment.php',
+    'Payment_Status' => __DIR__ . '/../classes/Payment_Status.php'
+];
+
+foreach ($requiredClasses as $className => $filePath) {
+    try {
+        require_once $filePath;
+        addDebug("✅ Loaded class: $className", $filePath, 'success');
+    } catch (Exception $e) {
+        addDebug("❌ Failed to load class: $className", [
+            'file' => $filePath,
+            'error' => $e->getMessage()
+        ], 'error');
+    }
+}
+
+// ============================================================================
+// DATABASE CONNECTION CHECK
+// ============================================================================
+addDebug("Checking database connection...");
+if (!isset($db)) {
+    addDebug("❌ Database connection NOT available", null, 'error');
+} else {
+    addDebug("✅ Database connection available", get_class($db), 'success');
+    
+    // Test database connection
+    try {
+        $testQuery = $db->query("SELECT 1 as test");
+        $testResult = $testQuery->fetch();
+        addDebug("✅ Database test query SUCCESS", $testResult, 'success');
+    } catch (Exception $e) {
+        addDebug("❌ Database test query FAILED", $e->getMessage(), 'error');
+    }
+    
+    // Check database collation
+    try {
+        $collationQuery = $db->query("SELECT @@collation_database as db_collation, @@character_set_database as db_charset");
+        $collationResult = $collationQuery->fetch();
+        addDebug("📊 Database collation info", $collationResult, 'info');
+    } catch (Exception $e) {
+        addDebug("❌ Failed to get database collation", $e->getMessage(), 'error');
+    }
+    
+    // Check appointment table collation
+    try {
+        $tableCollation = $db->query("SHOW TABLE STATUS WHERE Name = 'appointment'");
+        $tableInfo = $tableCollation->fetch();
+        addDebug("📊 Appointment table collation", [
+            'Collation' => $tableInfo['Collation'] ?? 'N/A',
+            'Engine' => $tableInfo['Engine'] ?? 'N/A'
+        ], 'info');
+    } catch (Exception $e) {
+        addDebug("❌ Failed to get table collation", $e->getMessage(), 'error');
+    }
+    
+    // Check APPT_ID column collation
+    try {
+        $columnCollation = $db->query("SHOW FULL COLUMNS FROM appointment WHERE Field = 'APPT_ID'");
+        $columnInfo = $columnCollation->fetch();
+        addDebug("📊 APPT_ID column info", [
+            'Collation' => $columnInfo['Collation'] ?? 'N/A',
+            'Type' => $columnInfo['Type'] ?? 'N/A'
+        ], 'info');
+    } catch (Exception $e) {
+        addDebug("❌ Failed to get column collation", $e->getMessage(), 'error');
+    }
+}
+
+// ============================================================================
+// SESSION CHECK
+// ============================================================================
+addDebug("Checking session data...");
+addDebug("Session user_type", $_SESSION['user_type'] ?? 'NOT SET', 'info');
+addDebug("Session pat_id", $_SESSION['pat_id'] ?? 'NOT SET', 'info');
+addDebug("Session user_id", $_SESSION['user_id'] ?? 'NOT SET', 'info');
 
 // ============================================================================
 // INITIALIZE CLASSES
 // ============================================================================
-$appointment = new Appointment($db);
-$service = new Service($db);
-$specialization = new Specialization($db);
-$paymentMethod = new Payment_Method($db);
-$payment = new Payment($db);
-$paymentStatus = new Payment_Status($db);
+try {
+    $appointment = new Appointment($db);
+    addDebug("✅ Appointment class initialized", null, 'success');
+} catch (Exception $e) {
+    addDebug("❌ Failed to initialize Appointment class", $e->getMessage(), 'error');
+}
+
+try {
+    $service = new Service($db);
+    addDebug("✅ Service class initialized", null, 'success');
+} catch (Exception $e) {
+    addDebug("❌ Failed to initialize Service class", $e->getMessage(), 'error');
+}
+
+try {
+    $specialization = new Specialization($db);
+    addDebug("✅ Specialization class initialized", null, 'success');
+} catch (Exception $e) {
+    addDebug("❌ Failed to initialize Specialization class", $e->getMessage(), 'error');
+}
+
+try {
+    $paymentMethod = new Payment_Method($db);
+    addDebug("✅ Payment_Method class initialized", null, 'success');
+} catch (Exception $e) {
+    addDebug("❌ Failed to initialize Payment_Method class", $e->getMessage(), 'error');
+}
+
+try {
+    $payment = new Payment($db);
+    addDebug("✅ Payment class initialized", null, 'success');
+} catch (Exception $e) {
+    addDebug("❌ Failed to initialize Payment class", $e->getMessage(), 'error');
+}
+
+try {
+    $paymentStatus = new Payment_Status($db);
+    addDebug("✅ Payment_Status class initialized", null, 'success');
+} catch (Exception $e) {
+    addDebug("❌ Failed to initialize Payment_Status class", $e->getMessage(), 'error');
+}
 
 // ============================================================================
 // FETCH DATA FOR PAGE
 // ============================================================================
-$allSpecializations = $specialization->all();
-$allPaymentMethods = $paymentMethod->all();
-$patientAppointments = $appointment->getByPatientId($pat_id);
+addDebug("Fetching specializations...");
+try {
+    $allSpecializations = $specialization->all();
+    addDebug("✅ Loaded specializations", "Count: " . count($allSpecializations), 'success');
+} catch (Exception $e) {
+    addDebug("❌ Failed to load specializations", $e->getMessage(), 'error');
+    $allSpecializations = [];
+}
+
+addDebug("Fetching payment methods...");
+try {
+    $allPaymentMethods = $paymentMethod->all();
+    addDebug("✅ Loaded payment methods", "Count: " . count($allPaymentMethods), 'success');
+} catch (Exception $e) {
+    addDebug("❌ Failed to load payment methods", $e->getMessage(), 'error');
+    $allPaymentMethods = [];
+}
+
+addDebug("Fetching patient appointments...");
+try {
+    $patientAppointments = $appointment->getByPatientId($pat_id);
+    addDebug("✅ Loaded patient appointments", "Count: " . count($patientAppointments), 'success');
+} catch (Exception $e) {
+    addDebug("❌ Failed to load patient appointments", $e->getMessage(), 'error');
+    $patientAppointments = [];
+}
 
 // ============================================================================
 // GET APPOINTMENTS WITH PAYMENT INFORMATION
 // ============================================================================
+addDebug("Fetching payment information for appointments...");
 $appointmentsWithPayment = [];
 foreach ($patientAppointments as $appt) {
     try {
@@ -61,8 +217,10 @@ foreach ($patientAppointments as $appt) {
         $paymentInfo = $paymentStmt->fetch(PDO::FETCH_ASSOC);
         $appt['payment_info'] = $paymentInfo;
         
+        addDebug("✅ Payment info for appointment {$appt['app_id']}", $paymentInfo ? 'Found' : 'Not found', 'info');
+        
     } catch (PDOException $e) {
-        error_log("Payment query error for appointment {$appt['app_id']}: " . $e->getMessage());
+        addDebug("❌ Payment query error for appointment {$appt['app_id']}", $e->getMessage(), 'error');
         $appt['payment_info'] = null;
     }
     
@@ -81,6 +239,91 @@ foreach ($appointmentsWithPayment as $appt) {
         $todayCount++;
     }
 }
+
+addDebug("📊 Appointment statistics", [
+    'today' => $todayCount,
+    'total' => $totalCount
+], 'info');
+
+addDebug("=== PAGE LOAD COMPLETED ===", null, 'header');
+
+// ============================================================================
+// RENDER DEBUG PANEL
+// ============================================================================
+function renderDebugPanel() {
+    global $debugLog;
+    
+    $typeColors = [
+        'header' => '#9333ea',
+        'success' => '#16a34a',
+        'error' => '#dc2626',
+        'warning' => '#ea580c',
+        'info' => '#2563eb'
+    ];
+    
+    $typeIcons = [
+        'header' => '🔷',
+        'success' => '✅',
+        'error' => '❌',
+        'warning' => '⚠️',
+        'info' => 'ℹ️'
+    ];
+    ?>
+    <div style="position: fixed; top: 10px; right: 10px; width: 450px; max-height: 90vh; overflow-y: auto; z-index: 9999; background: white; border: 3px solid #dc2626; border-radius: 12px; box-shadow: 0 10px 40px rgba(0,0,0,0.3);">
+        <!-- Header -->
+        <div style="background: linear-gradient(135deg, #dc2626, #991b1b); color: white; padding: 15px; border-radius: 9px 9px 0 0; position: sticky; top: 0; z-index: 10;">
+            <div style="display: flex; justify-content: space-between; align-items: center;">
+                <h3 style="margin: 0; font-size: 16px; font-weight: 700;">🔍 DEBUG PANEL</h3>
+                <button onclick="this.closest('div').parentElement.style.display='none'" 
+                        style="background: rgba(255,255,255,0.2); border: none; color: white; padding: 5px 12px; border-radius: 5px; cursor: pointer; font-size: 14px;">
+                    ✕ Close
+                </button>
+            </div>
+            <div style="font-size: 11px; margin-top: 5px; opacity: 0.9;">
+                Total Logs: <?= count($debugLog) ?>
+            </div>
+        </div>
+        
+        <!-- Content -->
+        <div style="padding: 15px; font-family: 'Courier New', monospace; font-size: 12px; background: #f9fafb;">
+            <?php foreach ($debugLog as $entry): 
+                $color = $typeColors[$entry['type']] ?? '#6b7280';
+                $icon = $typeIcons[$entry['type']] ?? '•';
+            ?>
+                <div style="margin-bottom: 12px; padding: 10px; background: white; border-left: 4px solid <?= $color ?>; border-radius: 6px; box-shadow: 0 1px 3px rgba(0,0,0,0.1);">
+                    <!-- Time & Type -->
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
+                        <span style="color: <?= $color ?>; font-weight: 700; font-size: 13px;">
+                            <?= $icon ?> <?= strtoupper($entry['type']) ?>
+                        </span>
+                        <span style="color: #6b7280; font-size: 10px;"><?= $entry['time'] ?></span>
+                    </div>
+                    
+                    <!-- Message -->
+                    <div style="color: #1f2937; font-weight: 600; margin-bottom: 6px;">
+                        <?= htmlspecialchars($entry['message']) ?>
+                    </div>
+                    
+                    <!-- Data -->
+                    <?php if ($entry['data'] !== null): ?>
+                        <div style="background: #f3f4f6; padding: 8px; border-radius: 4px; margin-top: 6px; overflow-x: auto; max-height: 200px;">
+                            <pre style="margin: 0; font-size: 11px; color: #374151; white-space: pre-wrap; word-wrap: break-word;"><?= htmlspecialchars(is_array($entry['data']) || is_object($entry['data']) ? json_encode($entry['data'], JSON_PRETTY_PRINT) : $entry['data']) ?></pre>
+                        </div>
+                    <?php endif; ?>
+                </div>
+            <?php endforeach; ?>
+        </div>
+        
+        <!-- Footer -->
+        <div style="background: #f3f4f6; padding: 10px 15px; border-radius: 0 0 9px 9px; text-align: center; font-size: 11px; color: #6b7280; border-top: 1px solid #e5e7eb;">
+            <strong>⚡ Real-time Debug Monitor</strong> • Scroll for full log
+        </div>
+    </div>
+    <?php
+}
+
+// Render debug panel at the top of the page
+renderDebugPanel();
 ?>
 
 <!-- DASHBOARD HEADER -->
