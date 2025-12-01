@@ -632,11 +632,11 @@ document.addEventListener('DOMContentLoaded', function () {
                     matchDate = false;
                 }
 
-                // Check name filter
+                // Check name filter (already lowercase from PHP)
                 if (nameValue) {
-                    const nameParts = rowPatient.toLowerCase().split(/\s+/);
-                    const nameMatches = nameParts.some(part => part.includes(nameValue));
-                    if (!nameMatches) matchName = false;
+                    if (!rowPatient.includes(nameValue)) {
+                        matchName = false;
+                    }
                 }
 
                 // Check appointment ID filter
@@ -984,7 +984,7 @@ document.addEventListener('DOMContentLoaded', function () {
                 }
 
                 const rowDate = row.dataset.date;
-                const rowPatient = row.dataset.patientName || '';
+                const rowPatient = row.getAttribute('data-patient-name') || '';
                 const rowApptId = row.dataset.apptId || '';
 
                 let matchDate = true;
@@ -996,12 +996,11 @@ document.addEventListener('DOMContentLoaded', function () {
                     matchDate = false;
                 }
 
-                // Check name filter
+                // Check name filter (case-insensitive partial match)
                 if (nameValue) {
-                    // Split patient name into parts (first, middle, last) and check each
-                    const nameParts = rowPatient.toLowerCase().split(/\s+/);
-                    const nameMatches = nameParts.some(part => part.includes(nameValue));
-                    if (!nameMatches) matchName = false;
+                    if (!rowPatient.toLowerCase().includes(nameValue)) {
+                        matchName = false;
+                    }
                 }
 
                 // Check appointment ID filter
