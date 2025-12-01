@@ -1,4 +1,7 @@
 <?php
+
+// public/superadmin/modules/payments-module.php
+
 if (session_status() === PHP_SESSION_NONE) {
     session_start();
 }
@@ -28,6 +31,11 @@ if (!$is_superadmin) {
     echo '<div class="alert alert-danger">Access denied. Only Super Admin can access this module.</div>';
     return;
 }
+
+// Pagination settings
+$records_per_page = 30;
+$current_page = isset($_GET['page']) && is_numeric($_GET['page']) ? (int)$_GET['page'] : 1;
+$current_page = max(1, $current_page); // Ensure page is at least 1
 
 // Fetch dropdown data
 $methods = $paymentMethod->getAllForDropdown();
@@ -97,46 +105,91 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     }
 }
 
-// Fetch payment records
-$records = !empty($search) ? $payment->searchWithDetails($search) : $payment->all();
-
-// Merge patient names into payment records
-$display_records = [];
-if (!empty($records)) {
-    try {
-        $appt_ids = array_filter(array_unique(array_column($records, 'app_id')));
+// Fetch payment records WITH patient names directly from database
+try {
+    if (!empty($search)) {
+        // Search query with patient name
+        $sql = "SELECT 
+                    p.PAYMT_ID as paymt_id,
+                    p.PAYMT_AMOUNT_PAID as paymt_amount_paid,
+                    p.PAYMT_DATE as paymt_date,
+                    pm.PYMT_METH_NAME as pymt_meth_name,
+                    ps.PYMT_STAT_NAME as pymt_stat_name,
+                    a.APPT_ID as app_id,
+                    CONCAT(pat.PAT_LAST_NAME, ', ', pat.PAT_FIRST_NAME) as patient_name,
+                    DATE_FORMAT(p.PAYMT_DATE, '%M %d, %Y %h:%i %p') as formatted_paymt_date,
+                    DATE_FORMAT(p.PYMT_CREATED_AT, '%M %d, %Y %h:%i %p') as formatted_created_at
+                FROM payment p
+                LEFT JOIN payment_method pm ON p.PYMT_METH_ID = pm.PYMT_METH_ID
+                LEFT JOIN payment_status ps ON p.PYMT_STAT_ID = ps.PYMT_STAT_ID
+                LEFT JOIN appointment a ON p.APPT_ID = a.APPT_ID
+                LEFT JOIN patient pat ON a.PAT_ID = pat.PAT_ID
+                WHERE p.PAYMT_ID LIKE :search1
+                   OR pm.PYMT_METH_NAME LIKE :search2
+                   OR ps.PYMT_STAT_NAME LIKE :search3
+                   OR CAST(p.PAYMT_AMOUNT_PAID AS CHAR) LIKE :search4
+                   OR CONCAT(pat.PAT_LAST_NAME, ', ', pat.PAT_FIRST_NAME) LIKE :search5
+                ORDER BY p.PAYMT_ID DESC";
         
-        if (!empty($appt_ids)) {
-            $ids_placeholder = implode(',', array_fill(0, count($appt_ids), '?'));
-            
-            $sql_patient_names = "SELECT a.APPT_ID as app_id, 
-                                        CONCAT(p.PAT_LAST_NAME, ', ', p.PAT_FIRST_NAME) as patient_name
-                                  FROM appointment a
-                                  JOIN patient p ON a.PAT_ID = p.PAT_ID
-                                  WHERE a.APPT_ID IN ({$ids_placeholder})";
-            
-            $stmt_names = $db->prepare($sql_patient_names);
-            $stmt_names->execute($appt_ids);
-            
-            $patient_name_map = $stmt_names->fetchAll(PDO::FETCH_KEY_PAIR);
-            
-            foreach ($records as $record) {
-                $app_id = $record['app_id'];
-                $record['patient_name'] = $patient_name_map[$app_id] ?? 'N/A';
-                $display_records[] = $record;
-            }
-        } else {
-            $display_records = $records;
-        }
-    } catch (Exception $e) {
-        error_log("Failed to load patient names: " . $e->getMessage());
-        $display_records = $records;
+        $stmt = $db->prepare($sql);
+        $searchParam = '%' . trim($search) . '%';
+        $stmt->execute([
+            ':search1' => $searchParam,
+            ':search2' => $searchParam,
+            ':search3' => $searchParam,
+            ':search4' => $searchParam,
+            ':search5' => $searchParam
+        ]);
+        $all_records = $stmt->fetchAll(PDO::FETCH_ASSOC);
+        $total_records = count($all_records);
+    } else {
+        // Count total records
+        $count_sql = "SELECT COUNT(*) as total FROM payment";
+        $count_stmt = $db->query($count_sql);
+        $total_records = $count_stmt->fetch(PDO::FETCH_ASSOC)['total'];
+        
+        // Fetch paginated records with patient name
+        $offset = ($current_page - 1) * $records_per_page;
+        $sql = "SELECT 
+                    p.PAYMT_ID as paymt_id,
+                    p.PAYMT_AMOUNT_PAID as paymt_amount_paid,
+                    p.PAYMT_DATE as paymt_date,
+                    pm.PYMT_METH_NAME as pymt_meth_name,
+                    ps.PYMT_STAT_NAME as pymt_stat_name,
+                    a.APPT_ID as app_id,
+                    CONCAT(pat.PAT_LAST_NAME, ', ', pat.PAT_FIRST_NAME) as patient_name,
+                    DATE_FORMAT(p.PAYMT_DATE, '%M %d, %Y %h:%i %p') as formatted_paymt_date,
+                    DATE_FORMAT(p.PYMT_CREATED_AT, '%M %d, %Y %h:%i %p') as formatted_created_at
+                FROM payment p
+                LEFT JOIN payment_method pm ON p.PYMT_METH_ID = pm.PYMT_METH_ID
+                LEFT JOIN payment_status ps ON p.PYMT_STAT_ID = ps.PYMT_STAT_ID
+                LEFT JOIN appointment a ON p.APPT_ID = a.APPT_ID
+                LEFT JOIN patient pat ON a.PAT_ID = pat.PAT_ID
+                ORDER BY p.PAYMT_ID DESC
+                LIMIT :limit OFFSET :offset";
+        
+        $stmt = $db->prepare($sql);
+        $stmt->bindValue(':limit', $records_per_page, PDO::PARAM_INT);
+        $stmt->bindValue(':offset', $offset, PDO::PARAM_INT);
+        $stmt->execute();
+        $all_records = $stmt->fetchAll(PDO::FETCH_ASSOC);
     }
+    
+    $display_records = $all_records;
+    
+} catch (Exception $e) {
+    error_log("Failed to load payment records: " . $e->getMessage());
+    $display_records = [];
+    $total_records = 0;
 }
+
+// Calculate pagination
+$total_pages = ceil($total_records / $records_per_page);
 
 // Build URL params for search
 $current_params = $_GET;
 unset($current_params['search_payment']);
+unset($current_params['page']);
 $url_params = http_build_query($current_params);
 ?>
 
@@ -149,18 +202,18 @@ $url_params = http_build_query($current_params);
 </div>
 <?php endif; ?>
 
-<div class="d-flex justify-content-between align-items-center mb-4 p-3 bg-white rounded-3 shadow-sm border">
-    <form class="d-flex w-50" method="GET">
+<div class="d-flex flex-column flex-md-row justify-content-between align-items-center mb-4 p-3 bg-white rounded-3 shadow-sm border gap-3">
+    <form class="d-flex w-100 w-md-50" method="GET">
         <?php foreach ($current_params as $k => $v): ?>
             <input type="hidden" name="<?= htmlspecialchars($k) ?>" value="<?= htmlspecialchars($v) ?>">
         <?php endforeach; ?>
-        <input class="form-control me-2 rounded-pill border-primary" type="search" name="search_payment" placeholder="Search by ID, Method, Status, or Amount..." value="<?= htmlspecialchars($search) ?>">
-        <button class="btn btn-outline-primary" type="submit">Search</button>
+        <input class="form-control me-2 rounded-pill border-primary" type="search" name="search_payment" placeholder="Search by ID, Method, Status, Amount, or Patient..." value="<?= htmlspecialchars($search) ?>">
+        <button class="btn btn-outline-primary text-nowrap" type="submit">Search</button>
         <?php if ($search): ?>
-            <a href="?<?= $url_params ?>" class="btn btn-outline-secondary ms-2 rounded-pill">Reset</a>
+            <a href="?<?= $url_params ?>" class="btn btn-outline-secondary ms-2 rounded-pill text-nowrap">Reset</a>
         <?php endif; ?>
     </form>
-    <button class="btn btn-success" data-bs-toggle="collapse" data-bs-target="#addFormPayment">Add New Payment</button>
+    <button class="btn btn-success text-nowrap" data-bs-toggle="collapse" data-bs-target="#addFormPayment">Add New Payment</button>
 </div>
 
 <div id="addFormPayment" class="collapse mb-4">
@@ -215,7 +268,13 @@ $url_params = http_build_query($current_params);
 </div>
 
 <div class="card p-3 shadow-sm">
-    <h5>Payment Records (Total: <?= count($display_records) ?>)</h5>
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <h5 class="mb-0">Payment Records (Total: <?= $total_records ?>)</h5>
+        <?php if (!$search && $total_pages > 1): ?>
+            <small class="text-muted">Page <?= $current_page ?> of <?= $total_pages ?></small>
+        <?php endif; ?>
+    </div>
+    
     <?php if (empty($display_records)): ?>
         <div class="alert alert-warning">
             No payment records found<?= $search ? ' matching "' . htmlspecialchars($search) . '"' : '' ?>.
@@ -236,7 +295,7 @@ $url_params = http_build_query($current_params);
                     <th>Status</th>
                     <th>Payment Date</th>
                     <th>Created</th>
-                    <th>Actions</th>
+                    <th class="text-center">Actions</th>
                 </tr>
             </thead>
             <tbody>
@@ -292,6 +351,54 @@ $url_params = http_build_query($current_params);
             </tbody>
         </table>
     </div>
+    
+    <?php if (!$search && $total_pages > 1): ?>
+    <!-- Pagination -->
+    <nav aria-label="Payment records pagination" class="mt-3">
+        <ul class="pagination justify-content-center flex-wrap">
+            <!-- First Page -->
+            <?php if ($current_page > 1): ?>
+                <li class="page-item">
+                    <a class="page-link" href="?<?= $url_params ?>&page=1">First</a>
+                </li>
+            <?php endif; ?>
+            
+            <!-- Previous Page -->
+            <?php if ($current_page > 1): ?>
+                <li class="page-item">
+                    <a class="page-link" href="?<?= $url_params ?>&page=<?= $current_page - 1 ?>">Previous</a>
+                </li>
+            <?php endif; ?>
+            
+            <!-- Page Numbers (show 5 pages around current) -->
+            <?php 
+            $start_page = max(1, $current_page - 2);
+            $end_page = min($total_pages, $current_page + 2);
+            
+            for ($i = $start_page; $i <= $end_page; $i++): 
+            ?>
+                <li class="page-item <?= $i == $current_page ? 'active' : '' ?>">
+                    <a class="page-link" href="?<?= $url_params ?>&page=<?= $i ?>"><?= $i ?></a>
+                </li>
+            <?php endfor; ?>
+            
+            <!-- Next Page -->
+            <?php if ($current_page < $total_pages): ?>
+                <li class="page-item">
+                    <a class="page-link" href="?<?= $url_params ?>&page=<?= $current_page + 1 ?>">Next</a>
+                </li>
+            <?php endif; ?>
+            
+            <!-- Last Page -->
+            <?php if ($current_page < $total_pages): ?>
+                <li class="page-item">
+                    <a class="page-link" href="?<?= $url_params ?>&page=<?= $total_pages ?>">Last</a>
+                </li>
+            <?php endif; ?>
+        </ul>
+    </nav>
+    <?php endif; ?>
+    
     <?php endif; ?>
 </div>
 
