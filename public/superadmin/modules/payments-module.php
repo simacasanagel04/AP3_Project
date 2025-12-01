@@ -1,6 +1,6 @@
 <?php
 
-// public/superadmin/modules/payments-module.php
+//public/superadmin/modules/payments-module.php
 
 if (session_status() === PHP_SESSION_NONE) {
     session_start();
