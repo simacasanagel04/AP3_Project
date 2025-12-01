@@ -168,7 +168,11 @@ require_once '../includes/staff_header.php';
                                 <?php foreach ($staffList as $row): ?>
                                     <tr>
                                         <td><?= htmlspecialchars($row['staff_id']) ?></td>
-                                        <td><?= htmlspecialchars($row['first_name'] . ' ' . $row['last_name']) ?></td>
+                                        <td><?= htmlspecialchars(
+                                            $row['first_name'] . 
+                                            (!empty($row['middle_init']) ? ' ' . $row['middle_init'] . '. ' : ' ') . 
+                                            $row['last_name']
+                                        ) ?></td>
                                         <td><?= htmlspecialchars($row['email']) ?></td>
                                         <td><?= htmlspecialchars($row['phone']) ?></td>
                                         <td><?= htmlspecialchars($row['created_at']) ?></td>

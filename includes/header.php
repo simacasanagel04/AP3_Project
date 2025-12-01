@@ -74,7 +74,9 @@ if ($user_type) {
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>AKSyon</title>
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <title>AKSyon Medical Center</title>
+    <meta name="description" content="AKSyon Medical Center - Quality Healthcare Services">
 
     <!-- FAVICON -->
     <link rel="icon" href="https://res.cloudinary.com/dibojpqg2/image/upload/v1763945513/AKSyon_favicon_1_foov82.png" type="image/png">
@@ -125,7 +127,7 @@ if ($user_type) {
                                 <!-- Logged In: Show Name + Dropdown -->
                                 <div class="dropdown">
                                     <a class="btn btn-outline-primary dropdown-toggle" href="#" role="button"
-                                        data-bs-toggle="dropdown" aria-expanded="false">
+                                        data-bs-toggle="dropdown" aria-expanded="false" aria-label="User menu">
                                         <?= htmlspecialchars($userName) ?>
                                     </a>
                                     <ul class="dropdown-menu dropdown-menu-end">
@@ -147,8 +149,8 @@ if ($user_type) {
                             <?php else: ?>
                                 <!-- Not Logged In: Show Buttons -->
                                 <button class="btn btn-outline-primary btn-sm me-2"
-                                    onclick="location.href='public/login.php'">LOG IN</button>
-                                <button class="btn btn-primary btn-sm" data-bs-toggle="modal" data-bs-target="#registerModal">REGISTER</button>
+                                    onclick="location.href='public/login.php'" aria-label="Log in">LOG IN</button>
+                                <button class="btn btn-primary btn-sm" data-bs-toggle="modal" data-bs-target="#registerModal" aria-label="Register">REGISTER</button>
                             <?php endif; ?>
                         </li>
                     </ul>

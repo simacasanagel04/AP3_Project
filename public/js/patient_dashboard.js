@@ -1184,15 +1184,12 @@ function fetchAvailableTimesForUpdate(specId, selectedDate, currentTime, current
     const timeSelect = document.getElementById('update_time');
     timeSelect.innerHTML = '<option value="">-- Loading... --</option>';
     timeSelect.disabled = true;
-    
-    console.log('Fetching times for:', { specId, selectedDate, currentTime, currentApptId });
-    
-    // Build URL with current_appt_id to exclude it from "booked" check
+
     let url = `ajax/patient_get_avail_times.php?spec_id=${specId}&date=${selectedDate}`;
     if (currentApptId) {
         url += `&current_appt_id=${currentApptId}`;
     }
-    
+
     return fetch(url)
         .then(response => response.json())
         .then(data => {

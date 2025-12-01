@@ -1,5 +1,5 @@
 <?php
-/**
+/** public/superadmin/modules/service-module.php
  * SERVICE MANAGEMENT MODULE (service-module.php)
  * * This file handles all CRUD operations for the Service entity 
  * and is designed to be included within the superadmin_dashboard.php content area.

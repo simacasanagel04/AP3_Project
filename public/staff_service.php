@@ -31,10 +31,19 @@ if (isset($_POST['update'])) {
     $service->serv_updated_at  = date('Y-m-d H:i:s');
 
     if ($service->update()) {
-        $message = "<div class='alert alert-success text-center'>Service updated successfully.</div>";
+        $_SESSION['message'] = "<div class='alert alert-success alert-dismissible fade show text-center'><i class='bi bi-check-circle-fill'></i> Service updated successfully.<button type='button' class='btn-close' data-bs-dismiss='alert'></button></div>";
+        $_SESSION['edit_id'] = $service->serv_id;
+        header("Location: staff_service.php?edit=" . $service->serv_id);
+        exit();
     } else {
-        $message = "<div class='alert alert-danger text-center'>Failed to update service.</div>";
+        $message = "<div class='alert alert-danger alert-dismissible fade show text-center'><i class='bi bi-exclamation-triangle-fill'></i> Failed to update service.<button type='button' class='btn-close' data-bs-dismiss='alert'></button></div>";
     }
+}
+
+// Display session message
+if (isset($_SESSION['message'])) {
+    $message = $_SESSION['message'];
+    unset($_SESSION['message']);
 }
 
 // Load single service for editing
@@ -44,7 +53,7 @@ if (isset($_GET['edit'])) {
     $service->serv_id = (int)$_GET['edit'];
     $editData = $service->readSingle();
     if (!$editData) {
-        $message = "<div class='alert alert-danger text-center'>Service not found.</div>";
+        $message = "<div class='alert alert-danger alert-dismissible fade show text-center'><i class='bi bi-exclamation-triangle-fill'></i> Service not found.<button type='button' class='btn-close' data-bs-dismiss='alert'></button></div>";
     } else {
         $editMode = true;
     }

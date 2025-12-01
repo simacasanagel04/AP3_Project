@@ -183,36 +183,41 @@ class Payment {
     }
 
     // Search payments with related info
-    public function searchWithDetails($searchTerm) {
-        try {
-            $sql = "SELECT 
-                        p.PAYMT_ID as paymt_id,
-                        p.PAYMT_AMOUNT_PAID as paymt_amount_paid,
-                        p.PAYMT_DATE as paymt_date,
-                        pm.PYMT_METH_NAME as pymt_meth_name,
-                        ps.PYMT_STAT_NAME as pymt_stat_name,
-                        a.APPT_ID as app_id,
-                        DATE_FORMAT(p.PAYMT_DATE, '%M %d, %Y %h:%i %p') as formatted_paymt_date,
-                        DATE_FORMAT(p.PYMT_CREATED_AT, '%M %d, %Y %h:%i %p') as formatted_created_at
-                    FROM {$this->table_payment} p
-                    LEFT JOIN {$this->table_payment_method} pm ON p.PYMT_METH_ID = pm.PYMT_METH_ID
-                    LEFT JOIN {$this->table_payment_status} ps ON p.PYMT_STAT_ID = ps.PYMT_STAT_ID
-                    LEFT JOIN {$this->table_appointment} a ON p.APPT_ID = a.APPT_ID
-                    WHERE p.PAYMT_ID LIKE :search
-                       OR pm.PYMT_METH_NAME LIKE :search
-                       OR ps.PYMT_STAT_NAME LIKE :search
-                       OR CAST(p.PAYMT_AMOUNT_PAID AS CHAR) LIKE :search
-                    ORDER BY p.PAYMT_ID DESC";
+public function searchWithDetails($searchTerm) {
+    try {
+        $sql = "SELECT 
+                    p.PAYMT_ID as paymt_id,
+                    p.PAYMT_AMOUNT_PAID as paymt_amount_paid,
+                    p.PAYMT_DATE as paymt_date,
+                    pm.PYMT_METH_NAME as pymt_meth_name,
+                    ps.PYMT_STAT_NAME as pymt_stat_name,
+                    a.APPT_ID as app_id,
+                    DATE_FORMAT(p.PAYMT_DATE, '%M %d, %Y %h:%i %p') as formatted_paymt_date,
+                    DATE_FORMAT(p.PYMT_CREATED_AT, '%M %d, %Y %h:%i %p') as formatted_created_at
+                FROM {$this->table_payment} p
+                LEFT JOIN {$this->table_payment_method} pm ON p.PYMT_METH_ID = pm.PYMT_METH_ID
+                LEFT JOIN {$this->table_payment_status} ps ON p.PYMT_STAT_ID = ps.PYMT_STAT_ID
+                LEFT JOIN {$this->table_appointment} a ON p.APPT_ID = a.APPT_ID
+                WHERE p.PAYMT_ID LIKE :search1
+                   OR pm.PYMT_METH_NAME LIKE :search2
+                   OR ps.PYMT_STAT_NAME LIKE :search3
+                   OR CAST(p.PAYMT_AMOUNT_PAID AS CHAR) LIKE :search4
+                ORDER BY p.PAYMT_ID DESC";
 
-            $stmt = $this->conn->prepare($sql);
-            $searchParam = '%' . trim($searchTerm) . '%';
-            $stmt->execute([':search' => $searchParam]);
-            return $stmt->fetchAll(PDO::FETCH_ASSOC);
-        } catch (PDOException $e) {
-            error_log("Error searching payments: " . $e->getMessage());
-            return [];
-        }
+        $stmt = $this->conn->prepare($sql);
+        $searchParam = '%' . trim($searchTerm) . '%';
+        $stmt->execute([
+            ':search1' => $searchParam,
+            ':search2' => $searchParam,
+            ':search3' => $searchParam,
+            ':search4' => $searchParam
+        ]);
+        return $stmt->fetchAll(PDO::FETCH_ASSOC);
+    } catch (PDOException $e) {
+        error_log("Error searching payments: " . $e->getMessage());
+        return [];
     }
+}
 
     // CREATE
     public function create($payment) {

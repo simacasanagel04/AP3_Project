@@ -12,34 +12,35 @@ class Doctor {
     }
 
     // Search by ID - Returns doctor data with row number and appointments
-    // NOTE: This function still uses COUNT/GROUP BY, which is fine since it's used for a specific single-row detail lookup.
     public function findById($doc_id) {
         try {
             // Get row number
-            $sqlRowNum = "SELECT COUNT(*) as row_num FROM {$this->table_doctor} WHERE doc_id <= :doc_id ORDER BY doc_id";
+            $sqlRowNum = "SELECT COUNT(*) as row_num FROM {$this->table_doctor} WHERE DOC_ID <= :doc_id ORDER BY DOC_ID";
             $stmtRowNum = $this->conn->prepare($sqlRowNum);
             $stmtRowNum->execute([':doc_id' => trim($doc_id)]);
             $rowData = $stmtRowNum->fetch(PDO::FETCH_ASSOC);
 
             // Get doctor data
-            $sql = "SELECT d.doc_id, d.doc_first_name, d.doc_middle_init, d.doc_last_name,
-                           d.doc_contact_num, d.doc_email, d.spec_id,
-                           d.doc_created_at, d.doc_updated_at,
-                           s.spec_name,
-                           COUNT(a.appt_id) as total_appointments,
-                           DATE_FORMAT(d.doc_created_at, '%M %d, %Y %h:%i %p') as formatted_created_at,
-                           DATE_FORMAT(d.doc_updated_at, '%M %d, %Y %h:%i %p') as formatted_updated_at
+            $sql = "SELECT d.DOC_ID, d.DOC_FIRST_NAME, d.DOC_MIDDLE_INIT, d.DOC_LAST_NAME,
+                           d.DOC_CONTACT_NUM, d.DOC_EMAIL, d.SPEC_ID,
+                           d.DOC_CREATED_AT, d.DOC_UPDATED_AT,
+                           s.SPEC_NAME,
+                           COUNT(a.APPT_ID) as total_appointments,
+                           DATE_FORMAT(d.DOC_CREATED_AT, '%M %d, %Y %h:%i %p') as formatted_created_at,
+                           DATE_FORMAT(d.DOC_UPDATED_AT, '%M %d, %Y %h:%i %p') as formatted_updated_at
                     FROM {$this->table_doctor} d
-                    LEFT JOIN {$this->table_specialization} s ON d.spec_id = s.spec_id
-                    LEFT JOIN {$this->table_appointment} a ON d.doc_id = a.doc_id
-                    WHERE d.doc_id = :doc_id
-                    GROUP BY d.doc_id"; // Grouping by PK is acceptable for single row fetch
+                    LEFT JOIN {$this->table_specialization} s ON d.SPEC_ID = s.SPEC_ID
+                    LEFT JOIN {$this->table_appointment} a ON d.DOC_ID = a.DOC_ID
+                    WHERE d.DOC_ID = :doc_id
+                    GROUP BY d.DOC_ID";
 
             $stmt = $this->conn->prepare($sql);
             $stmt->execute([':doc_id' => trim($doc_id)]);
             $doctor = $stmt->fetch(PDO::FETCH_ASSOC);
 
             if ($doctor) {
+                // Convert to lowercase for consistency with existing code
+                $doctor = $this->convertKeysToLowercase($doctor);
                 $doctor['row_number'] = $rowData['row_num'];
                 return $doctor;
             }
@@ -51,44 +52,49 @@ class Doctor {
         }
     }
 
-    // Display all doctors (FIXED: Removed GROUP BY)
+    // Display all doctors
     public function all() {
         try {
-            $sql = "SELECT d.doc_id, d.doc_first_name, d.doc_middle_init, d.doc_last_name,
-                           d.doc_contact_num, d.doc_email, d.spec_id,
-                           s.spec_name,
-                           DATE_FORMAT(d.doc_created_at, '%M %d, %Y %h:%i %p') as formatted_created_at,
-                           DATE_FORMAT(d.doc_updated_at, '%M %d, %Y %h:%i %p') as formatted_updated_at
+            $sql = "SELECT d.DOC_ID, d.DOC_FIRST_NAME, d.DOC_MIDDLE_INIT, d.DOC_LAST_NAME,
+                           d.DOC_CONTACT_NUM, d.DOC_EMAIL, d.SPEC_ID,
+                           s.SPEC_NAME,
+                           DATE_FORMAT(d.DOC_CREATED_AT, '%M %d, %Y %h:%i %p') as formatted_created_at,
+                           DATE_FORMAT(d.DOC_UPDATED_AT, '%M %d, %Y %h:%i %p') as formatted_updated_at
                     FROM {$this->table_doctor} d
-                    LEFT JOIN {$this->table_specialization} s ON d.spec_id = s.spec_id
-                    ORDER BY d.doc_id";
+                    LEFT JOIN {$this->table_specialization} s ON d.SPEC_ID = s.SPEC_ID
+                    ORDER BY d.DOC_ID";
 
             $stmt = $this->conn->query($sql);
-            return $stmt->fetchAll(PDO::FETCH_ASSOC);
+            $results = $stmt->fetchAll(PDO::FETCH_ASSOC);
+            
+            // Convert all results to lowercase keys
+            return array_map([$this, 'convertKeysToLowercase'], $results);
         } catch (PDOException $e) {
             error_log("Error fetching all doctors: " . $e->getMessage());
             return [];
         }
     }
 
-    // Display all with pagination and JOIN (FIXED: Removed GROUP BY)
+    // Display all with pagination and JOIN
     public function allPaginated($limit = 10, $offset = 0) {
         try {
-            $sql = "SELECT d.doc_id, d.doc_first_name, d.doc_middle_init, d.doc_last_name,
-                           d.doc_contact_num, d.doc_email, d.spec_id,
-                           s.spec_name,
-                           DATE_FORMAT(d.doc_created_at, '%M %d, %Y %h:%i %p') as formatted_created_at,
-                           DATE_FORMAT(d.doc_updated_at, '%M %d, %Y %h:%i %p') as formatted_updated_at
+            $sql = "SELECT d.DOC_ID, d.DOC_FIRST_NAME, d.DOC_MIDDLE_INIT, d.DOC_LAST_NAME,
+                           d.DOC_CONTACT_NUM, d.DOC_EMAIL, d.SPEC_ID,
+                           s.SPEC_NAME,
+                           DATE_FORMAT(d.DOC_CREATED_AT, '%M %d, %Y %h:%i %p') as formatted_created_at,
+                           DATE_FORMAT(d.DOC_UPDATED_AT, '%M %d, %Y %h:%i %p') as formatted_updated_at
                     FROM {$this->table_doctor} d
-                    LEFT JOIN {$this->table_specialization} s ON d.spec_id = s.spec_id
-                    ORDER BY d.doc_id
+                    LEFT JOIN {$this->table_specialization} s ON d.SPEC_ID = s.SPEC_ID
+                    ORDER BY d.DOC_ID
                     LIMIT :limit OFFSET :offset";
 
             $stmt = $this->conn->prepare($sql);
             $stmt->bindValue(':limit', $limit, PDO::PARAM_INT);
             $stmt->bindValue(':offset', $offset, PDO::PARAM_INT);
             $stmt->execute();
-            return $stmt->fetchAll(PDO::FETCH_ASSOC);
+            $results = $stmt->fetchAll(PDO::FETCH_ASSOC);
+            
+            return array_map([$this, 'convertKeysToLowercase'], $results);
         } catch (PDOException $e) {
             error_log("Error fetching paginated doctors: " . $e->getMessage());
             return [];
@@ -98,17 +104,17 @@ class Doctor {
     // Get doctor appointments with JOIN to patient
     public function getDoctorAppointments($doc_id) {
         try {
-            $sql = "SELECT a.appt_id, a.appt_date, a.appt_time,
-                           p.pat_first_name, p.pat_middle_init, p.pat_last_name,
-                           CONCAT(p.pat_last_name, ', ', p.pat_first_name, ' ', p.pat_middle_init) as patient_name,
-                           DATE_FORMAT(a.appt_date, '%M %d, %Y') as formatted_app_date,
-                           DATE_FORMAT(a.appt_time, '%h:%i %p') as formatted_app_time,
-                           s.STATUS_NAME as app_status_name
+            $sql = "SELECT a.APPT_ID, a.APPT_DATE, a.APPT_TIME,
+                           p.PAT_FIRST_NAME, p.PAT_MIDDLE_INIT, p.PAT_LAST_NAME,
+                           CONCAT(p.PAT_LAST_NAME, ', ', p.PAT_FIRST_NAME, ' ', p.PAT_MIDDLE_INIT) as patient_name,
+                           DATE_FORMAT(a.APPT_DATE, '%M %d, %Y') as formatted_app_date,
+                           DATE_FORMAT(a.APPT_TIME, '%h:%i %p') as formatted_app_time,
+                           s.STAT_NAME as app_status_name
                     FROM {$this->table_appointment} a
-                    INNER JOIN {$this->table_patient} p ON a.pat_id = p.pat_id
+                    INNER JOIN {$this->table_patient} p ON a.PAT_ID = p.PAT_ID
                     INNER JOIN `status` s ON a.STAT_ID = s.STAT_ID
-                    WHERE a.doc_id = :doc_id
-                    ORDER BY a.appt_date DESC, a.appt_time DESC";
+                    WHERE a.DOC_ID = :doc_id
+                    ORDER BY a.APPT_DATE DESC, a.APPT_TIME DESC";
 
             $stmt = $this->conn->prepare($sql);
             $stmt->execute([':doc_id' => trim($doc_id)]);
@@ -120,14 +126,12 @@ class Doctor {
     }
 
     public function getDoctorsBySpecialization($spec_id) {
-        // Assumes DOCTOR table has DOC_ID, DOC_FIRST_NAME, DOC_LAST_NAME, and SPEC_ID
         $query = "SELECT DOC_ID, DOC_FIRST_NAME, DOC_LAST_NAME 
                   FROM {$this->table_doctor} 
                   WHERE SPEC_ID = ? 
                   ORDER BY DOC_LAST_NAME ASC";
 
         $stmt = $this->conn->prepare($query);
-        // Bind the specialization ID for security
         $stmt->bindParam(1, $spec_id, PDO::PARAM_INT);
 
         if ($stmt->execute()) {
@@ -149,14 +153,14 @@ class Doctor {
         }
     }
 
-    // Get doctor names for dropdown (intelligent display) with JOIN to show appointment count
+    // Get doctor names for dropdown
     public function getAllForDropdown() {
         try {
-            $sql = "SELECT d.doc_id,
-                           CONCAT(d.doc_last_name, ', ', d.doc_first_name, ' ', d.doc_middle_init, ' (', s.spec_name, ')') as full_name
+            $sql = "SELECT d.DOC_ID,
+                           CONCAT(d.DOC_LAST_NAME, ', ', d.DOC_FIRST_NAME, ' ', d.DOC_MIDDLE_INIT, ' (', s.SPEC_NAME, ')') as full_name
                     FROM {$this->table_doctor} d
-                    LEFT JOIN {$this->table_specialization} s ON d.spec_id = s.spec_id
-                    ORDER BY d.doc_last_name, d.doc_first_name";
+                    LEFT JOIN {$this->table_specialization} s ON d.SPEC_ID = s.SPEC_ID
+                    ORDER BY d.DOC_LAST_NAME, d.DOC_FIRST_NAME";
 
             $stmt = $this->conn->query($sql);
             return $stmt->fetchAll(PDO::FETCH_ASSOC);
@@ -166,34 +170,43 @@ class Doctor {
         }
     }
 
-    // Search doctors with appointments info using JOIN (FIXED: Removed aggregation and GROUP BY)
+    // Search doctors with appointments info using JOIN
     public function searchWithAppointments($searchTerm) {
         try {
-            $sql = "SELECT d.doc_id, d.doc_first_name, d.doc_middle_init, d.doc_last_name,
-                           d.doc_contact_num, d.doc_email, d.spec_id,
-                           s.spec_name,
-                           DATE_FORMAT(d.doc_created_at, '%M %d, %Y %h:%i %p') as formatted_created_at,
-                           DATE_FORMAT(d.doc_updated_at, '%M %d, %Y %h:%i %p') as formatted_updated_at
+            $sql = "SELECT d.DOC_ID, d.DOC_FIRST_NAME, d.DOC_MIDDLE_INIT, d.DOC_LAST_NAME,
+                           d.DOC_CONTACT_NUM, d.DOC_EMAIL, d.SPEC_ID,
+                           s.SPEC_NAME,
+                           DATE_FORMAT(d.DOC_CREATED_AT, '%M %d, %Y %h:%i %p') as formatted_created_at,
+                           DATE_FORMAT(d.DOC_UPDATED_AT, '%M %d, %Y %h:%i %p') as formatted_updated_at
                     FROM {$this->table_doctor} d
-                    LEFT JOIN {$this->table_specialization} s ON d.spec_id = s.spec_id
-                    WHERE d.doc_first_name LIKE :search
-                       OR d.doc_last_name LIKE :search
-                       OR d.doc_id LIKE :search
-                       OR d.doc_contact_num LIKE :search
-                       OR s.spec_name LIKE :search
-                    ORDER BY d.doc_last_name, d.doc_first_name";
+                    LEFT JOIN {$this->table_specialization} s ON d.SPEC_ID = s.SPEC_ID
+                    WHERE d.DOC_FIRST_NAME LIKE :search1
+                       OR d.DOC_LAST_NAME LIKE :search2
+                       OR d.DOC_ID LIKE :search3
+                       OR d.DOC_CONTACT_NUM LIKE :search4
+                       OR s.SPEC_NAME LIKE :search5
+                    ORDER BY d.DOC_LAST_NAME, d.DOC_FIRST_NAME";
 
             $stmt = $this->conn->prepare($sql);
             $searchParam = '%' . trim($searchTerm) . '%';
-            $stmt->execute([':search' => $searchParam]);
-            return $stmt->fetchAll(PDO::FETCH_ASSOC);
+            
+            // Bind each parameter separately
+            $stmt->execute([
+                ':search1' => $searchParam,
+                ':search2' => $searchParam,
+                ':search3' => $searchParam,
+                ':search4' => $searchParam,
+                ':search5' => $searchParam
+            ]);
+            
+            $results = $stmt->fetchAll(PDO::FETCH_ASSOC);
+            
+            return array_map([$this, 'convertKeysToLowercase'], $results);
         } catch (PDOException $e) {
             error_log("Error searching doctors: " . $e->getMessage());
             return [];
         }
     }
-
-    // Inside Doctor.php (Focus on the create method)
 
     // CREATE
     public function create($doctor) {
@@ -216,24 +229,19 @@ class Doctor {
             ]);
             
             if ($success) {
-                return $this->conn->lastInsertId(); // Return the newly inserted ID
+                return $this->conn->lastInsertId();
             }
             return false;
         } catch (PDOException $e) {
             $errorMessage = $e->getMessage();
             $errorCode = $e->getCode();
 
-            // Check for Integrity Constraint Violation (SQLSTATE 23000)
             if ($errorCode === '23000') {
-                // Check if the error message specifically mentions the contact number unique key (AK_DOC_MOBILE_NUM)
-                if (strpos($errorMessage, 'AK_DOC_MOBILE_NUM') !== false) {
-                    // Return a clear, standardized message for the front end to handle
+                if (strpos($errorMessage, 'AK_DOC_CONTACT_NUM') !== false || strpos($errorMessage, 'DOC_CONTACT_NUM') !== false) {
                     return "DUPLICATE_CONTACT_NUMBER";
                 }
-                // Add similar logic for duplicate email key if needed (e.g., AK_DOC_EMAIL)
             }
             
-            // Fallback: Return the full error message for any other type of failure
             error_log("Error creating doctor: " . $errorMessage);
             return "Database Error: " . $errorMessage;
         }
@@ -243,14 +251,14 @@ class Doctor {
     public function update($doctor) {
         try {
             $sql = "UPDATE {$this->table_doctor}
-                    SET doc_first_name = :doc_first_name,
-                        doc_middle_init = :doc_middle_init,
-                        doc_last_name = :doc_last_name,
-                        doc_contact_num = :doc_contact_num,
-                        doc_email = :doc_email,
-                        spec_id = :spec_id,
-                        doc_updated_at = NOW()
-                    WHERE doc_id = :doc_id";
+                    SET DOC_FIRST_NAME = :doc_first_name,
+                        DOC_MIDDLE_INIT = :doc_middle_init,
+                        DOC_LAST_NAME = :doc_last_name,
+                        DOC_CONTACT_NUM = :doc_contact_num,
+                        DOC_EMAIL = :doc_email,
+                        SPEC_ID = :spec_id,
+                        DOC_UPDATED_AT = NOW()
+                    WHERE DOC_ID = :doc_id";
 
             $stmt = $this->conn->prepare($sql);
             $stmt->execute([
@@ -262,7 +270,7 @@ class Doctor {
                 ':doc_email' => trim($doctor['doc_email']),
                 ':spec_id' => $doctor['spec_id']
             ]);
-            return $stmt->rowCount(); // Return number of affected rows
+            return $stmt->rowCount();
         } catch (PDOException $e) {
             error_log("Error updating doctor: " . $e->getMessage());
             return false;
@@ -272,7 +280,7 @@ class Doctor {
     // DELETE
     public function delete($doc_id) {
         try {
-            $sql = "DELETE FROM {$this->table_doctor} WHERE doc_id = :doc_id";
+            $sql = "DELETE FROM {$this->table_doctor} WHERE DOC_ID = :doc_id";
             $stmt = $this->conn->prepare($sql);
             return $stmt->execute([':doc_id' => trim($doc_id)]);
         } catch (PDOException $e) {
@@ -281,20 +289,20 @@ class Doctor {
         }
     }
 
-   // UPDATE PROFILE (Doctor + User Table)
+    // UPDATE PROFILE (Doctor + User Table)
     public function updateProfile($doc_id, $first, $middle, $last, $contact, $email, $new_password = '') {
         try {
             $this->conn->beginTransaction();
 
             // Update DOCTOR table
             $sqlDoc = "UPDATE {$this->table_doctor}
-                       SET doc_first_name = ?, doc_middle_init = ?, doc_last_name = ?,
-                           doc_contact_num = ?, doc_email = ?, doc_updated_at = NOW()
-                       WHERE doc_id = ?";
+                       SET DOC_FIRST_NAME = ?, DOC_MIDDLE_INIT = ?, DOC_LAST_NAME = ?,
+                           DOC_CONTACT_NUM = ?, DOC_EMAIL = ?, DOC_UPDATED_AT = NOW()
+                       WHERE DOC_ID = ?";
             $stmtDoc = $this->conn->prepare($sqlDoc);
             $stmtDoc->execute([$first, $middle, $last, $contact, $email, $doc_id]);
 
-            // Update USERS table (email + password)
+            // Update USERS table
             $sqlUser = "UPDATE users SET USER_NAME = ?, USER_UPDATED_AT = NOW()";
             $params = [$email];
 
@@ -324,7 +332,7 @@ class Doctor {
             $this->conn->beginTransaction();
 
             // Get email for user deletion
-            $stmt = $this->conn->prepare("SELECT doc_email FROM {$this->table_doctor} WHERE doc_id = ?");
+            $stmt = $this->conn->prepare("SELECT DOC_EMAIL FROM {$this->table_doctor} WHERE DOC_ID = ?");
             $stmt->execute([$doc_id]);
             $email = $stmt->fetchColumn();
 
@@ -333,7 +341,7 @@ class Doctor {
             $stmtUser->execute([$email, $doc_id]);
 
             // Delete from DOCTORS
-            $stmtDoc = $this->conn->prepare("DELETE FROM {$this->table_doctor} WHERE doc_id = ?");
+            $stmtDoc = $this->conn->prepare("DELETE FROM {$this->table_doctor} WHERE DOC_ID = ?");
             $stmtDoc->execute([$doc_id]);
 
             $this->conn->commit();
@@ -345,12 +353,9 @@ class Doctor {
         }
     }
 
-    // LEGACY METHOD (kept for compatibility)
-    public function updateProfileLegacy($doc_id, $first, $middle, $last, $contact) {
-        $sql = "UPDATE DOCTORS SET doc_first_name = ?, doc_middle_init = ?, doc_last_name = ?, doc_contact_num = ?,
-                doc_updated_at = NOW() WHERE doc_id = ?";
-        $stmt = $this->conn->prepare($sql);
-        return $stmt->execute([$first, $middle, $last, $contact, $doc_id]);
+    // Helper function to convert array keys to lowercase
+    private function convertKeysToLowercase($array) {
+        return array_change_key_case($array, CASE_LOWER);
     }
 }
 ?>

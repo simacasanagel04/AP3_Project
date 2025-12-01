@@ -1,5 +1,5 @@
 <?php
-// staff-module.php
+// public/superadmin/modules/staff-module.php
 require_once dirname(__DIR__, 3) . '/classes/Staff.php';
 require_once dirname(__DIR__, 3) . '/classes/User.php';
 
@@ -141,36 +141,37 @@ if (!empty($search)) {
 <div class="d-flex justify-content-between align-items-center mb-3">
     <form class="d-flex" method="GET">
         <input type="hidden" name="module" value="staff">
-        <input class="form-control me-2 rounded-pill border-primary" type="search" name="search_staff" placeholder="Search by name or email..." value="<?= htmlspecialchars($search) ?>">
+        <label for="search_staff" class="visually-hidden">Search staff</label>
+        <input id="search_staff" class="form-control me-2 rounded-pill border-primary" type="search" name="search_staff" placeholder="Search by name or email..." value="<?= htmlspecialchars($search) ?>" aria-label="Search by name or email">
         <button class="btn btn-outline-primary" type="submit">Search</button>
         <?php if ($search): ?><a href="?module=staff" class="btn btn-outline-secondary ms-2">Reset</a><?php endif; ?>
     </form>
-    <button class="btn btn-success" data-bs-toggle="collapse" data-bs-target="#addFormStaff">+ Add New Staff</button>
+    <button class="btn btn-success" data-bs-toggle="collapse" data-bs-target="#addFormStaff" aria-expanded="false" aria-controls="addFormStaff">+ Add New Staff</button>
 </div>
 
 <div id="addFormStaff" class="collapse mb-4">
     <div class="card card-body shadow-sm">
         <form method="POST" class="row g-3">
             <div class="col-md-4">
-            <label class="form-label fw-semibold">First Name *</label>
-            <input name="staff_first_name" class="form-control" placeholder="First Name *" required>
+            <label for="staff_first_name" class="form-label fw-semibold">First Name *</label>
+            <input id="staff_first_name" name="staff_first_name" class="form-control" placeholder="First Name" required>
         </div>
             <div class="col-md-4">
-            <label class="form-label fw-semibold">Middle Initial</label>
-            <input name="staff_middle_init" class="form-control" placeholder="Middle Initial">
+            <label for="staff_middle_init" class="form-label fw-semibold">Middle Initial</label>
+            <input id="staff_middle_init" name="staff_middle_init" class="form-control" placeholder="Middle Initial">
         </div>
             <div class="col-md-4">
-            <label class="form-label fw-semibold">Last Name *</label>
-            <input name="staff_last_name" class="form-control" placeholder="Last Name *" required>
+            <label for="staff_last_name" class="form-label fw-semibold">Last Name *</label>
+            <input id="staff_last_name" name="staff_last_name" class="form-control" placeholder="Last Name" required>
         </div>
             <div class="col-md-6">
-            <label class="form-label fw-semibold">Contact Number *</label>
-            <input name="staff_contact_num" class="form-control" placeholder="09xxxxxxxxx" required>
+            <label for="staff_contact_num" class="form-label fw-semibold">Contact Number *</label>
+            <input id="staff_contact_num" name="staff_contact_num" class="form-control" placeholder="09xxxxxxxxx" required>
         
         </div>
             <div class="col-md-6">
-            <label class="form-label fw-semibold">Email *</label>
-            <input type="email" name="staff_email" class="form-control" placeholder="staff@example.con" required>
+            <label for="staff_email" class="form-label fw-semibold">Email *</label>
+            <input id="staff_email" type="email" name="staff_email" class="form-control" placeholder="staff@example.com" required>
         
         </div>
             
@@ -184,33 +185,42 @@ if (!empty($search)) {
 
 <div class="card p-3 shadow-sm">
     <h5 class="mb-0">All Staff Records (<?= count($records) ?>)</h5>
-    <div class="table-responsive mt-3" style="overflow-x: auto;">
-        <table class="table table-bordered table-striped table-hover align-middle" style="min-width: 1200px;">
+    <div class="table-responsive mt-3">
+        <table class="table table-bordered table-striped table-hover align-middle">
             <thead class="table-light">
                 <tr>
-                    <th style="width: 60px;">ID</th>
-                    <th>Name</th>
-                    <th>Contact</th>
-                    <th>Email</th>
-                    <th>Created</th>
-                    <th>Updated</th>
-                    <th style="width: 140px;">Action</th>
+                    <th scope="col">ID</th>
+                    <th scope="col">Name</th>
+                    <th scope="col">Contact</th>
+                    <th scope="col">Email</th>
+                    <th scope="col">Created</th>
+                    <th scope="col">Updated</th>
+                    <th scope="col">Action</th>
                 </tr>
             </thead>
             <tbody>
                 <?php if (empty($records)): ?>
-                <tr><td colspan="9" class="text-center text-muted py-4">No staff records found.</td></tr>
+                <tr><td colspan="7" class="text-center text-muted py-4">No staff records found.</td></tr>
                 <?php else: foreach ($records as $r): ?>
                 <tr>
                     <form method="POST">
                         <td class="text-center fw-semibold"><?= $r['staff_id'] ?? '-' ?></td>
                         <td>
-                        <input name="staff_first_name" value="<?= htmlspecialchars($r['first_name'] ?? '') ?>" class="form-control form-control-sm" required>
-                        <input name="staff_middle_init" value="<?= htmlspecialchars($r['middle_init'] ?? '') ?>" class="form-control form-control-sm">
-                        <input name="staff_last_name" value="<?= htmlspecialchars($r['last_name'] ?? '') ?>" class="form-control form-control-sm" required>
+                        <label for="staff_first_name_<?= $r['staff_id'] ?>" class="visually-hidden">First Name</label>
+                        <input id="staff_first_name_<?= $r['staff_id'] ?>" name="staff_first_name" value="<?= htmlspecialchars($r['first_name'] ?? '') ?>" class="form-control form-control-sm mb-1" required>
+                        <label for="staff_middle_init_<?= $r['staff_id'] ?>" class="visually-hidden">Middle Initial</label>
+                        <input id="staff_middle_init_<?= $r['staff_id'] ?>" name="staff_middle_init" value="<?= htmlspecialchars($r['middle_init'] ?? '') ?>" class="form-control form-control-sm mb-1">
+                        <label for="staff_last_name_<?= $r['staff_id'] ?>" class="visually-hidden">Last Name</label>
+                        <input id="staff_last_name_<?= $r['staff_id'] ?>" name="staff_last_name" value="<?= htmlspecialchars($r['last_name'] ?? '') ?>" class="form-control form-control-sm" required>
                         </td>
-                        <td><input name="staff_contact_num" value="<?= htmlspecialchars($r['phone'] ?? '') ?>" class="form-control form-control-sm" required></td>
-                        <td><input type="email" name="staff_email" value="<?= htmlspecialchars($r['email'] ?? '') ?>" class="form-control form-control-sm" required></td>
+                        <td>
+                            <label for="staff_contact_num_<?= $r['staff_id'] ?>" class="visually-hidden">Contact Number</label>
+                            <input id="staff_contact_num_<?= $r['staff_id'] ?>" name="staff_contact_num" value="<?= htmlspecialchars($r['phone'] ?? '') ?>" class="form-control form-control-sm" required>
+                        </td>
+                        <td>
+                            <label for="staff_email_<?= $r['staff_id'] ?>" class="visually-hidden">Email</label>
+                            <input id="staff_email_<?= $r['staff_id'] ?>" type="email" name="staff_email" value="<?= htmlspecialchars($r['email'] ?? '') ?>" class="form-control form-control-sm" required>
+                        </td>
                         <td class="text-center small"><?= $r['created_at'] ?? '-' ?></td>
                         <td class="text-center small"><?= $r['updated_at'] ?? '-' ?></td>
                         <td>
@@ -227,28 +237,28 @@ if (!empty($search)) {
 </div>
 
 <!-- Modal for displaying auto-generated credentials -->
-<div class="modal fade" id="autoUserStaffModal" tabindex="-1">
+<div class="modal fade" id="autoUserStaffModal" tabindex="-1" aria-labelledby="autoUserStaffModalLabel" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered"><div class="modal-content">
         <div class="modal-header bg-success text-white">
-            <h5 class="modal-title">New User Account Created!</h5>
-            <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            <h5 class="modal-title" id="autoUserStaffModalLabel">New User Account Created!</h5>
+            <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
         </div>
         <div class="modal-body">
             <p class="lead">A new staff record and linked user account were successfully created.</p>
             <p class="text-danger"><strong>⚠️ Important:</strong> Please save these credentials securely. The password will not be shown again.</p>
             <div class="mb-3">
-                <label class="form-label fw-bold">Staff ID</label>
-                <input type="text" class="form-control" value="<?= htmlspecialchars($displayStaffId ?? '') ?>" readonly>
+                <label for="modal_staff_id" class="form-label fw-bold">Staff ID</label>
+                <input id="modal_staff_id" type="text" class="form-control" value="<?= htmlspecialchars($displayStaffId ?? '') ?>" readonly>
             </div>
             <div class="mb-3">
-                <label class="form-label fw-bold">Username (Email)</label>
-                <input type="text" class="form-control" value="<?= htmlspecialchars($submittedEmail ?? '') ?>" readonly>
+                <label for="modal_staff_email" class="form-label fw-bold">Username (Email)</label>
+                <input id="modal_staff_email" type="text" class="form-control" value="<?= htmlspecialchars($submittedEmail ?? '') ?>" readonly>
             </div>
             <div class="mb-3">
-                <label class="form-label fw-bold">Temporary Password</label>
+                <label for="tempPassword" class="form-label fw-bold">Temporary Password</label>
                 <div class="input-group">
                     <input type="text" id="tempPassword" class="form-control" value="<?= htmlspecialchars($autoGeneratedPassword) ?>" readonly>
-                    <button class="btn btn-outline-secondary" type="button" onclick="copyPassword(this)">Copy</button>
+                    <button class="btn btn-outline-secondary" type="button" onclick="copyPassword(this)" aria-label="Copy password">Copy</button>
                 </div>
             </div>
         </div>

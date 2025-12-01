@@ -1,5 +1,11 @@
 <?php
-// classes/Appointment.php
+/**
+ * ============================================================================
+ * FILE: classes/Appointment.php
+ * PURPOSE: Appointment management class
+ * ============================================================================
+ */
+
 require_once __DIR__ . "/../config/Database.php";
 
 class Appointment {
@@ -76,7 +82,13 @@ class Appointment {
 
     private function generateNewApptId() {
         $year = date('Y');
-        $sql = "SELECT APPT_ID FROM appointment WHERE APPT_ID LIKE :prefix ORDER BY APPT_ID DESC LIMIT 1";
+        
+        $sql = "SELECT APPT_ID 
+                FROM appointment 
+                WHERE APPT_ID LIKE :prefix
+                ORDER BY APPT_ID DESC 
+                LIMIT 1";
+        
         $stmt = $this->conn->prepare($sql);
         $stmt->bindValue(':prefix', $year . '-%');
         $stmt->execute();
@@ -87,7 +99,7 @@ class Appointment {
         return $year . '-' . $month . '-' . str_pad($nextSequence, 7, '0', STR_PAD_LEFT);
     }
 
-    /** READ ALL (with optional search) - FIXED WITH CORRECT UPPERCASE COLUMNS */
+    /** READ ALL (with optional search) */
     public function readAll($search = null) {
         error_log("=== readAll() called with search: " . var_export($search, true) . " ===");
         
@@ -225,11 +237,15 @@ class Appointment {
                         a.APPT_TIME as app_time,
                         a.STAT_ID as app_status,
                         a.APPT_CREATED_AT,
+                        a.DOC_ID as doc_id,
+                        a.SERV_ID as serv_id,
                         d.DOC_FIRST_NAME,
                         d.DOC_LAST_NAME,
                         d.DOC_MIDDLE_INIT,
+                        d.SPEC_ID as spec_id,
                         s.SPEC_NAME as doc_specialization,
                         srv.SERV_NAME as service_name,
+                        srv.SERV_PRICE as service_price,
                         CONCAT(d.DOC_LAST_NAME, ', ', d.DOC_FIRST_NAME, ' ', COALESCE(d.DOC_MIDDLE_INIT, '')) as doctor_name,
                         DATE_FORMAT(a.APPT_DATE, '%M %d, %Y') as formatted_app_date,
                         DATE_FORMAT(a.APPT_TIME, '%h:%i %p') as formatted_app_time
@@ -262,6 +278,7 @@ class Appointment {
                         a.*,
                         d.DOC_FIRST_NAME,
                         d.DOC_LAST_NAME,
+                        d.SPEC_ID,
                         s.SPEC_NAME as doc_specialization,
                         srv.SERV_NAME as service_name,
                         p.PAT_FIRST_NAME,
