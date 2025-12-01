@@ -183,38 +183,44 @@ class Patient {
     }
 
     public function searchWithAppointments($searchTerm) {
-        try {
-            $sql = "SELECT 
-                        p.PAT_ID as pat_id,
-                        p.PAT_FIRST_NAME as pat_first_name,
-                        p.PAT_MIDDLE_INIT as pat_middle_init,
-                        p.PAT_LAST_NAME as pat_last_name,
-                        p.PAT_DOB as pat_dob,
-                        p.PAT_GENDER as pat_gender,
-                        p.PAT_CONTACT_NUM as pat_contact_num,
-                        p.PAT_EMAIL as pat_email,
-                        p.PAT_ADDRESS as pat_address,
-                        COUNT(a.APPT_ID) as total_appointments,
-                        MAX(a.APPT_DATE) as last_appointment_date,
-                        DATE_FORMAT(p.PAT_CREATED_AT, '%M %d, %Y %h:%i %p') as formatted_created_at,
-                        DATE_FORMAT(MAX(a.APPT_DATE), '%M %d, %Y') as formatted_last_appointment
-                    FROM {$this->table_patient} p
-                    LEFT JOIN {$this->table_appointment} a ON p.PAT_ID = a.PAT_ID
-                    WHERE p.PAT_FIRST_NAME LIKE :search
-                       OR p.PAT_LAST_NAME LIKE :search
-                       OR p.PAT_ID LIKE :search
-                       OR p.PAT_CONTACT_NUM LIKE :search
-                    GROUP BY p.PAT_ID
-                    ORDER BY p.PAT_LAST_NAME, p.PAT_FIRST_NAME";
-            $stmt = $this->conn->prepare($sql);
-            $searchParam = '%' . trim($searchTerm) . '%';
-            $stmt->execute([':search' => $searchParam]);
-            return $stmt->fetchAll(PDO::FETCH_ASSOC);
-        } catch (PDOException $e) {
-            error_log("Error in searchWithAppointments(): " . $e->getMessage());
-            return [];
-        }
+    try {
+        $sql = "SELECT 
+                    p.PAT_ID as pat_id,
+                    p.PAT_FIRST_NAME as pat_first_name,
+                    p.PAT_MIDDLE_INIT as pat_middle_init,
+                    p.PAT_LAST_NAME as pat_last_name,
+                    p.PAT_DOB as pat_dob,
+                    p.PAT_GENDER as pat_gender,
+                    p.PAT_CONTACT_NUM as pat_contact_num,
+                    p.PAT_EMAIL as pat_email,
+                    p.PAT_ADDRESS as pat_address,
+                    COUNT(a.APPT_ID) as total_appointments,
+                    MAX(a.APPT_DATE) as last_appointment_date,
+                    DATE_FORMAT(p.PAT_CREATED_AT, '%M %d, %Y %h:%i %p') as formatted_created_at,
+                    DATE_FORMAT(p.PAT_UPDATED_AT, '%M %d, %Y %h:%i %p') as formatted_updated_at,
+                    DATE_FORMAT(MAX(a.APPT_DATE), '%M %d, %Y') as formatted_last_appointment
+                FROM {$this->table_patient} p
+                LEFT JOIN {$this->table_appointment} a ON p.PAT_ID = a.PAT_ID
+                WHERE p.PAT_FIRST_NAME LIKE :search1
+                   OR p.PAT_LAST_NAME LIKE :search2
+                   OR p.PAT_ID LIKE :search3
+                   OR p.PAT_CONTACT_NUM LIKE :search4
+                GROUP BY p.PAT_ID
+                ORDER BY p.PAT_LAST_NAME, p.PAT_FIRST_NAME";
+        $stmt = $this->conn->prepare($sql);
+        $searchParam = '%' . trim($searchTerm) . '%';
+        $stmt->execute([
+            ':search1' => $searchParam,
+            ':search2' => $searchParam,
+            ':search3' => $searchParam,
+            ':search4' => $searchParam
+        ]);
+        return $stmt->fetchAll(PDO::FETCH_ASSOC);
+    } catch (PDOException $e) {
+        error_log("Error in searchWithAppointments(): " . $e->getMessage());
+        return [];
     }
+}
 
     // CREATE / UPDATE / DELETE
     public function create($data) {

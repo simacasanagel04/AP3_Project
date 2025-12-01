@@ -3,7 +3,7 @@ require_once __DIR__ . '/../config/Database.php';
 
 class Staff {
     private $conn;
-    private $table = "STAFF"; // Table name is STAFF (all caps) based on ERD
+    private $table = "staff"; 
 
     // Add public properties for easy access
     public $STAFF_ID;
@@ -15,6 +15,15 @@ class Staff {
 
     public function __construct($db) {
         $this->conn = $db;
+    }
+
+    /** 
+     * Helper function: Convert to Sentence Case 
+     * e.g., "john PAUL" -> "John Paul"
+     */
+    private function toSentenceCase($string) {
+        if (empty($string)) return $string;
+        return mb_convert_case(trim($string), MB_CASE_TITLE, 'UTF-8');
     }
 
     /** Get staff by ID */
@@ -68,6 +77,11 @@ class Staff {
             return "The email address is already registered as a staff member.";
         }
 
+        // Apply Sentence Case to names
+        $firstName = $this->toSentenceCase($data['first_name']);
+        $lastName = $this->toSentenceCase($data['last_name']);
+        $middleInit = !empty($data['middle_init']) ? strtoupper(substr(trim($data['middle_init']), 0, 1)) : null;
+
         // Use correct, case-sensitive column names
         $sql = "INSERT INTO {$this->table} 
                 (STAFF_FIRST_NAME, STAFF_LAST_NAME, STAFF_MIDDLE_INIT, STAFF_CONTACT_NUM, STAFF_EMAIL, STAFF_CREATED_AT, STAFF_UPDATED_AT) 
@@ -75,9 +89,9 @@ class Staff {
         $stmt = $this->conn->prepare($sql);
         try {
             $stmt->execute([
-                ':first_name' => $data['first_name'],
-                ':last_name' => $data['last_name'],
-                ':middle_init' => $data['middle_init'] ?? null,
+                ':first_name' => $firstName,
+                ':last_name' => $lastName,
+                ':middle_init' => $middleInit,
                 ':phone' => $data['phone'],
                 ':email' => $data['email']
             ]);
@@ -87,9 +101,12 @@ class Staff {
         }
     }
 
-    /** Read all staff (with optional search) */
+    /** 
+     * Read all staff (with optional search) - FIXED FOR cp850 COLLATION 
+     */
     public function readAll($search = null) {
         try {
+            // Base query with explicit column mapping
             $query = "SELECT 
                         STAFF_ID AS staff_id,
                         STAFF_FIRST_NAME AS first_name,
@@ -101,27 +118,38 @@ class Staff {
                         STAFF_UPDATED_AT AS updated_at 
                       FROM {$this->table}";
 
-            if ($search) {
+            // Check if search term exists and is not empty
+            $hasSearch = !empty($search) && trim($search) !== '';
+
+            // Add WHERE clause only if search exists
+            if ($hasSearch) {
+                // FIX: Use direct string interpolation to avoid cp850/utf8mb4 mismatch
+                $searchEscaped = $this->conn->quote('%' . trim($search) . '%');
+                
                 $query .= " WHERE 
-                    STAFF_ID LIKE :search OR
-                    STAFF_FIRST_NAME LIKE :search OR
-                    STAFF_MIDDLE_INIT LIKE :search OR
-                    STAFF_LAST_NAME LIKE :search OR
-                    STAFF_CONTACT_NUM LIKE :search OR
-                    STAFF_EMAIL LIKE :search";
+                    CAST(STAFF_ID AS CHAR) LIKE {$searchEscaped} OR
+                    STAFF_FIRST_NAME LIKE {$searchEscaped} OR
+                    COALESCE(STAFF_MIDDLE_INIT, '') LIKE {$searchEscaped} OR
+                    STAFF_LAST_NAME LIKE {$searchEscaped} OR
+                    STAFF_CONTACT_NUM LIKE {$searchEscaped} OR
+                    COALESCE(STAFF_EMAIL, '') LIKE {$searchEscaped}";
             }
 
-            $stmt = $this->conn->prepare($query);
+            $query .= " ORDER BY STAFF_ID DESC";
 
-            if ($search) {
-                $searchTerm = "%{$search}%";
-                $stmt->bindParam(":search", $searchTerm);
-            }
-
-            $stmt->execute();
-            return $stmt->fetchAll(PDO::FETCH_ASSOC);
+            // Execute without parameter binding (avoids collation mismatch)
+            $stmt = $this->conn->query($query);
+            $results = $stmt->fetchAll(PDO::FETCH_ASSOC);
+            
+            // Log for debugging
+            error_log("Staff readAll - Search: '" . ($search ?? 'NONE') . "', Results: " . count($results));
+            
+            return $results;
+            
         } catch (PDOException $e) {
-            error_log("readAll Error: " . $e->getMessage());
+            error_log("Staff readAll Error: " . $e->getMessage());
+            error_log("Query: " . ($query ?? 'N/A'));
+            error_log("Search term: " . ($search ?? 'N/A'));
             return [];
         }
     }
@@ -139,6 +167,11 @@ class Staff {
             return "Staff ID is required for update.";
         }
 
+        // Apply Sentence Case to names
+        $firstName = $this->toSentenceCase($data['first_name']);
+        $lastName = $this->toSentenceCase($data['last_name']);
+        $middleInit = !empty($data['middle_init']) ? strtoupper(substr(trim($data['middle_init']), 0, 1)) : null;
+
         $sql = "UPDATE {$this->table} 
                 SET STAFF_FIRST_NAME = :first_name, 
                     STAFF_LAST_NAME = :last_name, 
@@ -150,9 +183,9 @@ class Staff {
         $stmt = $this->conn->prepare($sql);
         try {
             $stmt->execute([
-                ':first_name' => $data['first_name'],
-                ':last_name' => $data['last_name'],
-                ':middle_init' => $data['middle_init'] ?? null,
+                ':first_name' => $firstName,
+                ':last_name' => $lastName,
+                ':middle_init' => $middleInit,
                 ':phone' => $data['phone'],
                 ':email' => $data['email'],
                 ':staff_id' => $data['staff_id']
@@ -166,6 +199,11 @@ class Staff {
     /** Update staff profile (for staff editing their own profile) */
     public function updateProfile() {
         try {
+            // Apply Sentence Case
+            $this->STAFF_FIRST_NAME = $this->toSentenceCase($this->STAFF_FIRST_NAME);
+            $this->STAFF_LAST_NAME = $this->toSentenceCase($this->STAFF_LAST_NAME);
+            $this->STAFF_MIDDLE_INIT = !empty($this->STAFF_MIDDLE_INIT) ? strtoupper(substr(trim($this->STAFF_MIDDLE_INIT), 0, 1)) : null;
+
             $query = "UPDATE {$this->table} 
                       SET STAFF_FIRST_NAME = :first_name,
                           STAFF_MIDDLE_INIT = :middle_init,

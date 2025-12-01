@@ -1,6 +1,6 @@
 <?php
 // ============================================
-// CRITICAL: Check if accessed properly
+// public/superadmin/modules/medical-record-module.php
 // ============================================
 if (!isset($db)) {
   die('

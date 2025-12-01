@@ -1,8 +1,13 @@
 <?php 
+/**
+ * ============================================================================
+ * FILE: public/patient_book_appt.php
+ * PURPOSE: Patient appointment booking and management interface
+ * USER ROLE: Patient
+ * ============================================================================
+ */
 
-// public/patient_book_appt.php
-// for user patient
-
+// Include patient authentication and header
 include '../includes/patient_header.php';
 
 // Include required classes
@@ -13,7 +18,9 @@ require_once __DIR__ . '/../classes/Payment_Method.php';
 require_once __DIR__ . '/../classes/Payment.php';
 require_once __DIR__ . '/../classes/Payment_Status.php';
 
-// Initialize classes
+// ============================================================================
+// INITIALIZE CLASSES
+// ============================================================================
 $appointment = new Appointment($db);
 $service = new Service($db);
 $specialization = new Specialization($db);
@@ -21,15 +28,20 @@ $paymentMethod = new Payment_Method($db);
 $payment = new Payment($db);
 $paymentStatus = new Payment_Status($db);
 
-// Fetch all data
+// ============================================================================
+// FETCH DATA FOR PAGE
+// ============================================================================
 $allSpecializations = $specialization->all();
 $allPaymentMethods = $paymentMethod->all();
 $patientAppointments = $appointment->getByPatientId($pat_id);
 
-// Get appointments with payment info
+// ============================================================================
+// GET APPOINTMENTS WITH PAYMENT INFORMATION
+// ============================================================================
 $appointmentsWithPayment = [];
 foreach ($patientAppointments as $appt) {
     try {
+        // Query to get payment details for each appointment
         $paymentQuery = "
             SELECT 
                 p.PAYMT_AMOUNT_PAID,
@@ -47,8 +59,8 @@ foreach ($patientAppointments as $appt) {
         $paymentStmt->execute();
         
         $paymentInfo = $paymentStmt->fetch(PDO::FETCH_ASSOC);
-        
         $appt['payment_info'] = $paymentInfo;
+        
     } catch (PDOException $e) {
         error_log("Payment query error for appointment {$appt['app_id']}: " . $e->getMessage());
         $appt['payment_info'] = null;
@@ -57,7 +69,9 @@ foreach ($patientAppointments as $appt) {
     $appointmentsWithPayment[] = $appt;
 }
 
-// Count appointments
+// ============================================================================
+// CALCULATE APPOINTMENT STATISTICS
+// ============================================================================
 $todayCount = 0;
 $totalCount = count($appointmentsWithPayment);
 $today = date('Y-m-d');
@@ -107,17 +121,20 @@ foreach ($appointmentsWithPayment as $appt) {
     <button class="tab-btn active" id="historyTab">Booked Appointments History</button>
 </div>
 
-<!-- BOOK FORM -->
+<!-- ============================================================================
+     BOOK APPOINTMENT FORM
+     ============================================================================ -->
 <div id="bookSection" class="info-card" style="display: none;">
     <p class="mb-3"><strong>Note:</strong> Each service has a duration (default duration is 30 mins)</p>
-
     <form id="apptForm">
+        <!-- Hidden fields -->
         <input type="hidden" id="patientId" value="<?= $pat_id ?>">
         <input type="hidden" id="selectedDoctorId" value="">
 
+        <!-- Department Selection -->
         <div class="mb-3">
             <label class="form-label"><strong>SELECT DEPARTMENT</strong></label>
-            <select class="form-select" id="department" required>
+            <select class="form-select" id="department" required title="Select a department">
                 <option value="">-- Select Department --</option>
                 <?php foreach ($allSpecializations as $spec): ?>
                     <option value="<?= $spec['SPEC_ID'] ?>"><?= htmlspecialchars($spec['SPEC_NAME']) ?></option>
@@ -125,31 +142,36 @@ foreach ($appointmentsWithPayment as $appt) {
             </select>
         </div>
 
+        <!-- Service Selection -->
         <div class="mb-3">
             <label class="form-label"><strong>SELECT SERVICE</strong></label>
-            <select class="form-select" id="service" required disabled>
+            <select class="form-select" id="service" required disabled title="Select a service">
                 <option value="">-- Select Department First --</option>
             </select>
         </div>
 
+        <!-- Service Price Display -->
         <div class="mb-3">
             <label class="form-label"><strong>SERVICE PRICE</strong></label>
             <div class="form-control bg-light fw-semibold text-primary" id="servicePrice">₱0.00</div>
         </div>
 
+        <!-- Date Selection -->
         <div class="mb-3">
             <label class="form-label"><strong>SELECT DATE</strong></label>
-            <input type="date" class="form-control" id="date" required disabled>
+            <input type="date" class="form-control" id="date" required disabled title="Select appointment date" placeholder="YYYY-MM-DD">
             <small class="text-muted" id="dateNote">Select a department first to see available dates</small>
         </div>
 
+        <!-- Time Selection -->
         <div class="mb-3">
             <label class="form-label"><strong>SELECT TIME</strong></label>
-            <select class="form-select" id="time" required disabled>
+            <select class="form-select" id="time" required disabled title="Select appointment time">
                 <option value="">-- Select Date First --</option>
             </select>
         </div>
 
+        <!-- Form Actions -->
         <div class="d-flex gap-2 justify-content-end">
             <button type="button" class="btn btn-secondary" id="clearBtn">CLEAR</button>
             <button type="submit" class="btn btn-primary">CONTINUE</button>
@@ -157,7 +179,9 @@ foreach ($appointmentsWithPayment as $appt) {
     </form>
 </div>
 
-<!-- HISTORY TABLE -->
+<!-- ============================================================================
+     APPOINTMENTS HISTORY TABLE
+     ============================================================================ -->
 <div id="historySection" class="info-card">
     <h4 class="mb-3">BOOKED APPOINTMENTS HISTORY</h4>
     
@@ -168,15 +192,15 @@ foreach ($appointmentsWithPayment as $appt) {
             <div class="row g-3">
                 <div class="col-md-4">
                     <label class="form-label">Appointment ID</label>
-                    <input type="text" class="form-control" id="filterApptId" placeholder="Enter appointment ID">
+                    <input type="text" class="form-control" id="filterApptId" placeholder="Enter appointment ID" title="Filter by appointment ID">
                 </div>
                 <div class="col-md-4">
                     <label class="form-label">Scheduled Date</label>
-                    <input type="date" class="form-control" id="filterDate">
+                    <input type="date" class="form-control" id="filterDate" title="Filter by date" placeholder="YYYY-MM-DD">
                 </div>
                 <div class="col-md-4">
                     <label class="form-label">Status</label>
-                    <select class="form-select" id="filterStatus">
+                    <select class="form-select" id="filterStatus" title="Filter by status">
                         <option value="">All Statuses</option>
                         <option value="1">Scheduled</option>
                         <option value="2">Completed</option>
@@ -192,6 +216,7 @@ foreach ($appointmentsWithPayment as $appt) {
         </div>
     </div>
 
+    <!-- Appointments Table -->
     <div class="table-responsive">
         <table class="table table-bordered table-hover align-middle" id="appointmentsTable">
             <thead class="table-light">
@@ -216,11 +241,13 @@ foreach ($appointmentsWithPayment as $appt) {
                     </tr>
                 <?php else: ?>
                     <?php foreach ($appointmentsWithPayment as $appt): 
+                        // Determine status display
                         $statusText = $appt['app_status'] == 1 ? 'Scheduled' : 
                                      ($appt['app_status'] == 2 ? 'Completed' : 'Cancelled');
                         $statusClass = $appt['app_status'] == 1 ? 'bg-warning' : 
                                       ($appt['app_status'] == 2 ? 'bg-success' : 'bg-danger');
                         
+                        // Format payment information
                         $payInfo = $appt['payment_info'];
                         $payAmount = $payInfo && $payInfo['PAYMT_AMOUNT_PAID'] ? '₱' . number_format($payInfo['PAYMT_AMOUNT_PAID'], 2) : 'N/A';
                         $payMethod = $payInfo && $payInfo['PYMT_METH_NAME'] ? $payInfo['PYMT_METH_NAME'] : 'N/A';
@@ -249,20 +276,24 @@ foreach ($appointmentsWithPayment as $appt) {
     </div>
 </div>
 
-<!-- PAYMENT SECTION -->
+<!-- ============================================================================
+     PAYMENT SECTION
+     ============================================================================ -->
 <div id="paymentSection" class="payment-section border border-2 border-primary rounded-3 p-4 bg-light bg-gradient" style="display: none;">
     <div class="bg-primary bg-gradient text-white p-3 rounded-3 text-center mb-4">
         <h5 class="mb-0 fw-semibold">Complete Your Payment</h5>
     </div>
-
+    
+    <!-- Payment Summary -->
     <div class="bg-white border border-2 p-3 rounded-3 d-flex justify-content-between align-items-center fw-semibold mb-4 shadow-sm">
         <span id="summaryService" class="fs-6 text-dark">Service Name</span>
         <strong id="summaryPrice" class="fs-6 text-primary">₱0.00</strong>
     </div>
 
+    <!-- Payment Method Selection -->
     <div class="mb-4">
         <label class="form-label fw-bold text-uppercase">Select Payment Method</label>
-        <select class="fs-6 form-select border-2" id="paymentMethodSelect" required>
+        <select class="fs-6 form-select border-2" id="paymentMethodSelect" required title="Select payment method">
             <option value="">-- Choose Payment Method --</option>
             <?php foreach ($allPaymentMethods as $method): ?>
                 <option value="<?= $method['pymt_meth_id'] ?>"><?= htmlspecialchars($method['pymt_meth_name']) ?></option>
@@ -270,28 +301,31 @@ foreach ($appointmentsWithPayment as $appt) {
         </select>
     </div>
 
+    <!-- Payment Actions -->
     <div class="d-flex gap-3 justify-content-center">
         <button type="button" class="btn btn-outline-secondary px-4 fw-semibold" id="cancelPaymentBtn">CANCEL</button>
         <button type="button" class="btn btn-primary px-4 fw-semibold text-uppercase" id="proceedPaymentBtn" disabled>PROCEED TO PAYMENT</button>
     </div>
 </div>
 
-<!-- PAYMENT MODAL -->
+<!-- ============================================================================
+     PAYMENT MODAL
+     ============================================================================ -->
 <div class="modal fade" id="paymentModal" tabindex="-1" data-bs-backdrop="static" data-bs-keyboard="false">
     <div class="modal-dialog modal-dialog-centered">
         <div class="modal-content border-0 shadow-lg rounded-4">
-            <!-- Header with gradient -->
+            <!-- Modal Header -->
             <div class="modal-header bg-primary bg-gradient text-white p-4 border-0">
                 <div>
                     <h5 class="modal-title fw-semibold mb-1" id="paymentModalTitle">Payment Method</h5>
                     <small class="opacity-75">Complete your appointment booking</small>
                 </div>
-                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
 
-            <!-- Body -->
+            <!-- Modal Body -->
             <div class="modal-body p-4">
-                <!-- Payment Icon Section -->
+                <!-- Amount Display -->
                 <div class="text-center mb-4">
                     <p class="text-muted mb-1">Amount to Pay:</p>
                     <h3 class="fw-bold" id="paymentAmount">₱0.00</h3>
@@ -299,11 +333,11 @@ foreach ($appointmentsWithPayment as $appt) {
 
                 <hr class="my-4">
 
-                <!-- Payment Form Container -->
+                <!-- Payment Form Container (dynamically populated) -->
                 <div id="paymentFormContainer"></div>
             </div>
 
-            <!-- Footer -->
+            <!-- Modal Footer -->
             <div class="modal-footer bg-light p-4 border-top">
                 <button type="button" class="btn btn-outline-secondary px-5" data-bs-dismiss="modal">CANCEL</button>
                 <button type="button" class="btn btn-success px-5 fw-semibold" id="confirmPaymentBtn">CONFIRM & BOOK</button>
@@ -314,6 +348,9 @@ foreach ($appointmentsWithPayment as $appt) {
 
 </div> <!-- END .main-content -->
 
+<!-- ============================================================================
+     SCRIPTS
+     ============================================================================ -->
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 <script src="js/patient_dashboard.js"></script>
 </body>

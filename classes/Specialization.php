@@ -9,6 +9,15 @@ class Specialization {
         $this->conn->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
     }
 
+    /** 
+     * Helper function: Convert to Sentence Case 
+     * e.g., "cardiology" -> "Cardiology"
+     */
+    private function toSentenceCase($string) {
+        if (empty($string)) return $string;
+        return mb_convert_case(trim($string), MB_CASE_TITLE, 'UTF-8');
+    }
+
     // Get all specializations
     public function all() {
         try {
@@ -27,7 +36,7 @@ class Specialization {
         }
     }
 
-    // Get all specializations with search (for staff management page)
+    // Get all specializations with search (FIXED FOR cp850 COLLATION)
     public function readAll($search = null) {
         try {
             $sql = "SELECT 
@@ -36,16 +45,23 @@ class Specialization {
                         DATE_FORMAT(SPEC_CREATED_AT, '%M %d, %Y %h:%i %p') as formatted_created_at,
                         DATE_FORMAT(SPEC_UPDATED_AT, '%M %d, %Y %h:%i %p') as formatted_updated_at 
                     FROM {$this->table}";
-            $params = [];
 
-            if ($search) {
-                $sql .= " WHERE SPEC_ID LIKE :search OR SPEC_NAME LIKE :search";
-                $params[':search'] = "%{$search}%";
+            // Check if search term exists and is not empty
+            $hasSearch = !empty($search) && trim($search) !== '';
+
+            if ($hasSearch) {
+                // FIX: Use direct string interpolation to avoid cp850/utf8mb4 mismatch
+                $searchEscaped = $this->conn->quote('%' . trim($search) . '%');
+                
+                $sql .= " WHERE 
+                    CAST(SPEC_ID AS CHAR) LIKE {$searchEscaped} OR
+                    SPEC_NAME LIKE {$searchEscaped}";
             }
-            $sql .= " ORDER BY SPEC_NAME";
 
-            $stmt = $this->conn->prepare($sql);
-            $stmt->execute($params);
+            $sql .= " ORDER BY SPEC_NAME ASC";
+
+            // Execute without parameter binding (avoids collation mismatch)
+            $stmt = $this->conn->query($sql);
             return $stmt->fetchAll(PDO::FETCH_ASSOC);
         } catch (PDOException $e) {
             error_log("Error in readAll(): " . $e->getMessage());
@@ -77,9 +93,12 @@ class Specialization {
         return $this->findById($spec_id);
     }
 
-    // CREATE: Add a new specialization
+    // CREATE: Add a new specialization (WITH SENTENCE CASE)
     public function create($data) {
         $spec_name = is_array($data) ? trim($data['SPEC_NAME']) : trim($data);
+        
+        // Apply Sentence Case
+        $spec_name = $this->toSentenceCase($spec_name);
 
         // Check if name already exists (Alternate Key: AK_SPEC_NAME)
         if ($this->nameExists($spec_name)) {
@@ -98,10 +117,13 @@ class Specialization {
         }
     }
 
-    // UPDATE: Edit specialization name
+    // UPDATE: Edit specialization name (WITH SENTENCE CASE)
     public function update($data) {
         $spec_id = is_array($data) ? $data['SPEC_ID'] : $data['spec_id'];
         $spec_name = is_array($data) ? trim($data['SPEC_NAME']) : trim($data['spec_name']);
+        
+        // Apply Sentence Case
+        $spec_name = $this->toSentenceCase($spec_name);
 
         // Check if the new name exists for a DIFFERENT ID
         $sql_check = "SELECT SPEC_ID FROM {$this->table} WHERE SPEC_NAME = ? AND SPEC_ID != ? LIMIT 1";

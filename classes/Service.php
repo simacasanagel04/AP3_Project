@@ -2,7 +2,7 @@
 // /classes/Service.php
 class Service {
     private $conn;
-    private $table_name = "SERVICE";
+    private $table_name = "service";
 
     // Make properties public for staff_service.php to access directly
     public $serv_id;
@@ -95,31 +95,36 @@ class Service {
     }
 
     /**
-     * Searches for services based on keywords in name, description, or price.
-     * @param string $keywords The search string.
-     * @return array
-     */
-    public function search($keyword) {
-        $keyword = "%$keyword%";
-        $query = "SELECT 
-                        SERV_ID, 
-                        SERV_NAME, 
-                        SERV_DESCRIPTION, 
-                        SERV_PRICE, 
-                        SPEC_ID,
-                        SERV_CREATED_AT, 
-                        SERV_UPDATED_AT 
-                  FROM {$this->table_name} 
-                  WHERE SERV_NAME LIKE :keyword 
-                     OR SERV_DESCRIPTION LIKE :keyword 
-                     OR CAST(SERV_PRICE AS CHAR) LIKE :keyword
-                  ORDER BY SERV_ID DESC";
+ * Searches for services based on keywords in name, description, or price.
+ * @param string $keywords The search string.
+ * @return array
+ */
+public function search($keyword) {
+    $keyword = "%$keyword%";
+    $query = "SELECT 
+                    s.SERV_ID, 
+                    s.SERV_NAME, 
+                    s.SERV_DESCRIPTION, 
+                    s.SERV_PRICE, 
+                    s.SPEC_ID,
+                    s.SERV_CREATED_AT, 
+                    s.SERV_UPDATED_AT,
+                    sp.SPEC_NAME
+              FROM {$this->table_name} s
+              LEFT JOIN specialization sp ON s.SPEC_ID = sp.SPEC_ID
+              WHERE s.SERV_NAME LIKE :keyword1 
+                 OR s.SERV_DESCRIPTION LIKE :keyword2 
+                 OR CAST(s.SERV_PRICE AS CHAR) LIKE :keyword3
+              ORDER BY s.SERV_ID DESC";
 
-        $stmt = $this->conn->prepare($query);
-        $stmt->bindParam(':keyword', $keyword);
-        $stmt->execute();
-        return $stmt->fetchAll(PDO::FETCH_ASSOC);
-    }
+    $stmt = $this->conn->prepare($query);
+    $stmt->execute([
+        ':keyword1' => $keyword,
+        ':keyword2' => $keyword,
+        ':keyword3' => $keyword
+    ]);
+    return $stmt->fetchAll(PDO::FETCH_ASSOC);
+}
 
     /**
      * Read one service by ID and populate object properties

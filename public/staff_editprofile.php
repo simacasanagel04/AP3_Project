@@ -25,8 +25,8 @@ if (!$staff) {
 // Handle form submission
 $success = $error = '';
 if ($_POST) {
-    $first_name = trim($_POST['first_name']);
-    $last_name = trim($_POST['last_name']);
+    $first_name = ucfirst(strtolower(trim($_POST['first_name'])));
+    $last_name = ucfirst(strtolower(trim($_POST['last_name'])));
     $middle_init = strtoupper(trim($_POST['middle_init']));
     $contact_num = trim($_POST['contact_num']);
     $email = trim($_POST['email']);
@@ -46,9 +46,9 @@ if ($_POST) {
         $staffModel->STAFF_EMAIL = $email;
 
         if ($staffModel->updateProfile()) {
-            $success = "Profile updated successfully!";
-            // Refresh staff data
-            $staff = $staffModel->getStaffById($_SESSION['staff_id']);
+            $_SESSION['success'] = "Profile updated successfully!";
+            header("Location: staff_myprofile.php");
+            exit();
         } else {
             $error = "Failed to update profile. Please try again.";
         }

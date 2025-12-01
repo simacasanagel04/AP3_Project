@@ -30,7 +30,7 @@ document.addEventListener('DOMContentLoaded', function () {
                     authSection.innerHTML = `
                         <div class="dropdown">
                             <a class="btn btn-outline-primary dropdown-toggle" href="#" role="button" 
-                               data-bs-toggle="dropdown" aria-expanded="false">
+                               data-bs-toggle="dropdown" aria-expanded="false" aria-label="User menu">
                                 ${userData.user_name}
                             </a>
                             <ul class="dropdown-menu dropdown-menu-end">
@@ -67,9 +67,9 @@ document.addEventListener('DOMContentLoaded', function () {
         if (authSection) {
             authSection.innerHTML = `
                 <button class="btn btn-outline-primary btn-sm me-2" 
-                        onclick="location.href='public/login.php'">LOG IN</button>
+                        onclick="location.href='public/login.php'" aria-label="Log in">LOG IN</button>
                 <button class="btn btn-primary btn-sm" 
-                        data-bs-toggle="modal" data-bs-target="#registerModal">REGISTER</button>
+                        data-bs-toggle="modal" data-bs-target="#registerModal" aria-label="Register">REGISTER</button>
             `;
         }
     }
@@ -181,9 +181,9 @@ document.addEventListener('DOMContentLoaded', function () {
             document.body.appendChild(c);
             return c;
         })();
-        const html = `<div class="toast align-items-center text-white bg-${type} border-0" role="alert">
+        const html = `<div class="toast align-items-center text-white bg-${type} border-0" role="alert" aria-live="assertive" aria-atomic="true">
                         <div class="d-flex"><div class="toast-body">${msg}</div>
-                        <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"></button>
+                        <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast" aria-label="Close"></button>
                         </div></div>`;
         container.insertAdjacentHTML('beforeend', html);
         const toast = new bootstrap.Toast(container.lastElementChild);
