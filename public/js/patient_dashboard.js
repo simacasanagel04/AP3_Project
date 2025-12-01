@@ -188,7 +188,7 @@ document.addEventListener('DOMContentLoaded', function () {
             }
 
             // Fetch available time slots
-            fetch(`ajax/patient_get_avail_times.php?spec_id=${specId}&date=${selectedDate}${currentApptId ? '&current_appt_id=' + currentApptId : ''}`)
+            fetch(`ajax/patient_get_avail_times.php?spec_id=${specId}&date=${selectedDate}`)
                 .then(response => response.json())
                 .then(data => {
                     if (data.success && data.timeSlots.length > 0) {
